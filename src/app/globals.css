@@ -42,10 +42,6 @@
   --z-toast: 500;
   --z-tooltip: 600;
 
-  /* Typography Families */
-  --font-family-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-family-mono: var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
   /* Typography Font Sizes */
   --font-size-xs: 0.75rem;     /* 12px */
   --font-size-sm: 0.875rem;    /* 14px */
@@ -54,12 +50,6 @@
   --font-size-xl: 1.25rem;     /* 20px */
   --font-size-2xl: 1.5rem;     /* 24px */
   --font-size-3xl: 2rem;       /* 32px */
-
-  /* Typography Semantic Font Sizes */
-  --font-size-h1: var(--font-size-3xl);
-  --font-size-h2: var(--font-size-2xl);
-  --font-size-h3: var(--font-size-xl);
-  --font-size-body: var(--font-size-base);
 
   /* Typography Font Weights */
   --font-weight-normal: 400;
@@ -207,8 +197,8 @@ html.dark {
 
 @theme {
   /* Typography Fonts mapping */
-  --font-sans: var(--font-family-sans);
-  --font-mono: var(--font-family-mono);
+  --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Typography Font Sizes mapping */
   --font-size-xs: var(--font-size-xs);
@@ -218,10 +208,10 @@ html.dark {
   --font-size-xl: var(--font-size-xl);
   --font-size-2xl: var(--font-size-2xl);
   --font-size-3xl: var(--font-size-3xl);
-  --font-size-h1: var(--font-size-h1);
-  --font-size-h2: var(--font-size-h2);
-  --font-size-h3: var(--font-size-h3);
-  --font-size-body: var(--font-size-body);
+  --font-size-h1: var(--font-size-3xl);
+  --font-size-h2: var(--font-size-2xl);
+  --font-size-h3: var(--font-size-xl);
+  --font-size-body: var(--font-size-base);
 
   /* Typography Font Weights mapping */
   --font-weight-normal: var(--font-weight-normal);
@@ -370,28 +360,35 @@ body {
 
 /* Base typography elements */
 h1 {
-  font-size: var(--font-size-h1);
+  font-size: var(--font-size-3xl);
   line-height: var(--line-height-tight);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
 h2 {
-  font-size: var(--font-size-h2);
+  font-size: var(--font-size-2xl);
   line-height: var(--line-height-tight);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
 h3 {
-  font-size: var(--font-size-h3);
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-tight);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+h4 {
+  font-size: var(--font-size-lg);
   line-height: var(--line-height-tight);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
 p {
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
   color: var(--color-text-secondary);
 }
@@ -412,4 +409,131 @@ code, pre {
 }
 .max-w-content-full {
   max-width: var(--content-full);
+}
+
+/* Global Typography Roles & Utilities */
+@utility text-display {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+@utility text-page-title {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+@utility text-section-title {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+@utility text-subsection-title {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+@utility text-block-title {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+@utility text-body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+@utility text-dense-body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-snug);
+}
+
+@utility text-caption {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-muted);
+}
+
+@utility text-label {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+}
+
+@utility text-metric-label {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-muted);
+}
+
+@utility text-metric-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-none);
+}
+
+@utility text-inline-code {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-snug);
+  background-color: var(--color-code-inline-bg);
+  color: var(--color-code-inline-text);
+  padding: 0.125em 0.25em;
+  border-radius: var(--radius-small);
+}
+
+@utility text-code-block {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-snug);
+  background-color: var(--color-code-bg);
+  color: var(--color-code-text);
+  border: 1px solid var(--color-code-border);
+  padding: var(--space-4);
+  border-radius: var(--radius-medium);
+}
+
+@utility text-terminal-output {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-snug);
+}
+
+@utility text-annotation {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-tight);
+}
+
+@utility text-metadata {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-muted);
 }
