@@ -1,12 +1,22 @@
-import { PageContainer } from "@/layouts/PageLayout";
+import { ActivitySection } from "@/components/landing/ActivitySection";
+import { ArchitectureSection } from "@/components/landing/ArchitectureSection";
+import { CapabilitiesSection } from "@/components/landing/CapabilitiesSection";
+import { DocumentationSection } from "@/components/landing/DocumentationSection";
+import { EngineeringPrinciplesSection } from "@/components/landing/EngineeringPrinciplesSection";
+import { HeroSection } from "@/components/landing/HeroSection";
+import { PerformanceSection } from "@/components/landing/PerformanceSection";
 
 export default function Home() {
   return (
-    <PageContainer width="standard" py="large" align="left">
-      <h1 className="mb-space-4">Torus Project</h1>
-      <p className="text-text-secondary">
-        Welcome to the Torus project. Torus is a Layer 7 reverse proxy and API gateway written in Go.
-      </p>
-    </PageContainer>
+    <div className="flex flex-col space-y-space-9">
+      <HeroSection />
+      <EngineeringPrinciplesSection />
+      <CapabilitiesSection />
+      <ArchitectureSection />
+      <PerformanceSection />
+      <DocumentationSection />
+      <ActivitySection />
+    </div>
   );
 }
+

@@ -46,8 +46,8 @@ export default function Header() {
                   key={link.name}
                   href={link.href}
                   className={`text-sm font-medium transition-colors hover:text-text-primary ${active
-                      ? "text-accent-primary border-b-2 border-accent-primary pb-[19px] pt-[21px] -mb-[1px]"
-                      : "text-text-secondary"
+                    ? "text-accent-primary border-b-2 border-accent-primary pb-[19px] pt-[21px] -mb-[1px]"
+                    : "text-text-secondary"
                     }`}
                 >
                   {link.name}
@@ -74,7 +74,7 @@ export default function Header() {
 
             {/* GitHub Link */}
             <a
-              href="https://github.com/torus-proxy/torus"
+              href="https://github.com/Ashish-Barmaiya/torus-proxy"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-md p-2 text-text-secondary hover:bg-background-subtle hover:text-text-primary transition-all focus:outline-none focus:ring-2 focus:ring-accent-focus focus:ring-offset-2 focus:ring-offset-canvas"
@@ -137,8 +137,8 @@ export default function Header() {
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`text-base font-medium py-2 px-space-3 rounded-md transition-colors ${active
-                    ? "bg-background-subtle text-accent-primary font-semibold"
-                    : "text-text-secondary hover:bg-background-subtle hover:text-text-primary"
+                  ? "bg-background-subtle text-accent-primary font-semibold"
+                  : "text-text-secondary hover:bg-background-subtle hover:text-text-primary"
                   }`}
               >
                 {link.name}
