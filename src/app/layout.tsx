@@ -1,41 +1,31 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
-import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 
-const ibmPlexSans = IBM_Plex_Sans({
+import "./globals.css";
+
+const sans = IBM_Plex_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-ibm-plex-sans",
+  display: "swap",
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
+const mono = IBM_Plex_Mono({
+  weight: "400",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-ibm-plex-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Torus - Layer 7 Reverse Proxy & API Gateway",
-  description: "Official engineering publication and documentation for the Torus project.",
+  title: "Torus — Edge infrastructure, made legible",
+  description:
+    "Torus is a high-performance Layer 7 reverse proxy and edge API gateway written in Go.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
-    >
-      <body className="flex min-h-full flex-col bg-canvas text-text-primary transition-colors duration-default">
-        <Header />
-        <main className="flex flex-1 flex-col">{children}</main>
-        <Footer />
-      </body>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
