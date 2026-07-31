@@ -24,7 +24,18 @@ const timeline = [
 
 export function RequestWalkthrough() {
   const [replay, setReplay] = useState(0);
+  const [activeStage, setActiveStage] = useState(-1);
   const reduceMotion = useReducedMotion();
+
+  const replayWalkthrough = () => {
+    setReplay((value) => value + 1);
+
+    stages.forEach((_, index) => {
+      window.setTimeout(() => setActiveStage(index), index * 460);
+    });
+
+    window.setTimeout(() => setActiveStage(-1), stages.length * 460 + 700);
+  };
 
   return (
     <section className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36">
@@ -40,32 +51,42 @@ export function RequestWalkthrough() {
           </p>
           <button
             type="button"
-            onClick={() => setReplay((value) => value + 1)}
-            className="mt-8 inline-flex items-center gap-2 border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
+            onClick={replayWalkthrough}
+            className="mt-8 inline-flex items-center gap-2 border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--signal-dark)] hover:text-[var(--signal-dark)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
           >
             Replay <span aria-hidden="true">↻</span>
           </button>
         </div>
         <div className="border border-[var(--line-strong)] bg-[var(--surface)] p-5 sm:p-8">
           <div className="relative grid gap-2 sm:grid-cols-7 sm:gap-0">
-            {stages.map((stage, index) => (
-              <motion.div
-                key={`${replay}-${stage}`}
-                initial={false}
-                animate={reduceMotion ? { opacity: 1 } : { opacity: [0.45, 1, 0.45] }}
-                transition={
-                  reduceMotion
-                    ? undefined
-                    : { duration: 4.9, delay: index * 0.7, repeat: Infinity, ease: "linear" }
-                }
-                className="relative border border-[var(--line)] bg-[var(--surface)] px-3 py-4 sm:border-r-0 sm:last:border-r"
-              >
-                <span className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-faint)]">
-                  0{index + 1}
-                </span>
-                <span className="mt-5 block text-sm font-medium text-[var(--ink)]">{stage}</span>
-              </motion.div>
-            ))}
+            {stages.map((stage, index) => {
+              const isActive = activeStage === index;
+
+              return (
+                <motion.div
+                  key={`${replay}-${stage}`}
+                  initial={false}
+                  animate={reduceMotion ? { opacity: 1 } : { opacity: [0.45, 1, 0.45] }}
+                  transition={
+                    reduceMotion
+                      ? undefined
+                      : { duration: 4.9, delay: index * 0.7, repeat: Infinity, ease: "linear" }
+                  }
+                  className={`relative border bg-[var(--surface)] px-3 py-4 transition-colors sm:border-r-0 sm:last:border-r ${isActive ? "border-[var(--signal)]" : "border-[var(--line)]"}`}
+                >
+                  <span
+                    className={`font-[family-name:var(--font-ibm-plex-mono)] text-[11px] ${isActive ? "text-[var(--signal)]" : "text-[var(--ink-faint)]"}`}
+                  >
+                    0{index + 1}
+                  </span>
+                  <span
+                    className={`mt-5 block text-sm transition-colors ${isActive ? "font-semibold text-[var(--signal-dark)]" : "font-medium text-[var(--ink)]"}`}
+                  >
+                    {stage}
+                  </span>
+                </motion.div>
+              );
+            })}
           </div>
           <motion.div
             key={replay}

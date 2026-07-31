@@ -25,7 +25,7 @@ export function HotReloadDemo() {
             <button
               type="button"
               onClick={() => setReloaded((value) => !value)}
-              className="mt-8 inline-flex border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
+              className="mt-8 inline-flex border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--signal)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
             >
               {reloaded ? "Show Runtime v1" : "Apply Runtime v2"}
             </button>
@@ -52,7 +52,7 @@ export function HotReloadDemo() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
                   transition={{ duration: 0.18 }}
-                  className="mt-6 border-l border-[var(--line-strong)] pl-4 text-sm leading-6 text-[var(--ink-soft)]"
+                  className="mt-6 border-l border-[var(--signal-dark)] pl-4 text-sm leading-6 text-[var(--ink-soft)]"
                 >
                   The pointer changes for new work only. No active request is forced to stop or
                   restart.
@@ -83,13 +83,19 @@ function RuntimeCard({
     <motion.div
       layout
       transition={{ duration: reduceMotion ? 0 : 0.2 }}
-      className={`border p-5 ${active ? "border-[var(--line-strong)] bg-[var(--paper)]" : "border-[var(--line)]"}`}
+      className={`border p-5 transition-colors ${active ? "border-[var(--signal)] bg-[var(--paper)]" : "border-[var(--line)]"}`}
     >
       <p className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-faint)]">
         {title}
       </p>
-      <p className="mt-6 text-lg font-medium text-[var(--ink)]">{runtime}</p>
-      <p className="mt-2 text-sm text-[var(--ink-soft)]">{state}</p>
+      <p
+        className={`mt-6 text-lg ${active ? "font-semibold text-[var(--signal-dark)]" : "font-medium text-[var(--ink)]"}`}
+      >
+        {runtime}
+      </p>
+      <p className={`mt-2 text-sm ${active ? "text-[var(--signal)]" : "text-[var(--ink-soft)]"}`}>
+        {state}
+      </p>
     </motion.div>
   );
 }

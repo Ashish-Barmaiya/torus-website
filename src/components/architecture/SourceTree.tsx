@@ -39,7 +39,7 @@ export function SourceTree() {
                   onMouseEnter={() => setActiveFolder(folder)}
                   onFocus={() => setActiveFolder(folder)}
                   onClick={() => setActiveFolder(folder)}
-                  className={`block w-full border-b border-[var(--line)] px-3 py-3 text-left font-[family-name:var(--font-ibm-plex-mono)] text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${activeFolder.name === folder.name ? "text-[var(--ink)]" : "text-[var(--ink-soft)]"}`}
+                  className={`block w-full border-b border-[var(--line)] px-3 py-3 text-left font-[family-name:var(--font-ibm-plex-mono)] text-sm transition-colors hover:text-[var(--signal)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${activeFolder.name === folder.name ? "text-[var(--ink)]" : "text-[var(--ink-soft)]"}`}
                 >
                   {folder.name}
                 </button>
