@@ -4,7 +4,7 @@ const links = [
   { href: "/#capabilities", label: "Capabilities" },
   { href: "/architecture", label: "Architecture" },
   { href: "/#benchmarks", label: "Benchmarks" },
-  { href: "/#documentation", label: "Documentation" },
+  { href: "/docs", label: "Documentation" },
 ];
 
 export default function Footer() {

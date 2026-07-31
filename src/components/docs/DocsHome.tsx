@@ -11,7 +11,7 @@ export function DocsHome() {
             Torus documentation
           </p>
           <h1 className="mt-5 max-w-2xl text-4xl font-semibold tracking-[-0.045em] text-[var(--ink)] sm:text-5xl lg:text-[58px] lg:leading-[1.03]">
-            <span className="text-[var(--signal)]">Documentation</span>
+            Documentation
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-[var(--ink-soft)]">
             Everything required to install, configure, operate, and understand Torus.

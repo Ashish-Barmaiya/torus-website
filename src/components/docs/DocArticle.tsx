@@ -1,10 +1,9 @@
 import Link from "next/link";
 
+import { getDocContent } from "@/lib/docs/content";
 import { getAdjacentDocs, hrefForDoc, type DocEntry } from "@/lib/docs/navigation";
 
-import { CodeBlock } from "./CodeBlock";
 import { DocsTableOfContents, type TableOfContentsItem } from "./DocsTableOfContents";
-import { ArchitectureDiagram, BenchmarkCard, ConfigReference, Note, RequestFlow } from "./MdxComponents";
 
 const tableOfContents: TableOfContentsItem[] = [
   { id: "why-this-exists", title: "Why this exists" },
@@ -14,25 +13,9 @@ const tableOfContents: TableOfContentsItem[] = [
   { id: "related-documentation", title: "Related documentation" },
 ];
 
-function PlaceholderParagraph({ doc, section }: { doc: DocEntry; section: string }) {
-  return (
-    <p>
-      This section is the working location for the <span className="text-[var(--ink)]">{section.toLowerCase()}</span> guidance for {doc.title}. It is intentionally structured around operational decisions, observable behavior, and the boundaries maintained in the Torus codebase.
-    </p>
-  );
-}
-
-function ArticleSection({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
-  return (
-    <section aria-labelledby={id} className="scroll-mt-10 border-t border-[var(--line)] py-10 sm:py-12">
-      <h2 id={id} className="text-2xl font-semibold tracking-[-0.03em] text-[var(--ink)]">{title}</h2>
-      <div className="mt-4 max-w-[680px] space-y-4 text-[15px] leading-7 text-[var(--ink-soft)]">{children}</div>
-    </section>
-  );
-}
-
-export function DocArticle({ doc }: { doc: DocEntry }) {
+export async function DocArticle({ doc }: { doc: DocEntry }) {
   const { previous, next } = getAdjacentDocs(doc);
+  const Content = await getDocContent(doc.slug);
   const sourcePath = doc.packagePath ?? "docs";
 
   return (
@@ -49,53 +32,27 @@ export function DocArticle({ doc }: { doc: DocEntry }) {
             <h1 className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-[var(--ink)] sm:text-5xl sm:leading-[1.05]">{doc.title}</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--ink-soft)]">{doc.summary}</p>
             <dl className="mt-7 flex flex-wrap gap-x-5 gap-y-2 border-y border-[var(--line)] py-3 font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.06em] text-[var(--ink-faint)] uppercase">
-              <div className="flex gap-2"><dt className="sr-only">Reading time</dt><dd>{doc.readingTime} read</dd></div>
-              <div className="flex gap-2"><dt className="sr-only">Last updated</dt><dd>Updated {doc.updated}</dd></div>
-              <div className="flex gap-2"><dt className="sr-only">Version</dt><dd>v0.x</dd></div>
+              <div><dt className="sr-only">Reading time</dt><dd>{doc.readingTime} read</dd></div>
+              <div><dt className="sr-only">Last updated</dt><dd>Updated {doc.updated}</dd></div>
+              <div><dt className="sr-only">Version</dt><dd>v0.x</dd></div>
             </dl>
           </header>
 
-          <ArticleSection id="why-this-exists" title="Why this exists">
-            <PlaceholderParagraph doc={doc} section="design rationale" />
-            <ArchitectureDiagram>The control path stays explicit: each boundary has one job and a named source of truth.</ArchitectureDiagram>
-          </ArticleSection>
+          <div className="docs-prose [&_h1]:hidden [&_h2]:scroll-mt-10 [&_h2]:border-t [&_h2]:border-[var(--line)] [&_h2]:pt-10 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:tracking-[-0.03em] [&_h2]:text-[var(--ink)] [&_h3]:mt-7 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-[var(--ink)] [&_p]:mt-4 [&_p]:max-w-[680px] [&_p]:text-[15px] [&_p]:leading-7 [&_p]:text-[var(--ink-soft)] [&_pre]:my-7 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-[var(--terminal-line)] [&_pre]:bg-[var(--terminal)] [&_pre]:p-4 [&_pre]:font-[family-name:var(--font-ibm-plex-mono)] [&_pre]:text-[13px] [&_pre]:leading-6 [&_pre]:text-[var(--terminal-text)] [&_code]:font-[family-name:var(--font-ibm-plex-mono)] [&_li]:text-[15px] [&_li]:leading-7 [&_li]:text-[var(--ink-soft)] [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5">
+            <Content />
+          </div>
 
-          <ArticleSection id="example" title="Example">
-            <PlaceholderParagraph doc={doc} section="minimal example" />
-            <CodeBlock filename="torus.yaml" language="yaml" highlightedLines={[5, 6]}>{`server:
-  address: ":8080"
+          <section id="source-files" className="scroll-mt-10 border-t border-[var(--line)] py-10 sm:py-12">
+            <h2 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--ink)]">Source files</h2>
+            <p className="mt-4 max-w-[680px] text-[15px] leading-7 text-[var(--ink-soft)]">Implementation references will be pinned to release revisions. The current ownership boundary is <code className="border border-[var(--line)] bg-[var(--paper-deep)] px-1.5 py-0.5 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] text-[var(--ink)]">{sourcePath}</code>.</p>
+          </section>
 
-routes:
-  - prefix: /api
-    service: api`}</CodeBlock>
-            <RequestFlow>Placeholder request path; production guidance will describe failure modes and timing at every handoff.</RequestFlow>
-          </ArticleSection>
-
-          <ArticleSection id="configuration" title="Configuration">
-            <PlaceholderParagraph doc={doc} section="configuration contract" />
-            <ConfigReference fields={[
-              { field: "server.address", type: "string", defaultValue: '":8080"', required: false, description: "Address accepted by the listener." },
-              { field: "routes[].prefix", type: "string", defaultValue: "—", required: true, description: "Path prefix used for deterministic route matching." },
-              { field: "routes[].service", type: "string", defaultValue: "—", required: true, description: "Named service selected after a successful match." },
-            ]} />
-            <Note title="Configuration placeholder">Field semantics, validation rules, and compatibility notes will be maintained here alongside each release.</Note>
-          </ArticleSection>
-
-          <ArticleSection id="implementation-notes" title="Implementation notes">
-            <PlaceholderParagraph doc={doc} section="implementation notes" />
-            <p>Source ownership is expected to remain legible from the documentation. The current implementation boundary is <code className="border border-[var(--line)] bg-[var(--paper-deep)] px-1.5 py-0.5 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] text-[var(--ink)]">{sourcePath}</code>.</p>
-            <BenchmarkCard id="TBD" title="Benchmark reference" summary="A linked, reproducible benchmark report will appear here when this subsystem has a published workload." />
-          </ArticleSection>
-
-          <ArticleSection id="related-documentation" title="Related documentation">
-            <PlaceholderParagraph doc={doc} section="related documentation" />
-            <div className="grid border-l border-t border-[var(--line)] sm:grid-cols-2">
-              {[
-                { label: "Architecture", href: "/docs/architecture" },
-                { label: "Configuration reference", href: "/docs/reference/configuration" },
-              ].map((item) => <Link key={item.href} href={item.href} className="border-b border-r border-[var(--line)] px-4 py-4 text-sm text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-deep)] hover:text-[var(--ink)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--signal)]">{item.label}<span aria-hidden="true" className="ml-2 text-[var(--signal-dark)] dark:text-[var(--signal)]">→</span></Link>)}
+          <section id="related-documentation" className="scroll-mt-10 border-t border-[var(--line)] py-10 sm:py-12">
+            <h2 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--ink)]">Related documentation</h2>
+            <div className="mt-5 grid border-l border-t border-[var(--line)] sm:grid-cols-2">
+              {[{ label: "Architecture", href: "/docs/architecture" }, { label: "Configuration reference", href: "/docs/reference/configuration" }].map((item) => <Link key={item.href} href={item.href} className="border-b border-r border-[var(--line)] px-4 py-4 text-sm text-[var(--ink-soft)] transition-colors hover:bg-[var(--paper-deep)] hover:text-[var(--ink)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--signal)]">{item.label}<span aria-hidden="true" className="ml-2 text-[var(--signal-dark)] dark:text-[var(--signal)]">→</span></Link>)}
             </div>
-          </ArticleSection>
+          </section>
 
           <nav aria-label="Documentation pagination" className="grid border-l border-t border-[var(--line)] sm:grid-cols-2">
             {previous ? <Link href={hrefForDoc(previous)} className="group border-b border-r border-[var(--line)] px-5 py-5 transition-colors hover:bg-[var(--paper-deep)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--signal)]"><span className="font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.1em] text-[var(--ink-faint)] uppercase">← Previous</span><span className="mt-2 block text-sm font-medium text-[var(--ink)] group-hover:text-[var(--signal-dark)] dark:group-hover:text-[var(--signal)]">{previous.title}</span></Link> : <div className="border-b border-r border-[var(--line)]" />}
