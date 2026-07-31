@@ -60,17 +60,17 @@ export function LoadBalancerDemo() {
                     key={backend}
                     animate={isSelected && !reduceMotion ? { x: [0, 5, 0] } : { x: 0 }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
-                    className={`grid grid-cols-[32px_1fr_auto] items-center gap-4 border px-4 py-4 transition-colors ${isDisabled ? "border-[var(--line)] text-[var(--ink-faint)]" : isSelected ? "border-[var(--signal)] bg-[var(--surface)] text-[var(--signal-dark)]" : "border-[var(--line-strong)] text-[var(--ink)]"}`}
+                    className={`grid grid-cols-[32px_1fr_auto] items-center gap-4 border px-4 py-4 transition-colors ${isDisabled ? "border-[var(--line)] text-[var(--ink-faint)]" : isSelected ? "border-[var(--signal)] bg-[var(--surface)] text-[var(--signal-dark)] dark:bg-[var(--ink)] dark:text-[var(--paper)]" : "border-[var(--line-strong)] text-[var(--ink)]"}`}
                   >
                     <span className="font-[family-name:var(--font-ibm-plex-mono)] text-xs">
                       0{index + 1}
                     </span>
                     <span
-                      className={`text-sm ${isSelected ? "font-semibold text-[var(--signal-dark)]" : "font-medium"}`}
+                      className={`text-sm ${isSelected ? "font-semibold text-[var(--signal-dark)] dark:text-[var(--paper)]" : "font-medium"}`}
                     >
                       {backend}
                       {isSelected && (
-                        <span className="ml-2 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--signal)]">
+                        <span className="ml-2 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--signal)] dark:text-[var(--paper)]">
                           selected
                         </span>
                       )}

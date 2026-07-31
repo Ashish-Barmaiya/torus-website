@@ -135,15 +135,15 @@ export function ExecutionPipeline() {
                   whileTap={reduceMotion ? undefined : { y: -1 }}
                   transition={{ duration: 0.16, ease: "easeOut" }}
                   aria-pressed={activeStage.id === stage.id}
-                  className={`min-w-44 border p-4 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] ${activeStage.id === stage.id ? "border-[var(--line-strong)] bg-[var(--surface)]" : "border-[var(--line)] bg-[var(--paper-deep)]"}`}
+                  className={`group/pipeline min-w-44 border p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] dark:hover:bg-[var(--ink)] dark:hover:text-[var(--paper)] ${activeStage.id === stage.id ? "border-[var(--line-strong)] bg-[var(--surface)]" : "border-[var(--line)] bg-[var(--paper-deep)]"}`}
                 >
-                  <span className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-faint)]">
+                  <span className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-faint)] dark:group-hover/pipeline:text-[var(--paper)]">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span className="mt-7 block text-base font-medium tracking-[-0.02em] text-[var(--ink)]">
+                  <span className="mt-7 block text-base font-medium tracking-[-0.02em] text-[var(--ink)] dark:group-hover/pipeline:text-[var(--paper)]">
                     {stage.name}
                   </span>
-                  <span className="mt-1 block font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-soft)]">
+                  <span className="mt-1 block font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-soft)] dark:group-hover/pipeline:text-[var(--paper)]">
                     {stage.packageName}
                   </span>
                 </motion.button>

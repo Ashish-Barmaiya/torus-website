@@ -29,7 +29,7 @@ export function RoutingVisualization() {
           <button
             type="button"
             onClick={() => setMatched((value) => !value)}
-            className="mt-8 inline-flex border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
+            className="mt-8 inline-flex border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--ink)] dark:hover:bg-[var(--ink)] dark:hover:text-[var(--paper)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
           >
             {matched ? "Reset match" : "Run match"}
           </button>
@@ -50,11 +50,11 @@ export function RoutingVisualization() {
                   initial={false}
                   animate={matched && isWinner && !reduceMotion ? { x: [0, 4, 0] } : { x: 0 }}
                   transition={{ duration: 0.32, ease: "easeOut" }}
-                  className={`flex items-center justify-between border-b border-[var(--line)] px-4 py-4 font-[family-name:var(--font-ibm-plex-mono)] text-sm transition-colors ${matched && isWinner ? "bg-[var(--paper)] font-semibold text-[var(--signal)]" : "text-[var(--ink-soft)]"}`}
+                  className={`flex items-center justify-between border-b border-[var(--line)] px-4 py-4 font-[family-name:var(--font-ibm-plex-mono)] text-sm transition-colors ${matched && isWinner ? "bg-[var(--paper)] font-semibold text-[var(--signal)] dark:bg-[var(--ink)] dark:text-[var(--paper)]" : "text-[var(--ink-soft)]"}`}
                 >
                   <span>{route}</span>
                   <span
-                    className={`text-[11px] ${matched && isWinner ? "text-[var(--signal)]" : ""}`}
+                    className={`text-[11px] ${matched && isWinner ? "text-[var(--signal)] dark:text-[var(--paper)]" : ""}`}
                   >
                     {matched
                       ? isWinner

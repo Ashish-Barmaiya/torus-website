@@ -52,7 +52,7 @@ export function RequestWalkthrough() {
           <button
             type="button"
             onClick={replayWalkthrough}
-            className="mt-8 inline-flex items-center gap-2 border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--signal-dark)] hover:text-[var(--signal-dark)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
+            className="mt-8 inline-flex items-center gap-2 border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--signal-dark)] hover:text-[var(--signal-dark)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] dark:hover:bg-[var(--ink)] dark:hover:text-[var(--paper)]"
           >
             Replay <span aria-hidden="true">↻</span>
           </button>
@@ -66,21 +66,21 @@ export function RequestWalkthrough() {
                 <motion.div
                   key={`${replay}-${stage}`}
                   initial={false}
-                  animate={reduceMotion ? { opacity: 1 } : { opacity: [0.45, 1, 0.45] }}
+                  animate={reduceMotion || isActive ? { opacity: 1 } : { opacity: [0.85, 1, 0.85] }}
                   transition={
                     reduceMotion
                       ? undefined
                       : { duration: 4.9, delay: index * 0.7, repeat: Infinity, ease: "linear" }
                   }
-                  className={`relative border bg-[var(--surface)] px-3 py-4 transition-colors sm:border-r-0 sm:last:border-r ${isActive ? "border-[var(--signal)]" : "border-[var(--line)]"}`}
+                  className={`relative border bg-[var(--surface)] px-3 py-4 transition-colors sm:border-r-0 sm:last:border-r ${isActive ? "border-[var(--signal)] dark:bg-[var(--ink)] dark:text-[var(--paper)]" : "border-[var(--line)]"}`}
                 >
                   <span
-                    className={`font-[family-name:var(--font-ibm-plex-mono)] text-[11px] ${isActive ? "text-[var(--signal)]" : "text-[var(--ink-faint)]"}`}
+                    className={`font-[family-name:var(--font-ibm-plex-mono)] text-[11px] ${isActive ? "text-[var(--signal)] dark:text-[var(--paper)]" : "text-[var(--ink-faint)]"}`}
                   >
                     0{index + 1}
                   </span>
                   <span
-                    className={`mt-5 block text-sm transition-colors ${isActive ? "font-semibold text-[var(--signal-dark)]" : "font-medium text-[var(--ink)]"}`}
+                    className={`mt-5 block text-sm transition-colors ${isActive ? "font-semibold text-[var(--signal-dark)] dark:text-[var(--paper)]" : "font-medium text-[var(--ink)]"}`}
                   >
                     {stage}
                   </span>
