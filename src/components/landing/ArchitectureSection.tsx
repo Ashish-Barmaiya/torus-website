@@ -1,64 +1,69 @@
-import { PageContainer } from "@/layouts/PageLayout";
+import { SectionEyebrow } from "./SectionEyebrow";
+
+const requestStages = [
+  ["Ingress", "Accept client connections and normalize incoming HTTP requests."],
+  ["Routing", "Resolve the request using longest-prefix route matching."],
+  ["Load Balancing", "Select a healthy upstream using the configured balancing policy."],
+  ["Proxy", "Forward the request, enrich forwarding headers, and stream the response."],
+];
 
 export function ArchitectureSection() {
   return (
-    <section id="architecture" aria-labelledby="architecture-title">
-      <PageContainer width="wide" py="large">
-        <div className="space-y-space-6">
-          <h2 id="architecture-title" className="text-section-title">
-            System Architecture
+    <section
+      id="architecture"
+      className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36"
+    >
+      <div className="grid gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-24">
+        <div>
+          <SectionEyebrow>Architecture</SectionEyebrow>
+
+          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+            Every request follows an explicit path.
           </h2>
-          
-          {/* Introductory Paragraph Placeholder */}
-          <div className="h-4 w-5/6 max-w-content-reading bg-background-subtle rounded animate-pulse" />
 
-          {/* Architecture Diagram Placeholder */}
-          <div className="w-full aspect-video border border-border-subtle rounded-md flex items-center justify-center bg-surface-secondary">
-            <span className="text-xs text-text-muted">Architecture Diagram Placeholder</span>
+          <p className="mt-5 max-w-md leading-7 text-[var(--ink-soft)]">
+            Torus keeps request processing intentionally small and observable. Routing, load
+            balancing, health awareness, and proxying remain separate responsibilities with
+            well-defined execution boundaries.
+          </p>
+
+          <a
+            href="#documentation"
+            className="mt-8 inline-flex font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] underline decoration-[var(--line-strong)] underline-offset-4 transition-colors hover:decoration-[var(--ink)]"
+          >
+            Explore the architecture →
+          </a>
+        </div>
+
+        <div className="border border-[var(--line-strong)] bg-[var(--surface)] p-5 sm:p-8">
+          <div className="flex items-center justify-between border-b border-[var(--line)] pb-4 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] tracking-[0.12em] text-[var(--ink-faint)] uppercase">
+            <span>Request lifecycle</span>
+            <span>01 / 04</span>
           </div>
 
-          {/* Subsystem Overview Placeholder (8 canonical subsystems) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-space-6 max-w-content-standard mx-auto">
-            <div className="space-y-space-1">
-              <h3 className="text-block-title">Router</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-1">
-              <h3 className="text-block-title">Middleware</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-1">
-              <h3 className="text-block-title">Load Balancer</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-1">
-              <h3 className="text-block-title">Health Checker</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-1">
-              <h3 className="text-block-title">Configuration Engine</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-1">
-              <h3 className="text-block-title">Observability</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-1">
-              <h3 className="text-block-title">Runtime</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-1">
-              <h3 className="text-block-title">Transport</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-          </div>
+          <ol className="mt-8 grid gap-3 sm:grid-cols-4 sm:gap-0">
+            {requestStages.map(([name, detail], index) => (
+              <li
+                key={name}
+                className="relative border border-[var(--line)] p-4 sm:border-r-0 sm:last:border-r"
+              >
+                <span className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-faint)]">
+                  0{index + 1}
+                </span>
 
-          {/* Architecture CTA Placeholder */}
-          <div className="max-w-content-standard mx-auto">
-            <div className="h-4 w-40 bg-background-subtle rounded animate-pulse" />
+                <h3 className="mt-7 text-base font-medium">{name}</h3>
+
+                <p className="mt-1 text-sm leading-5 text-[var(--ink-soft)]">{detail}</p>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-3 flex items-center gap-3 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-faint)]">
+            <span className="h-px flex-1 bg-[var(--terminal-line)]" />
+            <span>health checks inform routing • runtime reload remains atomic</span>
           </div>
         </div>
-      </PageContainer>
+      </div>
     </section>
   );
 }

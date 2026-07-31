@@ -1,54 +1,21 @@
-import { PageContainer } from "@/layouts/PageLayout";
+import { SectionEyebrow } from "./SectionEyebrow";
+
+const capabilities = [
+  ["01", "Request routing", "Host, path, method, and header matching with a route model that remains inspectable at scale."],
+  ["02", "Load balancing", "Distribute work across healthy upstreams with policy that is visible, controllable, and measurable."],
+  ["03", "Health checks", "Active checks and state transitions that remove uncertainty before a request reaches an unhealthy target."],
+  ["04", "Observability", "Surface the signals operators need: latency, status, upstream state, and the shape of live traffic."],
+];
 
 export function CapabilitiesSection() {
   return (
-    <section id="capabilities" aria-labelledby="capabilities-title">
-      <PageContainer width="standard" py="large">
-        <div className="space-y-space-6">
-          <h2 id="capabilities-title" className="text-section-title">
-            Core Capabilities
-          </h2>
-          
-          {/* Introductory Paragraph Placeholder */}
-          <div className="h-4 w-5/6 max-w-content-reading bg-background-subtle rounded animate-pulse" />
-
-          {/* Capability Matrix Placeholder (8 canonical capabilities) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-space-6">
-            <div className="space-y-space-2 border-t border-border-subtle pt-space-4">
-              <h3 className="text-subsection-title">Layer 7 Request Routing</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 border-t border-border-subtle pt-space-4">
-              <h3 className="text-subsection-title">Reverse Proxy</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 border-t border-border-subtle pt-space-4">
-              <h3 className="text-subsection-title">Active Health Checking</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 border-t border-border-subtle pt-space-4">
-              <h3 className="text-subsection-title">Load Balancing</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 border-t border-border-subtle pt-space-4">
-              <h3 className="text-subsection-title">Middleware Pipeline</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 border-t border-border-subtle pt-space-4">
-              <h3 className="text-subsection-title">Configuration System</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 border-t border-border-subtle pt-space-4">
-              <h3 className="text-subsection-title">Observability</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 border-t border-border-subtle pt-space-4">
-              <h3 className="text-subsection-title">Extensibility</h3>
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-          </div>
+    <section id="capabilities" className="border-y border-[var(--line)] bg-[var(--paper-deep)]">
+      <div className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-32">
+        <div className="max-w-2xl"><SectionEyebrow>Capabilities</SectionEyebrow><h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Purpose-built for the data plane.</h2><p className="mt-5 leading-7 text-[var(--ink-soft)]">Torus concentrates on the work between a client request and a dependable upstream response.</p></div>
+        <div className="mt-14 grid border-t border-l border-[var(--line)] md:grid-cols-2">
+          {capabilities.map(([number, title, description]) => <article key={number} className="min-h-60 border-r border-b border-[var(--line)] bg-transparent p-7 sm:p-9"><span className="font-[family-name:var(--font-ibm-plex-mono)] text-xs text-[var(--ink-faint)]">{number}</span><h3 className="mt-11 text-2xl font-medium tracking-[-0.035em]">{title}</h3><p className="mt-3 max-w-md leading-7 text-[var(--ink-soft)]">{description}</p></article>)}
         </div>
-      </PageContainer>
+      </div>
     </section>
   );
 }

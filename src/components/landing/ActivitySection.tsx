@@ -1,25 +1,18 @@
-import { PageContainer } from "@/layouts/PageLayout";
+import { SectionEyebrow } from "./SectionEyebrow";
+
+const activity = [["New report", "The economics of upstream health checking"], ["Release", "v0.8.0 — route execution refinements"], ["Engineering note", "Keeping proxy configuration boring"]];
 
 export function ActivitySection() {
   return (
-    <section id="activity" aria-labelledby="activity-title">
-      <PageContainer width="standard" py="large">
-        <div className="space-y-space-6">
-          <h2 id="activity-title" className="text-section-title">
-            Project Activity
-          </h2>
-          
-          {/* Introductory Paragraph Placeholder */}
-          <div className="h-4 w-5/6 max-w-content-reading bg-background-subtle rounded animate-pulse" />
-          
-          {/* Activity Container Placeholder */}
-          <div className="border border-border-subtle rounded-md p-space-6 bg-surface-secondary space-y-space-4">
-            <div className="h-4 w-full bg-background-subtle rounded animate-pulse" />
-            <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            <div className="h-4 w-4/5 bg-background-subtle rounded animate-pulse" />
-          </div>
+    <section className="border-t border-[var(--line)] bg-[var(--paper-deep)]">
+      <div className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-24 lg:px-12">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_2fr] lg:gap-24">
+          <div><SectionEyebrow>Project activity</SectionEyebrow><h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">A project is a trail of decisions.</h2></div>
+          <ol className="border-t border-[var(--line)]">
+            {activity.map(([type, title], index) => <li key={title} className="grid gap-3 border-b border-[var(--line)] py-5 sm:grid-cols-[140px_1fr_auto]"><span className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] tracking-[0.1em] text-[var(--ink-faint)] uppercase">{type}</span><span className="font-medium">{title}</span><span className="font-[family-name:var(--font-ibm-plex-mono)] text-xs text-[var(--ink-faint)]">0{index + 1} →</span></li>)}
+          </ol>
         </div>
-      </PageContainer>
+      </div>
     </section>
   );
 }

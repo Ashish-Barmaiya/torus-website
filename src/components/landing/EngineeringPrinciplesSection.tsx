@@ -1,52 +1,47 @@
-import { PageContainer } from "@/layouts/PageLayout";
+import { SectionEyebrow } from "./SectionEyebrow";
+
+const principles = [
+  [
+    "01",
+    "Performance must be measured.",
+    "Benchmark every architectural change before claiming improvement.",
+  ],
+  [
+    "02",
+    "Architecture should explain itself.",
+    "Document major engineering decisions through ADRs instead of tribal knowledge.",
+  ],
+  [
+    "03",
+    "Observability is a feature.",
+    "Every request should be inspectable from ingress to upstream.",
+  ],
+];
 
 export function EngineeringPrinciplesSection() {
   return (
-    <section id="principles" aria-labelledby="principles-title">
-      <PageContainer width="standard" py="large">
-        <div className="space-y-space-6">
-          <h2 id="principles-title" className="text-section-title">
-            Engineering Principles
+    <section className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36">
+      <div className="grid gap-12 lg:grid-cols-[0.8fr_2fr] lg:gap-24">
+        <div>
+          <SectionEyebrow>Engineering principles</SectionEyebrow>
+          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+            Designed for the work that cannot be hand-waved.
           </h2>
-          
-          {/* Introductory Paragraph Placeholder */}
-          <div className="h-4 w-5/6 max-w-content-reading bg-background-subtle rounded animate-pulse" />
-          
-          {/* Principle Grid Placeholder (6 canonical principles) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-space-6">
-            <div className="space-y-space-2 p-space-4 border border-border-subtle rounded-md">
-              <h3 className="text-subsection-title">Performance First</h3>
-              <div className="h-4 w-full bg-background-subtle rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 p-space-4 border border-border-subtle rounded-md">
-              <h3 className="text-subsection-title">Simplicity Through Design</h3>
-              <div className="h-4 w-full bg-background-subtle rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 p-space-4 border border-border-subtle rounded-md">
-              <h3 className="text-subsection-title">Correctness Before Optimization</h3>
-              <div className="h-4 w-full bg-background-subtle rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 p-space-4 border border-border-subtle rounded-md">
-              <h3 className="text-subsection-title">Explicit Over Implicit</h3>
-              <div className="h-4 w-full bg-background-subtle rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 p-space-4 border border-border-subtle rounded-md">
-              <h3 className="text-subsection-title">Observability by Default</h3>
-              <div className="h-4 w-full bg-background-subtle rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-            <div className="space-y-space-2 p-space-4 border border-border-subtle rounded-md">
-              <h3 className="text-subsection-title">Evidence-Driven Engineering</h3>
-              <div className="h-4 w-full bg-background-subtle rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-background-subtle rounded animate-pulse" />
-            </div>
-          </div>
         </div>
-      </PageContainer>
+        <div className="divide-y divide-[var(--line)] border-t border-[var(--line)]">
+          {principles.map(([number, title, description]) => (
+            <article key={number} className="grid gap-4 py-7 sm:grid-cols-[48px_1fr]">
+              <span className="font-[family-name:var(--font-ibm-plex-mono)] text-xs text-[var(--ink-faint)]">
+                {number}
+              </span>
+              <div>
+                <h3 className="text-xl font-medium tracking-[-0.025em]">{title}</h3>
+                <p className="mt-3 max-w-2xl leading-7 text-[var(--ink-soft)]">{description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
