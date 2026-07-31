@@ -3,10 +3,10 @@ import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 
 const navigation = [
-  { href: "#capabilities", label: "Capabilities" },
-  { href: "#architecture", label: "Architecture" },
-  { href: "#benchmarks", label: "Benchmarks" },
-  { href: "#documentation", label: "Documentation" },
+  { href: "/#capabilities", label: "Capabilities" },
+  { href: "/architecture", label: "Architecture" },
+  { href: "/#benchmarks", label: "Benchmarks" },
+  { href: "/#documentation", label: "Documentation" },
 ];
 
 export default function Header() {
@@ -22,13 +22,13 @@ export default function Header() {
 
         <nav aria-label="Primary navigation" className="hidden items-center gap-7 md:flex">
           {navigation.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className="text-sm text-[var(--ink-soft)] transition-colors hover:text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
 

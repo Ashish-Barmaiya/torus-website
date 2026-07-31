@@ -1,20 +1,29 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
 const themeStorageKey = "torus-theme";
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") {
+      return "light";
+    }
+
+    return window.localStorage.getItem(themeStorageKey) === "dark" ? "dark" : "light";
+  });
   const isDark = theme === "dark";
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
 
   const toggleTheme = () => {
     const nextTheme: Theme = isDark ? "light" : "dark";
 
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
     window.localStorage.setItem(themeStorageKey, nextTheme);
     setTheme(nextTheme);
   };

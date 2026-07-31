@@ -1,15 +1,15 @@
 import Link from "next/link";
 
 const links = [
-  { href: "#capabilities", label: "Capabilities" },
-  { href: "#architecture", label: "Architecture" },
-  { href: "#benchmarks", label: "Benchmarks" },
-  { href: "#documentation", label: "Documentation" },
+  { href: "/#capabilities", label: "Capabilities" },
+  { href: "/architecture", label: "Architecture" },
+  { href: "/#benchmarks", label: "Benchmarks" },
+  { href: "/#documentation", label: "Documentation" },
 ];
 
 export default function Footer() {
   return (
-    <footer className="bg-terminal border-t border-[var(--terminal-line)] text-[var(--terminal-text)]">
+    <footer className="border-t border-[var(--terminal-line)] bg-[var(--terminal)] text-[var(--terminal-text)]">
       <div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
         <div className="grid gap-12 border-b border-[var(--terminal-line)] pb-12 md:grid-cols-[1.5fr_1fr_1fr]">
           <div>
@@ -27,9 +27,9 @@ export default function Footer() {
             <ul className="mt-4 space-y-2.5 text-sm">
               {links.map((link) => (
                 <li key={link.href}>
-                  <a className="transition-colors hover:text-white" href={link.href}>
+                  <Link className="transition-colors hover:text-white" href={link.href}>
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

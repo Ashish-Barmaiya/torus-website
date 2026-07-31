@@ -28,7 +28,7 @@ export function ArchitectureSection() {
           </p>
 
           <a
-            href="#documentation"
+            href="/architecture"
             className="mt-8 inline-flex font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] underline decoration-[var(--line-strong)] underline-offset-4 transition-colors hover:decoration-[var(--ink)]"
           >
             Explore the architecture →
