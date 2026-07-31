@@ -9,7 +9,7 @@ const links = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-[var(--terminal-line)] bg-[var(--terminal)] text-[var(--terminal-text)]">
+    <footer className="bg-terminal border-t border-[var(--terminal-line)] text-[var(--terminal-text)]">
       <div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
         <div className="grid gap-12 border-b border-[var(--terminal-line)] pb-12 md:grid-cols-[1.5fr_1fr_1fr]">
           <div>
@@ -21,7 +21,7 @@ export default function Footer() {
             </p>
           </div>
           <div>
-            <p className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] uppercase tracking-[0.14em] text-[var(--terminal-muted)]">
+            <p className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] tracking-[0.14em] text-[var(--terminal-muted)] uppercase">
               Explore
             </p>
             <ul className="mt-4 space-y-2.5 text-sm">
@@ -35,7 +35,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <p className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] uppercase tracking-[0.14em] text-[var(--terminal-muted)]">
+            <p className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] tracking-[0.14em] text-[var(--terminal-muted)] uppercase">
               Project
             </p>
             <ul className="mt-4 space-y-2.5 text-sm">
@@ -57,7 +57,9 @@ export default function Footer() {
         </div>
         <div className="pt-5 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--terminal-muted)] sm:flex sm:items-center sm:justify-between">
           <p>© 2026 Torus Project</p>
-          <p className="mt-2 sm:mt-0">Built for the unglamorous path between request and response.</p>
+          <p className="mt-2 sm:mt-0">
+            Built for the unglamorous path between request and response.
+          </p>
         </div>
       </div>
     </footer>

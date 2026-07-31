@@ -1,53 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Sun, Moon } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
+import { useState } from "react";
+
+type Theme = "light" | "dark";
+
+const themeStorageKey = "torus-theme";
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    // Check initial preference from localStorage or prefers-color-scheme
-    const savedTheme = localStorage.getItem("theme");
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isDark = savedTheme === "dark" || (!savedTheme && systemPrefersDark);
-    
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      requestAnimationFrame(() => {
-        setTheme("dark");
-      });
-    } else {
-      document.documentElement.classList.remove("dark");
-      requestAnimationFrame(() => {
-        setTheme("light");
-      });
-    }
-  }, []);
+  const [theme, setTheme] = useState<Theme>("light");
+  const isDark = theme === "dark";
 
   const toggleTheme = () => {
-    if (theme === "light") {
-      setTheme("dark");
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      setTheme("light");
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
+    const nextTheme: Theme = isDark ? "light" : "dark";
+
+    document.documentElement.classList.toggle("dark", nextTheme === "dark");
+    window.localStorage.setItem(themeStorageKey, nextTheme);
+    setTheme(nextTheme);
   };
 
   return (
     <button
+      type="button"
       onClick={toggleTheme}
-      className="inline-flex items-center justify-center rounded-md p-2 text-text-secondary hover:bg-background-subtle hover:text-text-primary transition-all focus:outline-none focus:ring-2 focus:ring-accent-focus focus:ring-offset-2 focus:ring-offset-canvas"
-      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-pressed={isDark}
+      className="group relative inline-flex size-8 items-center justify-center rounded-[2px] border border-[var(--line)] text-[var(--ink-soft)] transition-colors duration-200 hover:border-[var(--line-strong)] hover:text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
     >
-      {theme === "light" ? (
-        <Moon className="w-5 h-5" />
-      ) : (
-        <Sun className="w-5 h-5" />
-      )}
+      <Sun
+        aria-hidden="true"
+        className={`absolute size-3.5 transition-all duration-200 ${
+          isDark ? "scale-100 rotate-45 opacity-100" : "scale-75 -rotate-45 opacity-0"
+        }`}
+      />
+      <Moon
+        aria-hidden="true"
+        className={`absolute size-3.5 transition-all duration-200 ${
+          isDark ? "scale-75 rotate-45 opacity-0" : "scale-100 rotate-0 opacity-100"
+        }`}
+      />
     </button>
   );
 }

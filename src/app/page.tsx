@@ -63,14 +63,16 @@ export default function Home() {
       <Header />
       <main>
         <section className="relative border-b border-[var(--line)]">
-          <div className="pointer-events-none absolute inset-0 [background-image:linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] [background-size:56px_56px] opacity-[0.16]" />
+          <div className="pointer-events-none absolute inset-0 [background-image:linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] [background-size:56px_56px] opacity-[0.18]" />
+          <div className="pointer-events-none absolute inset-y-0 left-[14%] w-[28%] [background-image:linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] [background-size:56px_56px] opacity-[0.05]" />
+          <div className="pointer-events-none absolute inset-y-0 right-[8%] w-[22%] [background-image:linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] [background-size:56px_56px] opacity-[0.1]" />
           <div className="relative mx-auto grid max-w-[1440px] gap-16 px-5 py-24 sm:px-8 sm:py-32 lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)] lg:gap-24 lg:px-12 lg:py-[11rem]">
             <div>
               <Eyebrow>Layer 7 reverse proxy / edge gateway</Eyebrow>
               <h1 className="mt-8 max-w-3xl text-[clamp(3.6rem,8vw,7.25rem)] leading-[0.9] font-semibold tracking-[-0.075em] text-[var(--ink)]">
                 Keep the edge
                 <br />
-                <span>understood.</span>
+                <span className="text-[var(--signal-dark)]">understood.</span>
               </h1>
               <p className="mt-9 max-w-[34rem] text-[1.05rem] leading-8 text-[var(--ink-soft)] sm:text-xl sm:leading-8">
                 Torus is a high-performance reverse proxy for teams that want the critical path to

@@ -1,23 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #172322;
-  --ink-soft: #53625f;
-  --ink-faint: #778582;
-  --paper: #f6f7f3;
-  --paper-deep: #eaede7;
-  --surface: #fcfcf9;
-  --line: #d2d8d0;
-  --line-strong: #adb9b2;
-  --signal: #236f6b;
-  --signal-dark: #195550;
-  --terminal: #182523;
-  --terminal-line: #344642;
-  --terminal-text: #e2ebe5;
-  --terminal-muted: #9baaa4;
+  /* Typography */
+
+  --ink: #17201f;
+  --ink-soft: #52605d;
+  --ink-faint: #7a8582;
+
+  /* Light theme (primary) */
+
+  --paper: #f5f6f2;
+  --paper-deep: #e9ece5;
+  --surface: #fbfcf8;
+
+  /* Borders */
+
+  --line: #cfd5cc;
+  --line-strong: #aeb8ae;
+
+  /* Accent */
+
+  --signal: #1d6251;
+  --signal-dark: #124438;
+
+  /* Trace panel */
+
+  --terminal: #17201f;
+  --terminal-line: #33423e;
+  --terminal-text: #dfe9e2;
+  --terminal-muted: #93a49d;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -30,10 +46,13 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-ibm-plex-sans), Arial, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: #c4d8d2;
+  background: #bdd8ca;
   color: var(--ink);
 }
 
@@ -45,24 +64,40 @@ a {
   box-shadow: none;
 }
 
+.trace-row {
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.trace-panel:hover .trace-row {
+  transform: translateX(2px);
+}
+
 .trace-live {
-  outline: 1px solid rgb(158 201 188 / 0.65);
+  outline: 1px solid rgb(95 157 180 / 45%);
   outline-offset: 2px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #e8eeea;
-    --ink-soft: #b6c2bc;
-    --ink-faint: #889791;
-    --paper: #111917;
-    --paper-deep: #17211e;
-    --surface: #1a2522;
-    --line: #31403b;
-    --line-strong: #50615a;
-    --signal: #63aaa2;
-    --signal-dark: #4e9089;
-  }
+html.dark {
+  --ink: #e8eeea;
+  --ink-soft: #b6c2bc;
+  --ink-faint: #889791;
+
+  --paper: #111917;
+  --paper-deep: #17211e;
+  --surface: #1a2522;
+
+  --line: #31403b;
+  --line-strong: #50615a;
+
+  --signal: #63aaa2;
+  --signal-dark: #4e9089;
+
+  --terminal: #182523;
+  --terminal-line: #344642;
+  --terminal-text: #e2ebe5;
+  --terminal-muted: #9baaa4;
 }
 
 @media (prefers-reduced-motion: reduce) {
