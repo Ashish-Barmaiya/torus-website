@@ -1,0 +1,16 @@
+---
+title: Runtime
+description: Immutable runtime snapshots and safe configuration reloads.
+---
+
+# Runtime
+
+This page will explain runtime snapshots, publication, and how active requests retain a coherent view of configuration.
+
+## Why this exists
+
+Reloading configuration must not make request handling ambiguous.
+
+## Implementation Notes
+
+The primary source boundary is `internal/runtime`.

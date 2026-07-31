@@ -1,0 +1,16 @@
+---
+title: systemd
+description: A service unit for reliable process supervision.
+---
+
+# systemd
+
+This page will provide a reviewable service unit and explain process lifecycle decisions.
+
+## Example
+
+```ini
+[Service]
+ExecStart=/usr/local/bin/torus
+Restart=on-failure
+```

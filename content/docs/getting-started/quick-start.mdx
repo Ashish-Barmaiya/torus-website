@@ -1,0 +1,20 @@
+---
+title: Quick Start
+description: Run a proxy and send the first request.
+---
+
+# Quick Start
+
+This walkthrough will start Torus with one listener, one route, and one service.
+
+## Example
+
+```yaml filename="torus.yaml"
+routes:
+  - prefix: /api
+    service: api
+```
+
+## Request Flow
+
+<RequestFlow>Follow the initial request from listener to upstream.</RequestFlow>
