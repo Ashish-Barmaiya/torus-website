@@ -7,11 +7,11 @@ export function ArchitectureHero() {
         <div className="max-w-3xl">
           <div className="border-l-2 border-[var(--signal)] pl-4">
             <SectionEyebrow>Architecture walkthrough</SectionEyebrow>
-            <h1 className="mt-5 text-[clamp(3.1rem,6.2vw,5.75rem)] leading-[0.92] font-semibold tracking-[-0.07em] text-[var(--ink)]">
+            <h1 className="mt-5 text-[clamp(2.85rem,12vw,5.75rem)] leading-[0.92] font-semibold tracking-[-0.07em] text-[var(--ink)] sm:text-[clamp(3.1rem,6.2vw,5.75rem)]">
               Inside <span className="text-[var(--signal-dark)]">Torus</span>
             </h1>
           </div>
-          <p className="mt-8 max-w-2xl text-lg leading-8 text-[var(--ink] sm:text-xl">
+          <p className="mt-8 max-w-2xl text-lg leading-8 text-[var(--ink-soft)] sm:text-xl">
             Follow a request as it moves through every stage of Torus—from the HTTP listener to a
             healthy upstream. Every component has a single responsibility, making request execution
             predictable, observable and easy to reason about.

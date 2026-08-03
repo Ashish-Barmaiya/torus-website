@@ -50,11 +50,11 @@ export function RoutingVisualization() {
                   initial={false}
                   animate={matched && isWinner && !reduceMotion ? { x: [0, 4, 0] } : { x: 0 }}
                   transition={{ duration: 0.32, ease: "easeOut" }}
-                  className={`flex items-center justify-between border-b border-[var(--line)] px-4 py-4 font-[family-name:var(--font-ibm-plex-mono)] text-sm transition-colors ${matched && isWinner ? "bg-[var(--paper)] font-semibold text-[var(--signal)] dark:bg-[var(--ink)] dark:text-[var(--paper)]" : "text-[var(--ink-soft)]"}`}
+                  className={`flex items-start justify-between gap-4 border-b border-[var(--line)] px-4 py-4 font-[family-name:var(--font-ibm-plex-mono)] text-sm transition-colors ${matched && isWinner ? "bg-[var(--paper)] font-semibold text-[var(--signal)] dark:bg-[var(--ink)] dark:text-[var(--paper)]" : "text-[var(--ink-soft)]"}`}
                 >
                   <span>{route}</span>
                   <span
-                    className={`text-[11px] ${matched && isWinner ? "text-[var(--signal)] dark:text-[var(--paper)]" : ""}`}
+                    className={`shrink-0 text-right text-[11px] ${matched && isWinner ? "text-[var(--signal)] dark:text-[var(--paper)]" : ""}`}
                   >
                     {matched
                       ? isWinner

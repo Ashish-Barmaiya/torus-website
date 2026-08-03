@@ -21,12 +21,12 @@ export function CodeBlock({ children, filename, language = "text", highlightedLi
 
   return (
     <div className="my-7 overflow-hidden border border-[var(--terminal-line)] bg-[var(--terminal)] text-[var(--terminal-text)]">
-      <div className="flex min-h-10 items-center justify-between border-b border-[var(--terminal-line)] px-3">
-        <span className="font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.08em] text-[var(--terminal-muted)] uppercase">{filename ?? language}</span>
+      <div className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--terminal-line)] px-3">
+        <span className="min-w-0 truncate font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.08em] text-[var(--terminal-muted)] uppercase">{filename ?? language}</span>
         <button
           type="button"
           onClick={copyCode}
-          className="font-[family-name:var(--font-ibm-plex-mono)] text-[10px] text-[var(--terminal-muted)] transition-colors hover:text-[var(--terminal-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
+          className="shrink-0 font-[family-name:var(--font-ibm-plex-mono)] text-[10px] text-[var(--terminal-muted)] transition-colors hover:text-[var(--terminal-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
         >
           {copied ? "Copied" : "Copy"}
         </button>

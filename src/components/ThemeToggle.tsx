@@ -47,7 +47,7 @@ export default function ThemeToggle() {
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={isDark}
-      className="group relative inline-flex size-8 items-center justify-center rounded-[2px] border border-[var(--line)] text-[var(--ink-soft)] transition-colors duration-200 hover:border-[var(--line-strong)] hover:text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
+      className="group relative inline-flex size-9 items-center justify-center rounded-[2px] border border-[var(--line)] text-[var(--ink-soft)] transition-colors duration-200 hover:border-[var(--line-strong)] hover:text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] sm:size-8"
     >
       <Sun
         aria-hidden="true"

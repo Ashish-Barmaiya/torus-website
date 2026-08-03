@@ -65,11 +65,11 @@ export function ConfigReference({ fields }: { fields: ConfigField[] }) {
 }
 
 export function BenchmarkCard({ id, title, summary }: { id: string; title: string; summary: string }) {
-  return <aside className="my-7 border border-[var(--line)] bg-[var(--surface)] p-5"><p className="font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.12em] text-[var(--ink-faint)] uppercase">Benchmark {id}</p><h3 className="mt-2 text-base font-semibold text-[var(--ink)]">{title}</h3><p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{summary}</p><div className="mt-4 flex gap-4 font-[family-name:var(--font-ibm-plex-mono)] text-[11px]"><span className="text-[var(--signal-dark)] dark:text-[var(--signal)]">Report →</span><span className="text-[var(--ink-faint)]">Dataset →</span></div></aside>;
+  return <aside className="my-7 border border-[var(--line)] bg-[var(--surface)] p-5"><p className="font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.12em] text-[var(--ink-faint)] uppercase">Benchmark {id}</p><h3 className="mt-2 text-base font-semibold text-[var(--ink)]">{title}</h3><p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{summary}</p><div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 font-[family-name:var(--font-ibm-plex-mono)] text-[11px]"><span className="text-[var(--signal-dark)] dark:text-[var(--signal)]">Report →</span><span className="text-[var(--ink-faint)]">Dataset →</span></div></aside>;
 }
 
 export function ApiReference({ method = "GET", endpoint, children }: { method?: string; endpoint: string; children?: ReactNode }) {
-  return <section className="my-7 border border-[var(--line)]"><div className="flex items-center gap-3 border-b border-[var(--line)] bg-[var(--paper-deep)] px-4 py-3"><span className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] font-medium text-[var(--signal-dark)] dark:text-[var(--signal)]">{method}</span><code className="text-sm text-[var(--ink)]">{endpoint}</code></div>{children ? <div className="px-4 py-4 text-sm leading-6 text-[var(--ink-soft)]">{children}</div> : null}</section>;
+  return <section className="my-7 border border-[var(--line)]"><div className="flex items-center gap-3 border-b border-[var(--line)] bg-[var(--paper-deep)] px-4 py-3"><span className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] font-medium text-[var(--signal-dark)] dark:text-[var(--signal)]">{method}</span><code className="min-w-0 break-all text-sm text-[var(--ink)]">{endpoint}</code></div>{children ? <div className="px-4 py-4 text-sm leading-6 text-[var(--ink-soft)]">{children}</div> : null}</section>;
 }
 
 export { CodeBlock, CodeTabs };

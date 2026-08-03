@@ -11,8 +11,8 @@ export default function Footer() {
   return (
     <footer className="border-t border-[var(--terminal-line)] bg-[var(--terminal)] text-[var(--terminal-text)]">
       <div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:px-12 lg:py-16">
-        <div className="grid gap-12 border-b border-[var(--terminal-line)] pb-12 md:grid-cols-[1.5fr_1fr_1fr]">
-          <div>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-10 border-b border-[var(--terminal-line)] pb-10 md:grid-cols-[1.5fr_1fr_1fr] md:gap-12 md:pb-12">
+          <div className="col-span-full md:col-auto">
             <p className="font-[family-name:var(--font-ibm-plex-mono)] text-base font-semibold tracking-[0.14em]">
               TORUS
             </p>

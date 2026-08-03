@@ -104,7 +104,7 @@ export function RequestWalkthrough() {
                 initial={reduceMotion ? false : { opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: reduceMotion ? 0 : index * 0.12 }}
-                className="grid grid-cols-[86px_1fr] gap-4 border-b border-[var(--line)] py-3 text-sm"
+                className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 border-b border-[var(--line)] py-3 text-sm sm:grid-cols-[86px_1fr] sm:gap-4"
               >
                 <span className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-faint)]">
                   {time}

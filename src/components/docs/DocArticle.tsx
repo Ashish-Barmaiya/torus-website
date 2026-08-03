@@ -44,7 +44,7 @@ export async function DocArticle({ doc }: { doc: DocEntry }) {
 
           <section id="source-files" className="scroll-mt-10 border-t border-[var(--line)] py-10 sm:py-12">
             <h2 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--ink)]">Source files</h2>
-            <p className="mt-4 max-w-[680px] text-[15px] leading-7 text-[var(--ink-soft)]">Implementation references will be pinned to release revisions. The current ownership boundary is <code className="border border-[var(--line)] bg-[var(--paper-deep)] px-1.5 py-0.5 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] text-[var(--ink)]">{sourcePath}</code>.</p>
+            <p className="mt-4 max-w-[680px] text-[15px] leading-7 text-[var(--ink-soft)]">Implementation references will be pinned to release revisions. The current ownership boundary is <code className="break-all border border-[var(--line)] bg-[var(--paper-deep)] px-1.5 py-0.5 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] text-[var(--ink)]">{sourcePath}</code>.</p>
           </section>
 
           <section id="related-documentation" className="scroll-mt-10 border-t border-[var(--line)] py-10 sm:py-12">
@@ -56,7 +56,7 @@ export async function DocArticle({ doc }: { doc: DocEntry }) {
 
           <nav aria-label="Documentation pagination" className="grid border-l border-t border-[var(--line)] sm:grid-cols-2">
             {previous ? <Link href={hrefForDoc(previous)} className="group border-b border-r border-[var(--line)] px-5 py-5 transition-colors hover:bg-[var(--paper-deep)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--signal)]"><span className="font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.1em] text-[var(--ink-faint)] uppercase">← Previous</span><span className="mt-2 block text-sm font-medium text-[var(--ink)] group-hover:text-[var(--signal-dark)] dark:group-hover:text-[var(--signal)]">{previous.title}</span></Link> : <div className="border-b border-r border-[var(--line)]" />}
-            {next ? <Link href={hrefForDoc(next)} className="group border-b border-r border-[var(--line)] px-5 py-5 text-right transition-colors hover:bg-[var(--paper-deep)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--signal)]"><span className="font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.1em] text-[var(--ink-faint)] uppercase">Next →</span><span className="mt-2 block text-sm font-medium text-[var(--ink)] group-hover:text-[var(--signal-dark)] dark:group-hover:text-[var(--signal)]">{next.title}</span></Link> : <div className="border-b border-r border-[var(--line)]" />}
+            {next ? <Link href={hrefForDoc(next)} className="group border-b border-r border-[var(--line)] px-5 py-5 transition-colors hover:bg-[var(--paper-deep)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--signal)] sm:text-right"><span className="font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.1em] text-[var(--ink-faint)] uppercase">Next →</span><span className="mt-2 block text-sm font-medium text-[var(--ink)] group-hover:text-[var(--signal-dark)] dark:group-hover:text-[var(--signal)]">{next.title}</span></Link> : <div className="border-b border-r border-[var(--line)]" />}
           </nav>
         </article>
 

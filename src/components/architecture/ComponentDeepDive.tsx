@@ -88,7 +88,7 @@ export function ComponentDeepDive() {
                       transition={{ duration: 0.2, ease: "easeOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="grid gap-6 pb-8 pl-16 sm:grid-cols-2">
+                      <div className="grid gap-6 pb-8 sm:grid-cols-2 sm:pl-16">
                         <div>
                           <h3 className="text-sm font-medium text-[var(--ink)]">Purpose</h3>
                           <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">

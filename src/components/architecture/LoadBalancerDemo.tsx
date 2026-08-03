@@ -60,7 +60,7 @@ export function LoadBalancerDemo() {
                     key={backend}
                     animate={isSelected && !reduceMotion ? { x: [0, 5, 0] } : { x: 0 }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
-                    className={`grid grid-cols-[32px_1fr_auto] items-center gap-4 border px-4 py-4 transition-colors ${isDisabled ? "border-[var(--line)] text-[var(--ink-faint)]" : isSelected ? "border-[var(--signal)] bg-[var(--surface)] text-[var(--signal-dark)] dark:bg-[var(--ink)] dark:text-[var(--paper)]" : "border-[var(--line-strong)] text-[var(--ink)]"}`}
+                    className={`grid grid-cols-[28px_minmax(0,1fr)] items-center gap-x-3 gap-y-1 border px-3 py-4 transition-colors sm:grid-cols-[32px_minmax(0,1fr)_auto] sm:gap-4 sm:px-4 ${isDisabled ? "border-[var(--line)] text-[var(--ink-faint)]" : isSelected ? "border-[var(--signal)] bg-[var(--surface)] text-[var(--signal-dark)] dark:bg-[var(--ink)] dark:text-[var(--paper)]" : "border-[var(--line-strong)] text-[var(--ink)]"}`}
                   >
                     <span className="font-[family-name:var(--font-ibm-plex-mono)] text-xs">
                       0{index + 1}
@@ -75,7 +75,7 @@ export function LoadBalancerDemo() {
                         </span>
                       )}
                     </span>
-                    <span className="flex items-center gap-2 font-[family-name:var(--font-ibm-plex-mono)] text-[11px]">
+                    <span className="col-start-2 flex items-center gap-2 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] sm:col-auto">
                       <span
                         className={`size-1.5 rounded-full ${isDisabled ? "bg-[var(--line-strong)]" : "bg-[var(--signal)]"}`}
                       />

@@ -45,7 +45,7 @@ export function SourceTree() {
                 </button>
               ))}
             </div>
-            <div className="border-l border-[var(--line-strong)] pl-5">
+            <div className="border-t border-[var(--line-strong)] pt-5 sm:border-t-0 sm:border-l sm:pl-5 sm:pt-0">
               <p className="font-[family-name:var(--font-ibm-plex-mono)] text-sm text-[var(--ink)]">
                 {activeFolder.name}
               </p>

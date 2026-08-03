@@ -68,7 +68,7 @@ function HeaderPanel({
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.6 }}
               transition={{ duration: 0.2, delay: isAdded ? index * 0.08 : 0 }}
-              className={`border-b border-[var(--line)] px-3 py-3 font-[family-name:var(--font-ibm-plex-mono)] text-xs ${isAdded ? "text-[var(--ink)]" : "text-[var(--ink-soft)]"}`}
+              className={`break-words border-b border-[var(--line)] px-3 py-3 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] leading-5 sm:text-xs ${isAdded ? "text-[var(--ink)]" : "text-[var(--ink-soft)]"}`}
             >
               {isAdded && <span className="mr-2 text-[var(--signal)]">+</span>}
               {header}
