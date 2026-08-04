@@ -1,16 +1,172 @@
 ---
 title: TLS
-description: TLS termination and certificate configuration.
+description: Terminating HTTPS connections at the edge.
+updated: 2026-08-04
+package: internal/tls
+files:
+  - internal/config/tls.go
+related:
+  - configuration
+  - reverse-proxy
+  - deployment
 ---
 
 # TLS
 
-This page will document listener TLS configuration, certificate loading, and rotation behavior.
+Torus can terminate HTTPS connections at the edge, allowing backend services to receive normal HTTP traffic while clients communicate securely over TLS.
 
-## Configuration
+TLS termination is configured entirely through the YAML configuration file and is enabled when certificate and private key files are provided.
 
-TLS examples and supported policy choices will appear here.
+---
 
-## Warning
+## What is TLS termination?
 
-Production certificate lifecycle guidance is pending.
+Without TLS termination:
+
+<RequestFlow steps={["Client", "HTTPS", "Backend"]} />
+
+With Torus:
+
+<RequestFlow steps={["Client", "HTTPS", "Torus", "HTTP", "Backend"]} />
+
+The encrypted connection ends at Torus.
+
+Backend services receive standard HTTP requests while clients continue to communicate securely using HTTPS.
+
+---
+
+## Responsibilities
+
+When TLS is enabled, Torus is responsible for:
+
+- accepting HTTPS connections
+- loading certificates
+- performing TLS handshakes
+- decrypting incoming traffic
+- forwarding requests to backend services
+- encrypting responses before returning them to clients
+
+Routing and backend selection remain unchanged.
+
+---
+
+## Enabling TLS
+
+TLS is configured through the `server.tls` section.
+
+Example:
+
+```yaml
+server:
+  addr: ":8443"
+
+  tls:
+    cert_file: cert.pem
+    key_file: key.pem
+    min_version: "1.2"
+```
+
+When both certificate and key files are present, Torus starts an HTTPS listener instead of a plain HTTP listener.
+
+---
+
+## Request flow
+
+<RequestFlow
+  steps={["HTTPS Client", "TLS Handshake", "Decrypt Request", "Runtime", "Router", "Backend"]}
+/>
+
+TLS is processed before the request enters the normal execution pipeline.
+
+Once the handshake completes, request processing is identical to HTTP.
+
+---
+
+## Certificate loading
+
+During startup Torus loads:
+
+- the server certificate
+- the corresponding private key
+
+Startup fails if:
+
+- either file is missing
+- the certificate is invalid
+- the private key cannot be loaded
+- the certificate and key do not match
+
+This prevents the proxy from starting in an invalid state.
+
+---
+
+## Minimum TLS version
+
+The minimum supported TLS protocol version can be configured.
+
+For production deployments, newer protocol versions should be preferred whenever possible.
+
+The exact supported values are documented in the **Configuration Reference**.
+
+---
+
+## Backend communication
+
+TLS termination affects only client connections.
+
+After the request has been decrypted:
+
+<RequestFlow steps={["Client (HTTPS)", "Backend (HTTP)"]} />
+
+Backend communication remains unchanged unless future versions introduce upstream TLS support.
+
+---
+
+## Performance considerations
+
+TLS introduces additional work compared to plain HTTP.
+
+Typical overhead includes:
+
+- TLS handshake
+- certificate validation
+- encryption
+- decryption
+
+Benchmark-002 evaluates the impact of TLS termination on throughput, latency, CPU utilization, and memory usage.
+
+---
+
+## Failure behavior
+
+TLS connections are rejected when:
+
+- certificate loading fails
+- the private key is invalid
+- protocol negotiation fails
+- the client does not support the configured minimum TLS version
+
+These failures occur before request routing begins.
+
+---
+
+## Design rationale
+
+TLS termination allows backend services to remain simple while providing secure client communication at the edge.
+
+Centralizing TLS management also simplifies:
+
+- certificate rotation
+- deployment
+- observability
+- operational management
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Configuration** — configuring server behavior.
+- **Deployment** — deploying HTTPS in production.
+- **Benchmark Reports** — measuring TLS overhead.

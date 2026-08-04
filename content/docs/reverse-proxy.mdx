@@ -1,16 +1,190 @@
 ---
 title: Reverse Proxy
-description: Forwarding requests and returning upstream responses.
+description: Forwarding requests to upstream backends using Go's standard library.
+updated: 2026-08-04
+package: internal/proxy
+files:
+  - internal/proxy/proxy.go
+related:
+  - services
+  - load-balancing
+  - runtime
 ---
 
 # Reverse Proxy
 
-This page will explain how Torus builds upstream requests and carries response semantics back to clients.
+The reverse proxy is the final stage of Torus' request pipeline.
 
-## Request Flow
+Once the router has selected a service and the load balancer has chosen a healthy backend, the reverse proxy forwards the client's request to that backend and streams the response back to the client.
 
-Proxy request and response transformations will be documented here.
+Torus is built on Go's standard library implementation:
 
-## Implementation Notes
+```go
+net/http/httputil.ReverseProxy
+```
 
-The primary source boundary is `internal/proxy`.
+Rather than implementing HTTP proxying from scratch, Torus focuses on the systems surrounding request forwarding: routing, runtime management, health monitoring, observability, and configuration.
+
+---
+
+## Responsibilities
+
+The reverse proxy is responsible for:
+
+- forwarding requests to the selected backend
+- forwarding response headers
+- streaming response bodies
+- preserving HTTP semantics
+- injecting forwarding headers
+- returning upstream responses to the client
+
+It does **not** select routes or choose backends.
+
+---
+
+## Request forwarding
+
+Every request reaches the reverse proxy only after backend selection has completed.
+
+<RequestFlow
+  steps={["Healthy Backend", "Reverse Proxy", "Forward Request", "Backend Response", "Client"]}
+/>
+
+At this stage, all routing decisions have already been made.
+
+---
+
+## Request lifecycle
+
+The reverse proxy performs the following operations:
+
+1. Receives the selected backend.
+2. Creates an outbound request.
+3. Rewrites the request destination.
+4. Injects forwarding headers.
+5. Sends the request upstream.
+6. Streams the response back to the client.
+7. Closes the upstream connection when complete.
+
+Because responses are streamed, Torus avoids buffering entire payloads in memory.
+
+---
+
+## Forwarding headers
+
+Before forwarding a request, Torus enriches it with standard forwarding information.
+
+Examples include:
+
+- `X-Forwarded-For`
+- `X-Forwarded-Host`
+- `X-Forwarded-Proto`
+- request tracing headers
+
+These headers allow upstream applications to identify the original client and protocol.
+
+---
+
+## Streaming responses
+
+Responses are streamed directly from the backend to the client.
+
+```text
+Client
+    ▲
+    │
+Response Stream
+    │
+Reverse Proxy
+    │
+Backend
+```
+
+Streaming reduces memory usage and allows large responses to be delivered efficiently.
+
+---
+
+## Error handling
+
+The reverse proxy handles failures that occur after a backend has already been selected.
+
+Examples include:
+
+- connection refused
+- upstream timeout
+- network interruption
+- unexpected backend termination
+
+When forwarding fails, Torus returns an appropriate HTTP error to the client.
+
+Routing decisions are **not** repeated during the same request.
+
+---
+
+## Design rationale
+
+Using Go's standard library reverse proxy provides several advantages.
+
+- mature implementation
+- correct HTTP semantics
+- HTTP/1.x support
+- streaming support
+- continuous maintenance by the Go project
+
+This allows Torus to concentrate on higher-level proxy architecture instead of low-level HTTP implementation details.
+
+---
+
+## Performance considerations
+
+The reverse proxy is intentionally lightweight.
+
+Most request-processing overhead occurs before this stage:
+
+- route matching
+- runtime lookup
+- backend selection
+
+Once a backend has been selected, the reverse proxy primarily performs efficient request forwarding and response streaming.
+
+This design minimizes additional latency while preserving compatibility with Go's HTTP ecosystem.
+
+---
+
+## Example
+
+A request to:
+
+```text
+GET /api/users
+```
+
+may ultimately become:
+
+```text
+GET http://10.0.0.12:3001/api/users
+```
+
+The backend processes the request normally.
+
+The reverse proxy then streams the backend response back to the original client.
+
+---
+
+## Relationship to the request pipeline
+
+The reverse proxy is the final component in the request execution path.
+
+<RequestFlow steps={["Router", "Service", "Load Balancer", "Reverse Proxy", "Backend"]} />
+
+Once the reverse proxy begins forwarding the request, all routing and backend selection decisions have already been completed.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Runtime** — immutable runtime snapshots.
+- **Configuration** — configuring routes and upstreams.
+- **Load Balancing** — backend selection before proxying.

@@ -1,20 +1,208 @@
 ---
 title: Routing
-description: Route prefixes, services and request matching.
+description: Matching incoming requests to services using longest-prefix routing.
+updated: 2026-08-04
+package: internal/router
+files:
+  - internal/router/router.go
+  - internal/router/matcher.go
+related:
+  - router
+  - services
+  - configuration
 ---
 
 # Routing
 
-This page will document path prefixes, service references, and longest-prefix matching.
+Routing is the process of determining which service should receive an incoming request.
 
-## Example
+Every request entering Torus is evaluated against the configured routing table. The router performs **longest-prefix matching**, selecting the most specific route that matches the request path.
+
+Routing is deterministic, efficient, and independent of backend selection.
+
+---
+
+## Responsibilities
+
+The routing subsystem is responsible for:
+
+- matching request paths
+- selecting a route
+- resolving the destination service
+- rejecting requests that do not match any route
+
+It does **not** choose backend servers or forward requests.
+
+---
+
+## Route definition
+
+Routes are declared in the configuration file.
 
 ```yaml
 routes:
-  - prefix: /api
-    service: users
+  - path: /
+    service: web
+
+  - path: /api
+    service: api
+
+  - path: /admin
+    service: admin
 ```
 
-## Related Documentation
+Each route maps a URL path prefix to a logical service.
 
-See Router and Services.
+---
+
+## Longest-prefix matching
+
+When multiple routes could match a request, Torus selects the most specific prefix.
+
+For example:
+
+| Route     | Service |
+| --------- | ------- |
+| `/`       | web     |
+| `/api`    | api     |
+| `/api/v1` | api-v1  |
+
+Incoming request:
+
+```text
+/api/v1/users
+```
+
+Matches:
+
+```text
+/api/v1
+```
+
+because it is the longest matching prefix.
+
+---
+
+## Example
+
+Given the following routes:
+
+```text
+/
+/api
+/api/v1
+/admin
+```
+
+Requests are resolved as:
+
+| Request          | Selected Route |
+| ---------------- | -------------- |
+| `/`              | `/`            |
+| `/about`         | `/`            |
+| `/api/users`     | `/api`         |
+| `/api/v1/orders` | `/api/v1`      |
+| `/admin`         | `/admin`       |
+
+---
+
+## Path segment boundaries
+
+Matching respects path segment boundaries.
+
+For example:
+
+```text
+Configured route
+
+/api
+```
+
+Matches:
+
+```text
+/api
+/api/users
+/api/v1/orders
+```
+
+Does **not** match:
+
+```text
+/apiv1
+/api-test
+```
+
+This prevents unintended route selection for similarly named paths.
+
+---
+
+## Request flow
+
+<RequestFlow steps={["Incoming Request", "Router", "Longest Prefix Match", "Selected Service"]} />
+
+After a route has been selected, request processing continues through the service layer.
+
+---
+
+## No matching route
+
+If no configured route matches the request path, Torus immediately returns an HTTP error.
+
+Example:
+
+```text
+Configured routes
+
+/api
+/admin
+```
+
+Incoming request:
+
+```text
+/static/logo.png
+```
+
+No matching route exists, so the request is rejected without reaching the load balancer or reverse proxy.
+
+---
+
+## Performance considerations
+
+The routing table is built during runtime construction.
+
+During request processing, the router performs lookups against an immutable routing structure.
+
+Because routing data never changes while requests are executing:
+
+- no locks are required
+- no configuration parsing occurs
+- every request observes a consistent routing table
+
+This contributes to predictable request latency and efficient concurrent processing.
+
+---
+
+## Design rationale
+
+Torus uses longest-prefix routing because it provides:
+
+- deterministic route selection
+- intuitive configuration
+- predictable behavior
+- efficient request matching
+- compatibility with common reverse proxy routing models
+
+The routing subsystem is intentionally isolated from service management and backend selection, allowing each component to evolve independently.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Services** — resolving logical destinations.
+- **Load Balancing** — selecting a backend.
+- **Configuration** — defining routes in YAML.
+- **Router** — implementation details of the routing subsystem.

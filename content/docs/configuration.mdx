@@ -1,16 +1,177 @@
 ---
 title: Configuration
-description: Configuration file structure and validation boundaries.
+description: Building the runtime from declarative configuration.
+updated: 2026-08-04
+package: internal/config
+files:
+  - internal/config/config.go
+  - internal/config/parser.go
+related:
+  - runtime
+  - routing
+  - tls
 ---
 
 # Configuration
 
-This page will introduce the configuration schema and validation contract.
+Torus is configured entirely through a declarative YAML configuration file.
 
-## Configuration
+Rather than configuring components programmatically, the configuration describes the desired state of the proxy. During startup (or reload), Torus validates this configuration and constructs a new immutable runtime snapshot from it.
 
-<ConfigReference fields={[]} />
+The configuration file is therefore the source of truth for the entire proxy.
 
-## Notes
+---
 
-Configuration compatibility notes will be recorded for each release.
+## Overview
+
+A configuration defines:
+
+- server settings
+- routing rules
+- backend services
+- TLS configuration
+- health checking
+- observability
+
+Every runtime snapshot is built directly from this configuration.
+
+---
+
+## Configuration lifecycle
+
+Configuration is processed in four stages.
+
+<RequestFlow steps={["Read YAML", "Parse", "Validate", "Build Runtime"]} />
+
+If any stage fails, the runtime is not replaced.
+
+---
+
+## Example
+
+A minimal configuration looks like this.
+
+```yaml
+server:
+  addr: ":8080"
+
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+
+routes:
+  - path: /api
+    upstream:
+      - http://localhost:3001
+      - http://localhost:3002
+```
+
+This configuration is sufficient to start Torus and proxy requests to two backend servers.
+
+---
+
+## Major sections
+
+A Torus configuration is organized into several logical sections.
+
+| Section         | Purpose                |
+| --------------- | ---------------------- |
+| `server`        | Listener configuration |
+| `routes`        | Request routing rules  |
+| `upstream`      | Backend servers        |
+| `health`        | Active backend probing |
+| `tls`           | HTTPS termination      |
+| `observability` | Metrics and monitoring |
+
+Each section configures one subsystem of the runtime.
+
+---
+
+## Validation
+
+Before a runtime is constructed, Torus validates the configuration.
+
+Typical validation includes:
+
+- malformed YAML
+- duplicate routes
+- invalid addresses
+- invalid TLS configuration
+- missing upstreams
+- unsupported values
+
+Validation always occurs before runtime publication.
+
+---
+
+## Runtime construction
+
+Once validation succeeds, Torus constructs a completely new runtime snapshot.
+
+<RequestFlow
+  steps={[
+    "Configuration",
+    "Configuration Parser",
+    "Validation",
+    "Runtime Builder",
+    "Immutable Runtime",
+  ]}
+/>
+
+Requests never access the configuration file directly.
+
+They interact only with the runtime produced from it.
+
+---
+
+## Reload behavior
+
+Configuration changes do not modify the active runtime.
+
+Instead, Torus:
+
+1. reads the updated configuration
+2. validates it
+3. builds a new runtime
+4. atomically publishes the new runtime
+
+Existing requests continue using the previous runtime until completion.
+
+---
+
+## Design rationale
+
+Using declarative configuration provides several advantages.
+
+- reproducible deployments
+- predictable startup behavior
+- complete runtime validation
+- zero-downtime reloads
+- clear separation between configuration and execution
+
+This approach keeps request processing independent from configuration management.
+
+---
+
+## Best practices
+
+For production deployments:
+
+- keep configuration under version control
+- validate changes before deployment
+- prefer descriptive route prefixes
+- avoid overlapping routes unless intentional
+- use health checks for every backend
+- enable TLS for public deployments
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Routing** — configuring request routing.
+- **TLS** — enabling HTTPS termination.
+- **Runtime** — how configuration becomes an immutable runtime snapshot.
+- **Configuration Reference** — complete YAML field documentation.
