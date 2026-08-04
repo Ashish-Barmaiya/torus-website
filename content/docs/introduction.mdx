@@ -1,16 +1,121 @@
 ---
 title: Introduction
-description: What Torus is and the problems it is designed to solve.
+description: An overview of Torus, its goals, and the engineering philosophy behind the project.
+updated: 2026-08-04
+package: cmd/torus
+related:
+  - architecture
+  - getting-started/installation
+  - getting-started/quick-start
 ---
 
 # Introduction
 
-Torus is a Layer 7 reverse proxy and edge API gateway written in Go. This page will establish the operating model, guarantees, and non-goals of the project.
+Torus is a Layer 7 reverse proxy and edge API gateway written entirely in Go.
 
-## Why this exists
+The project was created to explore the engineering principles behind modern reverse proxies, including request routing, load balancing, runtime management, observability, and performance engineering.
 
-Document the constraints that make Torus useful in an edge request path.
+Rather than attempting to replace mature production systems such as Envoy, NGINX, HAProxy, or Caddy, Torus focuses on understanding and implementing the techniques they employ while documenting the engineering decisions behind those implementations.
 
-## Related documentation
+---
 
-Continue with Installation and Architecture.
+## Project goals
+
+Torus has four primary goals.
+
+- Build a production-oriented Layer 7 reverse proxy.
+- Document architectural decisions as the project evolves.
+- Measure performance using reproducible benchmarks.
+- Explore modern systems programming using Go's standard library.
+
+The project treats implementation, documentation, and benchmarking as equally important engineering activities.
+
+---
+
+## What Torus provides
+
+Today, Torus includes support for:
+
+- Layer 7 HTTP reverse proxying
+- Longest-prefix route matching
+- Round-robin load balancing
+- Active backend health checking
+- Zero-downtime configuration reloads
+- Immutable runtime snapshots
+- Graceful shutdown
+- Structured request logging
+- TLS termination
+- Prometheus metrics
+- Comprehensive automated testing
+
+The feature set continues to evolve as new architectural work is completed.
+
+---
+
+## Design philosophy
+
+Several principles guide the development of Torus.
+
+### Simplicity
+
+Whenever practical, Torus prefers simple, well-understood designs over unnecessary abstraction.
+
+Most functionality is implemented using Go's standard library rather than large third-party frameworks.
+
+---
+
+### Predictable execution
+
+Every request follows the same deterministic execution pipeline.
+
+Configuration changes never modify a running request.
+
+Instead, new requests begin using a newly constructed runtime snapshot while existing requests continue using the snapshot under which they started.
+
+This approach minimizes synchronization complexity and enables zero-downtime configuration reloads.
+
+---
+
+### Performance is measured
+
+Performance claims are supported by published benchmark reports.
+
+Each benchmark documents:
+
+- hardware configuration
+- software versions
+- workloads
+- methodology
+- statistical analysis
+- reproducible results
+
+Performance improvements are treated as engineering decisions rather than assumptions.
+
+---
+
+### Documentation is part of the product
+
+The documentation is maintained alongside the implementation.
+
+Architecture documents, benchmark reports, and Architecture Decision Records (ADRs) explain not only _what_ Torus does, but also _why_ particular implementation strategies were chosen.
+
+---
+
+## Project status
+
+Torus is an actively developed engineering project.
+
+Although suitable for experimentation, learning, and benchmarking, it should not yet be considered a drop-in replacement for mature production reverse proxies.
+
+Future work includes additional routing capabilities, observability improvements, allocation reductions, and networking optimizations.
+
+---
+
+## Learn more
+
+If this is your first time using Torus, continue with:
+
+- **Installation** — build Torus from source.
+- **Quick Start** — configure and run your first proxy.
+- **Architecture** — understand the request lifecycle and runtime model.
+- **Benchmarking** — explore published performance evaluations.

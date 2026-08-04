@@ -15,14 +15,14 @@ function Callout({
   title?: string;
 }) {
   const labels: Record<CalloutKind, string> = {
-    note: "Engineering note",
-    tip: "Operational tip",
-    warning: "Warning",
-    info: "Information",
+    note: "ⓘ Engineering note",
+    tip: "✓ Operational tip",
+    warning: "⚠ Warning",
+    info: "ℹ Information",
   };
 
   return (
-    <aside className="my-7 border-l-2 border-[var(--signal)] bg-[var(--paper-deep)] px-5 py-4 text-sm leading-6 text-[var(--ink-soft)]">
+    <aside className="my-7 border-l-2 border-[var(--signal)] bg-[var(--paper-deep)] px-5 py-2 text-sm leading-6 text-[var(--ink-soft)]">
       <p className="font-[family-name:var(--font-ibm-plex-mono)] text-[10px] font-medium tracking-[0.12em] text-[var(--signal-dark)] uppercase dark:text-[var(--signal)]">
         {title ?? labels[kind]}
       </p>
@@ -93,30 +93,28 @@ export function ArchitectureDiagram({ children }: { children?: ReactNode }) {
   );
 }
 
-export function RequestFlow({ children }: { children?: ReactNode }) {
+export function RequestFlow({ steps, children }: { steps: string[]; children?: ReactNode }) {
   return (
     <figure className="my-7 border-y border-[var(--line)] py-5">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-soft)]">
-        {["Request", "match", "service", "backend", "response"].map((stage, index) => (
-          <span key={stage} className="flex items-center gap-3">
-            <span
-              className={index === 1 ? "text-[var(--signal-dark)] dark:text-[var(--signal)]" : ""}
-            >
-              {stage}
-            </span>
-            {index < 4 ? (
+      <div className="text-semi flex flex-wrap items-center gap-x-3 gap-y-2 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] text-[var(--ink-soft)]">
+        {steps.map((step, index) => (
+          <span key={step} className="flex items-center gap-3">
+            <span>{step}</span>
+
+            {index < steps.length - 1 && (
               <span aria-hidden="true" className="text-[var(--ink-faint)]">
                 →
               </span>
-            ) : null}
+            )}
           </span>
         ))}
       </div>
-      {children ? (
+
+      {children && (
         <figcaption className="mt-3 text-xs leading-5 text-[var(--ink-faint)]">
           {children}
         </figcaption>
-      ) : null}
+      )}
     </figure>
   );
 }

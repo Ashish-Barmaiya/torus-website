@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
+import { Mermaid } from "@/components/docs/Mermaid";
 
 import {
   ApiReference,
@@ -123,6 +124,7 @@ export function useMDXComponents(components: Record<string, unknown>) {
     RequestFlow,
     Tip,
     Warning,
+    Mermaid,
 
     ...components,
   };

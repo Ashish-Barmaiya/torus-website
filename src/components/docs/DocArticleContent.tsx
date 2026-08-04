@@ -24,10 +24,14 @@ interface DocArticleContentProps {
   doc: DocEntry;
   Content: (props: Record<string, unknown>) => ReactNode;
   headings: HeadingItem[];
-  packagePath: string | null;
-  files: string[] | null;
+
+  packagePath?: string;
+  files?: string[];
   relatedDocs?: DocEntry[];
-  updated: string;
+
+  updated?: string;
+  readingTime?: string;
+
   previous?: DocEntry;
   next?: DocEntry;
 }
@@ -40,13 +44,14 @@ export function DocArticleContent({
   files,
   relatedDocs,
   updated,
+  readingTime,
   previous,
   next,
 }: DocArticleContentProps) {
   const hasHeadings = headings.length > 0;
 
   return (
-    <div className="min-w-0 px-5 py-12 sm:px-8 sm:py-16 lg:px-12">
+    <div className="min-w-0 px-5 pt-8 pb-12 sm:px-8 sm:pt-10 sm:pb-16 lg:px-12">
       <div className="mx-auto grid max-w-[1040px] gap-12 xl:grid-cols-[minmax(0,760px)_180px] xl:gap-16">
         <article className="min-w-0">
           <nav
@@ -63,15 +68,19 @@ export function DocArticleContent({
             <span>{doc.category}</span>
           </nav>
 
-          <header className="pb-11 sm:pb-14">
-            <h1 className="mt-5 text-4xl font-semibold tracking-[-0.045em] text-[var(--ink)] sm:text-5xl sm:leading-[1.05]">
+          <header className="pb-8 sm:pb-10">
+            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.045em] text-[var(--ink)] sm:text-5xl sm:leading-[1.05]">
               {doc.title}
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--ink-soft)]">{doc.summary}</p>
-            <dl className="mt-7 flex flex-wrap gap-x-5 gap-y-2 border-y border-[var(--line)] py-3 font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.06em] text-[var(--ink-faint)] uppercase">
+            <p className="mt-3 max-w-2xl text-lg leading-8 text-[var(--ink-soft)]">{doc.summary}</p>
+            <dl className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-y border-[var(--line)] py-3 font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.06em] text-[var(--ink-faint)] uppercase">
+              {/* <div>
+                <dt className="sr-only">Last updated</dt>
+                <dd>{formatDate(updated) ?? "Last updated unknown"}</dd>
+              </div> */}
               <div>
                 <dt className="sr-only">Reading time</dt>
-                <dd>{doc.readingTime} read</dd>
+                <dd>{readingTime}</dd>
               </div>
               {formatDate(updated) && (
                 <div>

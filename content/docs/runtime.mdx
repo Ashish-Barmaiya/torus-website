@@ -1,16 +1,173 @@
 ---
 title: Runtime
-description: Immutable runtime snapshots and safe configuration reloads.
+description: Immutable runtime snapshots and zero-downtime configuration reloads.
+updated: 2026-08-04
+package: internal/runtime
+files:
+  - internal/runtime/runtime.go
+  - internal/reload/
+  - internal/configwatcher/
+related:
+  - architecture
+  - architecture/execution-pipeline
+  - configuration
 ---
 
 # Runtime
 
-This page will explain runtime snapshots, publication, and how active requests retain a coherent view of configuration.
+The runtime is the central execution object used by Torus to process every incoming request.
 
-## Why this exists
+Rather than reading configuration files or rebuilding internal state while serving traffic, Torus constructs a complete immutable runtime snapshot ahead of time. Every request uses exactly one runtime snapshot for its entire lifetime.
 
-Reloading configuration must not make request handling ambiguous.
+This design enables deterministic request processing and zero-downtime configuration reloads.
 
-## Implementation Notes
+---
 
-The primary source boundary is `internal/runtime`.
+## Responsibilities
+
+The runtime owns all state required to process a request.
+
+This includes:
+
+- route definitions
+- services
+- upstream backend pools
+- load balancers
+- health state
+- observability configuration
+
+Once constructed, a runtime snapshot is never modified.
+
+---
+
+## Immutable snapshots
+
+Instead of updating internal structures while requests are executing, Torus builds a completely new runtime whenever configuration changes.
+
+The existing runtime continues serving active requests while the new runtime is prepared independently.
+
+Only after the new runtime has been fully validated does Torus begin routing new requests to it.
+
+<Info>
+
+Immutable runtime snapshots eliminate synchronization between configuration updates and request processing.
+
+</Info>
+
+---
+
+## Runtime lifecycle
+
+Every runtime progresses through the same lifecycle.
+
+<RequestFlow
+  steps={[
+    "Configuration",
+    "Parse",
+    "Validate",
+    "Build Runtime Snapshot",
+    "Atomic Runtime Swap",
+    "Serve New Requests",
+  ]}
+/>
+
+Existing requests continue using the previous runtime until they complete.
+
+---
+
+## Configuration reload
+
+Configuration reloads occur without interrupting traffic.
+
+The reload sequence is:
+
+1. Detect configuration changes.
+2. Parse the updated configuration.
+3. Validate all configuration values.
+4. Construct a new runtime snapshot.
+5. Atomically replace the active runtime.
+6. Route all subsequent requests through the new runtime.
+
+If any stage fails, Torus discards the new runtime and continues serving requests using the previous one.
+
+No partially constructed runtime is ever exposed to incoming traffic.
+
+---
+
+## Concurrency model
+
+Runtime replacement uses an atomic pointer.
+
+Only a single atomic load is required during request processing to obtain the active runtime.
+
+This design has several advantages:
+
+- no global request lock
+- no runtime mutation during request processing
+- predictable synchronization costs
+- consistent request behavior
+- efficient concurrent access
+
+Each request observes a stable view of the runtime regardless of whether a configuration reload occurs while the request is executing.
+
+---
+
+## Runtime ownership
+
+The runtime owns the components required to execute a request.
+
+```text
+Runtime
+├── Router
+├── Services
+├── Load Balancers
+├── Backend Pools
+├── Health State
+└── Observability Configuration
+```
+
+These components are created together and destroyed together.
+
+Ownership is intentionally centralized to simplify lifecycle management.
+
+---
+
+## Failure handling
+
+Runtime construction is treated as an all-or-nothing operation.
+
+A new runtime becomes active only after:
+
+- configuration parsing succeeds
+- validation succeeds
+- every required component has been initialized
+- runtime construction completes successfully
+
+Any failure leaves the currently active runtime unchanged.
+
+---
+
+## Why this design?
+
+Alternative approaches modify routing tables and backend state in place.
+
+While functional, those designs require additional synchronization and increase the likelihood of inconsistent request state during configuration updates.
+
+Torus instead prefers immutable runtime snapshots because they provide:
+
+- deterministic request execution
+- simpler concurrency
+- safer configuration reloads
+- clear ownership boundaries
+- easier reasoning about runtime state
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Router** — longest-prefix route matching.
+- **Services** — logical request destinations.
+- **Load Balancing** — selecting healthy upstreams.
+- **Configuration** — how runtime snapshots are constructed.

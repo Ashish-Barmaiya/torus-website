@@ -1,26 +1,21 @@
-import { getDocContent, getDocHeadings } from "@/lib/docs/content";
+import { getDocContent, getDocHeadings, type DocMetadata } from "@/lib/docs/content";
 import { getAdjacentDocs, type DocEntry } from "@/lib/docs/navigation";
 import { allDocs } from "@/lib/docs/navigation";
 
 import { DocArticleContent } from "./DocArticleContent";
 
-export async function DocArticle({
-  doc,
-  metadata,
-}: {
-  doc: DocEntry;
-  metadata?: Record<string, unknown>;
-}) {
+export async function DocArticle({ doc, metadata }: { doc: DocEntry; metadata?: DocMetadata }) {
   const { previous, next } = getAdjacentDocs(doc);
   const [Content, headings] = await Promise.all([
     getDocContent(doc.slug),
     getDocHeadings(doc.slug),
   ]);
 
-  const packagePath = (metadata?.package as string) ?? doc.packagePath ?? null;
-  const files = (metadata?.files as string[]) ?? null;
-  const relatedSlugs = (metadata?.related as string[]) ?? null;
-  const updated = (metadata?.updated as string) ?? doc.updated;
+  const packagePath = metadata?.package ?? doc.packagePath;
+  const files = metadata?.files;
+  const relatedSlugs = metadata?.related;
+  const updated = metadata?.updated ?? doc.updated;
+  const readingTime = metadata?.readingTime ?? doc.readingTime;
 
   const relatedDocs = relatedSlugs
     ? relatedSlugs
@@ -37,6 +32,7 @@ export async function DocArticle({
       files={files}
       relatedDocs={relatedDocs ?? undefined}
       updated={updated}
+      readingTime={readingTime}
       previous={previous}
       next={next}
     />

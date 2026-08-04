@@ -34,36 +34,18 @@ These principles influence every component inside Torus.
 
 Every incoming request follows the same execution path.
 
-```text
-Client
-    │
-    ▼
-TCP Listener
-    │
-    ▼
-HTTP Server
-    │
-    ▼
-Runtime Snapshot
-    │
-    ▼
-Router
-    │
-    ▼
-Service
-    │
-    ▼
-Load Balancer
-    │
-    ▼
-Reverse Proxy
-    │
-    ▼
-Backend
-    │
-    ▼
-Response
-```
+<Mermaid
+chart={`
+flowchart LR
+
+Client --> Runtime
+Runtime --> Router
+Router --> Service
+Service --> LoadBalancer
+LoadBalancer --> ReverseProxy
+ReverseProxy --> Backend
+`}
+/>
 
 Each stage performs a single responsibility before passing the request to the next component.
 
@@ -173,24 +155,16 @@ Configuration updates do not interrupt active traffic.
 
 The reload sequence is:
 
-```text
-Configuration changed
-        │
-        ▼
-Parse
-        │
-        ▼
-Validate
-        │
-        ▼
-Build new runtime
-        │
-        ▼
-Atomic runtime swap
-        │
-        ▼
-New requests use updated runtime
-```
+<RequestFlow
+  steps={[
+    "Configuration changed",
+    "Parse configuration",
+    "Validate configuration",
+    "Build runtime snapshot",
+    "Atomic runtime swap",
+    "Serve new requests",
+  ]}
+/>
 
 If validation fails, Torus continues serving traffic using the previous runtime.
 

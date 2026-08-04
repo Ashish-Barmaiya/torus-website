@@ -1,20 +1,176 @@
 ---
 title: Quick Start
-description: Run a proxy and send the first request.
+description: Configure Torus and proxy your first request.
+updated: 2026-08-04
+related:
+  - getting-started/installation
+  - architecture
 ---
 
 # Quick Start
 
-This walkthrough will start Torus with one listener, one route, and one service.
+This guide configures a minimal Torus instance, starts the proxy, and forwards the first request to two backend servers.
 
-## Example
+By the end of this page you will have a working reverse proxy using round-robin load balancing.
 
-```yaml filename="torus.yaml"
-routes:
-  - prefix: /api
-    service: api
+---
+
+## Start two backend servers
+
+If you have not already done so, start the included mock backend twice.
+
+Terminal 1
+
+```bash
+go run ./cmd/mock-backend 3001
 ```
 
-## Request Flow
+Terminal 2
 
-<RequestFlow>Follow the initial request from listener to upstream.</RequestFlow>
+```bash
+go run ./cmd/mock-backend 3002
+```
+
+Each backend responds with its listening port, making it easy to observe load balancing.
+
+---
+
+## Create a configuration
+
+Create a file named `torus.yaml`.
+
+```yaml
+apiVersion: v1
+
+server:
+  addr: ":8080"
+
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+
+routes:
+  - path: /api
+    upstream:
+      - http://localhost:3001
+      - http://localhost:3002
+```
+
+This configuration defines:
+
+- an HTTP listener on port `8080`
+- a health checker
+- one route (`/api`)
+- two upstream backends
+
+---
+
+## Start Torus
+
+Run the proxy.
+
+```bash
+./torus -config torus.yaml
+```
+
+The proxy begins listening on:
+
+```text
+http://localhost:8080
+```
+
+---
+
+## Verify readiness
+
+Open another terminal.
+
+```bash
+curl http://localhost:8080/readyz
+```
+
+Expected response:
+
+```text
+ok
+```
+
+The readiness endpoint indicates that Torus has successfully initialized and is ready to accept traffic.
+
+---
+
+## Send requests
+
+Forward several requests through the proxy.
+
+```bash
+curl http://localhost:8080/api/hello
+```
+
+Run the command multiple times.
+
+Because the configuration contains two healthy upstreams, responses should alternate between the backend running on port `3001` and the backend running on port `3002`.
+
+Example:
+
+```text
+Backend :3001
+```
+
+```text
+Backend :3002
+```
+
+```text
+Backend :3001
+```
+
+```text
+Backend :3002
+```
+
+This demonstrates Torus' round-robin load balancer.
+
+---
+
+## What happened?
+
+Every request forwarded through Torus follows the same deterministic execution pipeline.
+
+<RequestFlow
+  steps={[
+    "Client",
+    "HTTP Listener",
+    "Runtime Snapshot",
+    "Router",
+    "Service",
+    "Load Balancer",
+    "Reverse Proxy",
+    "Backend",
+  ]}
+/>
+
+Each stage has a single responsibility:
+
+1. **HTTP Listener** accepts the incoming connection.
+2. **Runtime Snapshot** provides an immutable view of the active configuration.
+3. **Router** matches the request using longest-prefix routing.
+4. **Service** resolves the logical destination.
+5. **Load Balancer** selects a healthy upstream.
+6. **Reverse Proxy** forwards the request and streams the response.
+7. **Backend** processes the request and returns the response.
+
+The complete execution pipeline, runtime model, and configuration reload mechanism are described in the **Architecture** documentation.
+
+---
+
+## Next steps
+
+You now have a working Torus installation.
+
+Continue with:
+
+- **Architecture** — understand how requests move through the runtime.
+- **Introduction** — learn the goals and design philosophy of the project.
+- **Runtime** — explore immutable runtime snapshots and configuration reloads.

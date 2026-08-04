@@ -1,16 +1,124 @@
 ---
 title: Installation
-description: Prepare a Torus binary for local or production use.
+description: Build and install Torus from source.
+updated: 2026-08-04
+related:
+  - introduction
+  - getting-started/quick-start
 ---
 
 # Installation
 
-This page will cover verified release artifacts, supported platforms, and a minimal local installation.
+This guide walks through building Torus from source.
 
-## Why this exists
+At the end of this page you will have a working `torus` binary ready to run.
 
-Installation guidance should be reproducible and explicit about version boundaries.
+---
 
-## Example
+## Prerequisites
 
-<Command>torus --version</Command>
+Before building Torus, ensure the following software is installed.
+
+| Requirement | Version               |
+| ----------- | --------------------- |
+| Go          | 1.26.1 or newer       |
+| Git         | Latest stable version |
+
+You will also need one or more HTTP services if you want to proxy real traffic during local development.
+
+---
+
+## Clone the repository
+
+Clone the project and enter the repository.
+
+```bash
+git clone https://github.com/Ashish-Barmaiya/torus-proxy.git
+
+cd torus-proxy
+```
+
+---
+
+## Verify your Go installation
+
+Confirm the installed Go version.
+
+```bash
+go version
+```
+
+Example output:
+
+```text
+go version go1.26.1 linux/amd64
+```
+
+---
+
+## Build Torus
+
+Compile the proxy.
+
+```bash
+go build -o torus ./cmd/torus
+```
+
+After the build completes, a `torus` executable is created in the repository root.
+
+---
+
+## Build the mock backend (optional)
+
+For local testing, Torus includes a lightweight mock backend.
+
+Run two instances in separate terminals.
+
+Terminal 1
+
+```bash
+go run ./cmd/mock-backend 3001
+```
+
+Terminal 2
+
+```bash
+go run ./cmd/mock-backend 3002
+```
+
+These servers can be used by the Quick Start guide without requiring additional applications.
+
+---
+
+## Verify the build
+
+Display the available command-line options.
+
+```bash
+./torus --help
+```
+
+Successful execution confirms that Torus was built correctly.
+
+---
+
+## Repository structure
+
+The most important directories are:
+
+| Directory      | Purpose                      |
+| -------------- | ---------------------------- |
+| `cmd/torus`    | Application entry point      |
+| `internal/`    | Core proxy implementation    |
+| `configs/`     | Example configuration files  |
+| `integration/` | Integration tests            |
+| `docs/`        | Engineering documentation    |
+| `docker/`      | Prometheus and Grafana setup |
+
+Understanding the complete project layout is not required before running Torus.
+
+---
+
+## Next steps
+
+Continue with **Quick Start** to configure the proxy, start the server, and forward your first request.

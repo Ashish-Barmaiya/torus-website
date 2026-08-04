@@ -8,14 +8,19 @@ import { type HeadingItem, extractHeadingsFromSource } from "@/lib/docs/headings
 type MdxDocument = (props: Record<string, unknown>) => ReactNode;
 type MdxLoader = () => Promise<{ default: MdxDocument }>;
 
-export type DocMetadata = {
+export interface DocMetadata {
   title?: string;
   description?: string;
+
   package?: string;
   files?: string[];
   related?: string[];
+
   updated?: string;
-};
+
+  readingTime?: string;
+  wordCount?: number;
+}
 
 const docsRoot = path.join(process.cwd(), "content", "docs");
 
@@ -161,11 +166,31 @@ export async function getDocContent(slug: string[]): Promise<MdxDocument> {
   return (await document.loader()).default;
 }
 
+function calculateWordCount(content: string): number {
+  return content.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function calculateReadingTime(wordCount: number): string {
+  const minutes = Math.max(1, Math.ceil(wordCount / 200));
+  return `${minutes} min`;
+}
+
 export async function getDocMetadata(slug: string[]): Promise<DocMetadata> {
   const document = getDocument(slug);
+
   const source = await fs.readFile(document.filePath, "utf8");
-  const { data } = matter(source);
-  return data as DocMetadata;
+
+  const { data, content } = matter(source);
+
+  const wordCount = calculateWordCount(content);
+
+  return {
+    ...(data as DocMetadata),
+
+    wordCount,
+
+    readingTime: calculateReadingTime(wordCount),
+  };
 }
 
 export async function getDocHeadings(slug: string[]): Promise<HeadingItem[]> {
