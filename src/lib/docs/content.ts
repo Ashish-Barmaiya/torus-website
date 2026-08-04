@@ -1,48 +1,176 @@
 import type { ReactNode } from "react";
+import { promises as fs } from "fs";
+import path from "path";
+import matter from "gray-matter";
+
+import { type HeadingItem, extractHeadingsFromSource } from "@/lib/docs/headings";
 
 type MdxDocument = (props: Record<string, unknown>) => ReactNode;
 type MdxLoader = () => Promise<{ default: MdxDocument }>;
 
-const mdxDocuments: Record<string, MdxLoader> = {
-  introduction: () => import("../../../content/docs/introduction.mdx"),
-  "getting-started/installation": () => import("../../../content/docs/getting-started/installation.mdx"),
-  "getting-started/quick-start": () => import("../../../content/docs/getting-started/quick-start.mdx"),
-  architecture: () => import("../../../content/docs/architecture.mdx"),
-  "architecture/execution-pipeline": () => import("../../../content/docs/architecture/execution-pipeline.mdx"),
-  runtime: () => import("../../../content/docs/runtime.mdx"),
-  router: () => import("../../../content/docs/router.mdx"),
-  services: () => import("../../../content/docs/services.mdx"),
-  "reverse-proxy": () => import("../../../content/docs/reverse-proxy.mdx"),
-  configuration: () => import("../../../content/docs/configuration.mdx"),
-  routing: () => import("../../../content/docs/routing.mdx"),
-  tls: () => import("../../../content/docs/tls.mdx"),
-  "load-balancing": () => import("../../../content/docs/load-balancing.mdx"),
-  "health-checks": () => import("../../../content/docs/health-checks.mdx"),
-  deployment: () => import("../../../content/docs/deployment.mdx"),
-  "deployment/docker": () => import("../../../content/docs/deployment/docker.mdx"),
-  "deployment/linux": () => import("../../../content/docs/deployment/linux.mdx"),
-  "deployment/systemd": () => import("../../../content/docs/deployment/systemd.mdx"),
-  "deployment/oracle-cloud": () => import("../../../content/docs/deployment/oracle-cloud.mdx"),
-  observability: () => import("../../../content/docs/observability.mdx"),
-  "observability/logging": () => import("../../../content/docs/observability/logging.mdx"),
-  "observability/metrics": () => import("../../../content/docs/observability/metrics.mdx"),
-  "observability/health-endpoint": () => import("../../../content/docs/observability/health-endpoint.mdx"),
-  "benchmarking/methodology": () => import("../../../content/docs/benchmarking/methodology.mdx"),
-  "benchmarking/reports": () => import("../../../content/docs/benchmarking/reports.mdx"),
-  "benchmarking/datasets": () => import("../../../content/docs/benchmarking/datasets.mdx"),
-  "reference/configuration": () => import("../../../content/docs/reference/configuration.mdx"),
-  "reference/cli": () => import("../../../content/docs/reference/cli.mdx"),
-  "reference/packages": () => import("../../../content/docs/reference/packages.mdx"),
-  adrs: () => import("../../../content/docs/adrs.mdx"),
-  roadmap: () => import("../../../content/docs/roadmap.mdx"),
+export type DocMetadata = {
+  title?: string;
+  description?: string;
+  package?: string;
+  files?: string[];
+  related?: string[];
+  updated?: string;
 };
 
-export async function getDocContent(slug: string[]): Promise<MdxDocument> {
+const docsRoot = path.join(process.cwd(), "content", "docs");
+
+const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
+  introduction: {
+    loader: () => import("../../../content/docs/introduction.mdx"),
+    filePath: path.join(docsRoot, "introduction.mdx"),
+  },
+  "getting-started/installation": {
+    loader: () => import("../../../content/docs/getting-started/installation.mdx"),
+    filePath: path.join(docsRoot, "getting-started", "installation.mdx"),
+  },
+  "getting-started/quick-start": {
+    loader: () => import("../../../content/docs/getting-started/quick-start.mdx"),
+    filePath: path.join(docsRoot, "getting-started", "quick-start.mdx"),
+  },
+  architecture: {
+    loader: () => import("../../../content/docs/architecture.mdx"),
+    filePath: path.join(docsRoot, "architecture.mdx"),
+  },
+  "architecture/execution-pipeline": {
+    loader: () => import("../../../content/docs/architecture/execution-pipeline.mdx"),
+    filePath: path.join(docsRoot, "architecture", "execution-pipeline.mdx"),
+  },
+  runtime: {
+    loader: () => import("../../../content/docs/runtime.mdx"),
+    filePath: path.join(docsRoot, "runtime.mdx"),
+  },
+  router: {
+    loader: () => import("../../../content/docs/router.mdx"),
+    filePath: path.join(docsRoot, "router.mdx"),
+  },
+  services: {
+    loader: () => import("../../../content/docs/services.mdx"),
+    filePath: path.join(docsRoot, "services.mdx"),
+  },
+  "reverse-proxy": {
+    loader: () => import("../../../content/docs/reverse-proxy.mdx"),
+    filePath: path.join(docsRoot, "reverse-proxy.mdx"),
+  },
+  configuration: {
+    loader: () => import("../../../content/docs/configuration.mdx"),
+    filePath: path.join(docsRoot, "configuration.mdx"),
+  },
+  routing: {
+    loader: () => import("../../../content/docs/routing.mdx"),
+    filePath: path.join(docsRoot, "routing.mdx"),
+  },
+  tls: {
+    loader: () => import("../../../content/docs/tls.mdx"),
+    filePath: path.join(docsRoot, "tls.mdx"),
+  },
+  "load-balancing": {
+    loader: () => import("../../../content/docs/load-balancing.mdx"),
+    filePath: path.join(docsRoot, "load-balancing.mdx"),
+  },
+  "health-checks": {
+    loader: () => import("../../../content/docs/health-checks.mdx"),
+    filePath: path.join(docsRoot, "health-checks.mdx"),
+  },
+  deployment: {
+    loader: () => import("../../../content/docs/deployment.mdx"),
+    filePath: path.join(docsRoot, "deployment.mdx"),
+  },
+  "deployment/docker": {
+    loader: () => import("../../../content/docs/deployment/docker.mdx"),
+    filePath: path.join(docsRoot, "deployment", "docker.mdx"),
+  },
+  "deployment/linux": {
+    loader: () => import("../../../content/docs/deployment/linux.mdx"),
+    filePath: path.join(docsRoot, "deployment", "linux.mdx"),
+  },
+  "deployment/systemd": {
+    loader: () => import("../../../content/docs/deployment/systemd.mdx"),
+    filePath: path.join(docsRoot, "deployment", "systemd.mdx"),
+  },
+  "deployment/oracle-cloud": {
+    loader: () => import("../../../content/docs/deployment/oracle-cloud.mdx"),
+    filePath: path.join(docsRoot, "deployment", "oracle-cloud.mdx"),
+  },
+  observability: {
+    loader: () => import("../../../content/docs/observability.mdx"),
+    filePath: path.join(docsRoot, "observability.mdx"),
+  },
+  "observability/logging": {
+    loader: () => import("../../../content/docs/observability/logging.mdx"),
+    filePath: path.join(docsRoot, "observability", "logging.mdx"),
+  },
+  "observability/metrics": {
+    loader: () => import("../../../content/docs/observability/metrics.mdx"),
+    filePath: path.join(docsRoot, "observability", "metrics.mdx"),
+  },
+  "observability/health-endpoint": {
+    loader: () => import("../../../content/docs/observability/health-endpoint.mdx"),
+    filePath: path.join(docsRoot, "observability", "health-endpoint.mdx"),
+  },
+  "benchmarking/methodology": {
+    loader: () => import("../../../content/docs/benchmarking/methodology.mdx"),
+    filePath: path.join(docsRoot, "benchmarking", "methodology.mdx"),
+  },
+  "benchmarking/reports": {
+    loader: () => import("../../../content/docs/benchmarking/reports.mdx"),
+    filePath: path.join(docsRoot, "benchmarking", "reports.mdx"),
+  },
+  "benchmarking/datasets": {
+    loader: () => import("../../../content/docs/benchmarking/datasets.mdx"),
+    filePath: path.join(docsRoot, "benchmarking", "datasets.mdx"),
+  },
+  "reference/configuration": {
+    loader: () => import("../../../content/docs/reference/configuration.mdx"),
+    filePath: path.join(docsRoot, "reference", "configuration.mdx"),
+  },
+  "reference/cli": {
+    loader: () => import("../../../content/docs/reference/cli.mdx"),
+    filePath: path.join(docsRoot, "reference", "cli.mdx"),
+  },
+  "reference/packages": {
+    loader: () => import("../../../content/docs/reference/packages.mdx"),
+    filePath: path.join(docsRoot, "reference", "packages.mdx"),
+  },
+  adrs: {
+    loader: () => import("../../../content/docs/adrs.mdx"),
+    filePath: path.join(docsRoot, "adrs.mdx"),
+  },
+  roadmap: {
+    loader: () => import("../../../content/docs/roadmap.mdx"),
+    filePath: path.join(docsRoot, "roadmap.mdx"),
+  },
+};
+
+function getDocument(slug: string[]) {
   const document = mdxDocuments[slug.join("/")];
 
   if (!document) {
     throw new Error(`Missing MDX document for ${slug.join("/")}`);
   }
 
-  return (await document()).default;
+  return document;
+}
+
+export async function getDocContent(slug: string[]): Promise<MdxDocument> {
+  const document = getDocument(slug);
+  return (await document.loader()).default;
+}
+
+export async function getDocMetadata(slug: string[]): Promise<DocMetadata> {
+  const document = getDocument(slug);
+  const source = await fs.readFile(document.filePath, "utf8");
+  const { data } = matter(source);
+  return data as DocMetadata;
+}
+
+export async function getDocHeadings(slug: string[]): Promise<HeadingItem[]> {
+  const document = getDocument(slug);
+  const source = await fs.readFile(document.filePath, "utf8");
+  const { content } = matter(source);
+  return extractHeadingsFromSource(content);
 }

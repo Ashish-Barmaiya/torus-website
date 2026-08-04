@@ -1,14 +1,238 @@
 ---
 title: Architecture
-description: The request path through Torus.
+description: How Torus processes every request from the listener to the upstream and back.
 ---
 
 # Architecture
 
-This page will describe the stable boundaries between the listener, runtime, router, service, and upstream proxy.
+Torus is a Layer 7 reverse proxy and edge API gateway written in Go.
 
-## Why this exists
+The architecture is intentionally small.
 
-The architecture reference makes request ownership inspectable.
+Every request passes through a fixed execution pipeline with clearly defined responsibilities. There are no hidden execution paths, implicit middleware chains, or dynamically constructed request graphs.
 
-<ArchitectureDiagram>Each component has a narrow responsibility.</ArchitectureDiagram>
+The runtime remains predictable because each subsystem performs one job before handing control to the next stage.
+
+---
+
+## Design goals
+
+The architecture was designed around a small number of engineering principles.
+
+- Immutable runtime during request execution.
+- Deterministic request routing.
+- Health-aware upstream selection.
+- Zero-downtime configuration reloads.
+- Clear ownership boundaries between subsystems.
+- Production-first observability.
+
+These principles influence every component inside Torus.
+
+---
+
+## Request lifecycle
+
+Every incoming request follows the same execution path.
+
+```text
+Client
+    │
+    ▼
+TCP Listener
+    │
+    ▼
+HTTP Server
+    │
+    ▼
+Runtime Snapshot
+    │
+    ▼
+Router
+    │
+    ▼
+Service
+    │
+    ▼
+Load Balancer
+    │
+    ▼
+Reverse Proxy
+    │
+    ▼
+Backend
+    │
+    ▼
+Response
+```
+
+Each stage performs a single responsibility before passing the request to the next component.
+
+---
+
+## Component responsibilities
+
+| Component     | Responsibility                                                           |
+| ------------- | ------------------------------------------------------------------------ |
+| Listener      | Accept incoming TCP connections.                                         |
+| HTTP Server   | Parse HTTP requests and manage request lifecycle.                        |
+| Runtime       | Provides an immutable snapshot of the active configuration.              |
+| Router        | Matches the incoming request against configured routes.                  |
+| Service       | Resolves the logical service selected by the router.                     |
+| Load Balancer | Selects a healthy upstream according to the configured balancing policy. |
+| Reverse Proxy | Forwards the request to the selected backend and streams the response.   |
+
+No component performs work outside its responsibility.
+
+This separation makes the system easier to reason about and simplifies testing.
+
+---
+
+## Runtime snapshots
+
+One of the most important concepts in Torus is the runtime snapshot.
+
+Configuration is parsed only when a reload occurs.
+
+Once validated, Torus constructs an immutable runtime object containing every route, service, backend, and lookup structure required to serve requests.
+
+Every request reads from this snapshot.
+
+The snapshot never changes while requests are executing.
+
+When configuration changes, Torus builds a completely new runtime and atomically swaps the active pointer.
+
+Existing requests continue using the previous runtime until completion.
+
+New requests immediately observe the updated configuration.
+
+This design eliminates locking from the request path while allowing zero-downtime reloads.
+
+---
+
+## Routing
+
+The router receives the request after the runtime snapshot has been acquired.
+
+Its responsibility is straightforward:
+
+1. Read the request path.
+2. Find the matching route.
+3. Resolve the configured service.
+
+The router never performs proxying or load balancing.
+
+Its only responsibility is determining **where the request should go**.
+
+---
+
+## Services
+
+A service represents a logical destination.
+
+Rather than attaching routes directly to backend servers, routes reference services.
+
+A service contains one or more upstreams.
+
+This separation allows routing policy and backend topology to evolve independently.
+
+---
+
+## Load balancing
+
+After a service has been resolved, Torus selects one healthy upstream.
+
+Only healthy upstreams participate in selection.
+
+Unhealthy backends are excluded before the balancing algorithm executes.
+
+This avoids forwarding traffic to known failing instances.
+
+---
+
+## Reverse proxy
+
+The reverse proxy is the final stage before communicating with the backend.
+
+Its responsibilities include:
+
+- creating the upstream request
+- forwarding headers
+- streaming request bodies
+- receiving responses
+- streaming responses back to the client
+
+The reverse proxy does not perform routing decisions.
+
+By the time execution reaches this stage, the destination has already been determined.
+
+---
+
+## Configuration reload
+
+Configuration updates do not interrupt active traffic.
+
+The reload sequence is:
+
+```text
+Configuration changed
+        │
+        ▼
+Parse
+        │
+        ▼
+Validate
+        │
+        ▼
+Build new runtime
+        │
+        ▼
+Atomic runtime swap
+        │
+        ▼
+New requests use updated runtime
+```
+
+If validation fails, Torus continues serving traffic using the previous runtime.
+
+The active configuration is never replaced with an invalid one.
+
+---
+
+## Concurrency model
+
+Torus is designed to minimize synchronization in the request path.
+
+Requests execute concurrently while sharing an immutable runtime snapshot.
+
+Because runtime data is read-only after construction, request handling does not require coarse-grained locking around routing or service discovery.
+
+Synchronization is limited primarily to configuration reloads, which occur outside the critical request path.
+
+---
+
+## Architecture boundaries
+
+Each subsystem has a clearly defined responsibility.
+
+| Subsystem     | Owns                  |
+| ------------- | --------------------- |
+| Listener      | Accepting connections |
+| Runtime       | Active configuration  |
+| Router        | Route selection       |
+| Service       | Backend grouping      |
+| Load Balancer | Upstream selection    |
+| Reverse Proxy | HTTP forwarding       |
+
+Maintaining these boundaries keeps the codebase predictable as new features are added.
+
+---
+
+## Next steps
+
+The following documents explain each subsystem in more detail.
+
+- Runtime
+- Router
+- Services
+- Reverse Proxy
+- Configuration
