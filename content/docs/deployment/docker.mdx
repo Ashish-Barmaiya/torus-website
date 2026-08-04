@@ -1,16 +1,174 @@
 ---
 title: Docker
-description: Containerized Torus deployments.
+description: Running Torus in a Docker container.
+updated: 2026-08-04
+package: docker
+files:
+  - Dockerfile
+  - docker-compose.yml
+related:
+  - deployment
+  - deployment/linux
+  - deployment/systemd
 ---
 
 # Docker
 
-This page will document container image assumptions, configuration mounts, and networking boundaries.
+Torus can be packaged as a lightweight container image and deployed anywhere a Docker-compatible runtime is available.
 
-## Example
+Containerized deployments are useful for local development, virtual machines, CI environments, and container orchestration platforms.
 
-```dockerfile
-FROM scratch
-COPY torus /torus
-ENTRYPOINT ["/torus"]
+---
+
+## Prerequisites
+
+Before building the image, ensure you have:
+
+- Docker installed
+- A Torus configuration file
+- Backend services accessible from the container
+
+---
+
+## Build the image
+
+From the repository root:
+
+```bash
+docker build -t torus:latest .
 ```
+
+This produces a container image containing the Torus binary and its runtime dependencies.
+
+---
+
+## Run the container
+
+Mount the configuration file into the container.
+
+```bash
+docker run \
+  --name torus \
+  -p 8080:8080 \
+  -v $(pwd)/configs/torus-http.yaml:/etc/torus/torus.yaml:ro \
+  torus:latest \
+  -config /etc/torus/torus.yaml
+```
+
+Windows PowerShell users should replace the volume mount syntax with the appropriate Windows path.
+
+---
+
+## Exposing ports
+
+Expose the port configured in the Torus configuration.
+
+Example:
+
+| Torus Address | Docker Mapping |
+| ------------- | -------------- |
+| `:8080`       | `-p 8080:8080` |
+| `:8443`       | `-p 8443:8443` |
+
+---
+
+## Mounting configuration
+
+Configuration should be provided through a bind mount or container volume.
+
+```text
+Host
+└── configs/
+    └── torus-http.yaml
+
+          ↓
+
+Container
+└── /etc/torus/torus.yaml
+```
+
+Keeping configuration outside the image allows updates without rebuilding the container.
+
+---
+
+## TLS certificates
+
+When HTTPS is enabled, mount the certificate and private key into the container.
+
+Example:
+
+```text
+/etc/certs/cert.pem
+/etc/certs/key.pem
+```
+
+Update the configuration file so the certificate paths match the mounted locations.
+
+---
+
+## Health checks
+
+Docker health checks can use Torus' readiness endpoint.
+
+Example:
+
+```bash
+curl http://localhost:8080/readyz
+```
+
+A successful response indicates that Torus has completed startup and is ready to serve traffic.
+
+---
+
+## Logs
+
+Torus writes structured logs to standard output.
+
+Docker automatically captures these logs.
+
+View recent logs with:
+
+```bash
+docker logs torus
+```
+
+---
+
+## Updating configuration
+
+Configuration reloads behave the same inside a container as on a native installation.
+
+After updating the configuration file:
+
+```text
+Configuration Updated
+        ↓
+ Build Runtime
+        ↓
+ Atomic Swap
+        ↓
+ Continue Serving Requests
+```
+
+No container restart is required.
+
+---
+
+## Production recommendations
+
+For production deployments:
+
+- Mount configuration as a read-only volume.
+- Store TLS certificates outside the image.
+- Configure container restart policies.
+- Monitor `/readyz` and `/metrics`.
+- Limit container privileges where possible.
+- Use tagged image versions instead of `latest`.
+
+---
+
+## Related documentation
+
+- **Deployment** — deployment overview
+- **Linux** — native Linux deployment
+- **systemd** — long-running service management

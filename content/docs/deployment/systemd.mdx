@@ -1,16 +1,314 @@
 ---
 title: systemd
-description: A service unit for reliable process supervision.
+description: Run Torus as a managed Linux service using systemd.
+updated: 2026-08-04
+package: deployment
+files:
+  - deployments/systemd/torus.service
+related:
+  - deployment
+  - deployment/linux
+  - hot-reload
 ---
 
 # systemd
 
-This page will provide a reviewable service unit and explain process lifecycle decisions.
+For production Linux deployments, Torus should run under **systemd** rather than as an interactive shell process.
 
-## Example
+Running Torus as a system service provides:
+
+- automatic startup during system boot
+- process supervision
+- automatic restart after failures
+- centralized logging through journald
+- predictable lifecycle management
+
+---
+
+## Recommended installation layout
+
+A typical production installation looks like:
+
+```text
+/usr/local/bin/
+└── torus
+
+/etc/torus/
+└── torus.yaml
+
+/etc/systemd/system/
+└── torus.service
+```
+
+Keeping the binary, configuration, and service definition separate simplifies upgrades and operational maintenance.
+
+---
+
+## Create a dedicated service account
+
+Torus should not run as the root user.
+
+Create a dedicated system account:
+
+```bash
+sudo useradd \
+  --system \
+  --home /nonexistent \
+  --shell /usr/sbin/nologin \
+  torus
+```
+
+This account should have read access only to:
+
+- the Torus configuration
+- TLS certificates (if enabled)
+
+---
+
+## Install the binary
+
+Copy the compiled executable.
+
+```bash
+sudo install -m 755 torus /usr/local/bin/torus
+```
+
+Verify the installation.
+
+```bash
+/usr/local/bin/torus --help
+```
+
+---
+
+## Install the configuration
+
+Create the configuration directory.
+
+```bash
+sudo mkdir -p /etc/torus
+```
+
+Copy the configuration.
+
+```bash
+sudo cp configs/torus-http.yaml /etc/torus/torus.yaml
+```
+
+Set appropriate permissions.
+
+```bash
+sudo chown root:torus /etc/torus/torus.yaml
+sudo chmod 640 /etc/torus/torus.yaml
+```
+
+---
+
+## Create the service unit
+
+Create:
+
+```text
+/etc/systemd/system/torus.service
+```
+
+Example service definition:
 
 ```ini
+[Unit]
+Description=Torus Reverse Proxy
+Documentation=https://github.com/Ashish-Barmaiya/torus-proxy
+After=network-online.target
+Wants=network-online.target
+
 [Service]
-ExecStart=/usr/local/bin/torus
+Type=simple
+
+User=torus
+Group=torus
+
+ExecStart=/usr/local/bin/torus \
+  -config /etc/torus/torus.yaml
+
 Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
 ```
+
+---
+
+## Reload systemd
+
+Whenever the service definition changes:
+
+```bash
+sudo systemctl daemon-reload
+```
+
+---
+
+## Enable automatic startup
+
+Enable the service.
+
+```bash
+sudo systemctl enable torus
+```
+
+Start it immediately.
+
+```bash
+sudo systemctl start torus
+```
+
+---
+
+## Verify the service
+
+Check service status.
+
+```bash
+systemctl status torus
+```
+
+Expected output resembles:
+
+```text
+● torus.service
+   Loaded: loaded
+   Active: active (running)
+```
+
+---
+
+## View logs
+
+systemd automatically captures Torus logs.
+
+Recent logs:
+
+```bash
+journalctl -u torus
+```
+
+Follow logs in real time:
+
+```bash
+journalctl -u torus -f
+```
+
+---
+
+## Service management
+
+Restart:
+
+```bash
+sudo systemctl restart torus
+```
+
+Stop:
+
+```bash
+sudo systemctl stop torus
+```
+
+Disable automatic startup:
+
+```bash
+sudo systemctl disable torus
+```
+
+---
+
+## Updating Torus
+
+When deploying a new version:
+
+1. Stop the service.
+
+```bash
+sudo systemctl stop torus
+```
+
+2. Replace the executable.
+
+```bash
+sudo install -m 755 torus /usr/local/bin/torus
+```
+
+3. Start the service.
+
+```bash
+sudo systemctl start torus
+```
+
+Configuration updates are independent of binary updates. Refer to **Hot Reload** for runtime configuration replacement.
+
+---
+
+## Operational recommendations
+
+For production systems:
+
+- Run Torus as a dedicated service account.
+- Keep configuration under `/etc/torus`.
+- Restrict access to TLS private keys.
+- Enable request logging and metrics.
+- Monitor the readiness endpoint.
+- Configure automatic restart on failures.
+- Keep the operating system updated.
+
+---
+
+## Troubleshooting
+
+### Service will not start
+
+Check the service status.
+
+```bash
+systemctl status torus
+```
+
+Review the logs.
+
+```bash
+journalctl -u torus
+```
+
+---
+
+### Configuration errors
+
+Validate that:
+
+- the configuration file exists
+- file permissions allow Torus to read it
+- backend addresses are reachable
+
+---
+
+### Permission denied
+
+Verify ownership and permissions for:
+
+- `/usr/local/bin/torus`
+- `/etc/torus/torus.yaml`
+- TLS certificate and key files
+
+---
+
+## Related documentation
+
+- **Deployment** — deployment overview
+- **Linux** — native Linux deployment
+- **Hot Reload** — runtime configuration replacement
+- **Observability** — monitoring a running proxy

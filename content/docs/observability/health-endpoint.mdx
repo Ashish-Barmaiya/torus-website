@@ -1,12 +1,162 @@
 ---
 title: Health Endpoint
-description: Health endpoint behavior and intent.
+description: Readiness reporting and health monitoring in Torus.
+updated: 2026-08-04
+package: internal/health
+files:
+  - internal/health
+related:
+  - observability
+  - observability/metrics
+  - health-checks
 ---
 
 # Health Endpoint
 
-This page will specify health endpoint response conditions and how consumers should interpret them.
+Torus exposes a dedicated HTTP endpoint that reports whether the proxy is ready to receive traffic.
 
-## API Reference
+Unlike backend health checks, which monitor upstream services, the readiness endpoint reflects the operational state of the Torus process itself.
 
-<ApiReference endpoint="/healthz">Response and error semantics will appear here.</ApiReference>
+This endpoint is intended for load balancers, orchestration platforms, and monitoring systems.
+
+---
+
+## Endpoint
+
+By default, Torus exposes the following endpoint:
+
+```text
+GET /readyz
+```
+
+The endpoint is lightweight and can be polled frequently without affecting request processing.
+
+---
+
+## Purpose
+
+The readiness endpoint answers a single operational question:
+
+> **Can this Torus instance safely receive client traffic?**
+
+A successful readiness response indicates that:
+
+- the server has started successfully
+- configuration has been loaded
+- the runtime has been initialized
+- the proxy is ready to accept requests
+
+---
+
+## Readiness lifecycle
+
+During startup, Torus transitions through several initialization stages before becoming ready.
+
+```text
+Process Started
+        ↓
+Load Configuration
+        ↓
+Build Runtime
+        ↓
+Initialize Services
+        ↓
+Ready
+```
+
+Only after initialization completes should external systems begin routing traffic to the instance.
+
+---
+
+## Typical deployment
+
+A common production deployment looks like:
+
+```text
+          Load Balancer
+                │
+     Readiness Probe (/readyz)
+                ↓
+             Torus
+```
+
+Load balancers periodically query the endpoint before forwarding requests.
+
+---
+
+## Difference from backend health checks
+
+These two concepts serve different purposes.
+
+| Feature               | Purpose                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `/readyz`             | Reports whether the Torus process is ready to serve traffic |
+| Backend health checks | Monitor the availability of upstream services               |
+
+A healthy Torus instance may still report unhealthy backends, and vice versa.
+
+---
+
+## Common integrations
+
+The readiness endpoint is commonly used by:
+
+- Docker health checks
+- Kubernetes readiness probes
+- cloud load balancers
+- reverse proxies
+- external monitoring systems
+
+These systems rely on a lightweight endpoint to determine whether traffic should be routed to the proxy.
+
+---
+
+## Operational workflow
+
+A typical readiness workflow is:
+
+```text
+Torus Starts
+      ↓
+Runtime Initialized
+      ↓
+/readyz Returns Success
+      ↓
+Load Balancer Sends Traffic
+```
+
+If the proxy is not ready, traffic should remain directed to healthy instances.
+
+---
+
+## Monitoring recommendations
+
+For production environments:
+
+- monitor the readiness endpoint continuously
+- alert on repeated readiness failures
+- combine readiness checks with runtime metrics
+- investigate failures using request and operational logs
+
+The readiness endpoint should be considered one component of a broader monitoring strategy rather than the sole indicator of application health.
+
+---
+
+## Future enhancements
+
+Future versions of Torus may extend health reporting with additional operational information, including:
+
+- startup diagnostics
+- runtime generation information
+- dependency status
+- optional detailed health responses
+
+The endpoint will remain lightweight and suitable for automated polling.
+
+---
+
+## Related documentation
+
+- **Observability** — overview of monitoring capabilities.
+- **Metrics** — runtime measurements.
+- **Health Checks** — monitoring backend availability.

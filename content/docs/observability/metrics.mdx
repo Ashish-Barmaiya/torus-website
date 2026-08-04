@@ -1,12 +1,202 @@
 ---
 title: Metrics
-description: Metrics placeholders for traffic and upstream health.
+description: Runtime metrics exported by Torus for monitoring and alerting.
+updated: 2026-08-04
+package: internal/observability
+files:
+  - internal/observability
+related:
+  - observability
+  - observability/logging
+  - observability/health-endpoint
 ---
 
 # Metrics
 
-This page will describe metric names, labels, cardinality considerations, and scrape behavior.
+Torus exposes operational metrics that describe the current state and performance of the proxy.
 
-## Related Benchmark
+These metrics are intended for continuous collection by monitoring systems such as Prometheus and can be visualized using dashboards or used to trigger alerts.
 
-Metric overhead notes will be attached to future benchmark reports.
+Unlike request logs, metrics provide a quantitative view of system behavior over time.
+
+---
+
+## Why metrics matter
+
+Metrics answer operational questions such as:
+
+- Is Torus receiving traffic?
+- Are requests succeeding?
+- Are backends healthy?
+- Has latency increased?
+- Did configuration reload successfully?
+- Is resource usage changing over time?
+
+Monitoring these signals allows operators to identify performance regressions and infrastructure failures before they impact users.
+
+---
+
+## Metrics architecture
+
+```text
+                 Torus
+
+                   ↓
+
+        Runtime Measurements
+
+                   ↓
+
+          /metrics endpoint
+
+                   ↓
+
+             Prometheus
+
+                   ↓
+
+               Grafana
+```
+
+Metrics are generated continuously while Torus processes requests.
+
+---
+
+## Metric categories
+
+Torus groups its metrics into several logical categories.
+
+### HTTP traffic
+
+These metrics describe incoming client traffic.
+
+Typical measurements include:
+
+- total requests
+- response status codes
+- request duration
+- throughput
+
+These metrics help operators understand traffic patterns and application performance.
+
+---
+
+### Backend health
+
+Backend metrics describe the state of upstream services.
+
+Examples include:
+
+- healthy backend count
+- unhealthy backend count
+- health probe results
+- backend availability
+
+Health metrics help identify failing or overloaded upstream services.
+
+---
+
+### Runtime
+
+Runtime metrics describe the internal state of the proxy.
+
+Examples include:
+
+- active runtime generation
+- successful reloads
+- failed reloads
+- active requests
+
+These metrics are useful when diagnosing configuration changes or operational issues.
+
+---
+
+### Process
+
+Process-level metrics describe the Torus process itself.
+
+Examples include:
+
+- memory usage
+- goroutine count
+- CPU utilization
+- uptime
+
+These measurements help detect resource exhaustion and performance regressions.
+
+---
+
+## Collecting metrics
+
+Metrics are exposed through the HTTP endpoint:
+
+```text
+GET /metrics
+```
+
+The endpoint is designed for automated polling by monitoring systems.
+
+A typical deployment looks like:
+
+```text
+Torus
+   ↓
+/metrics
+   ↓
+Prometheus
+   ↓
+Grafana
+```
+
+---
+
+## Operational recommendations
+
+For production environments:
+
+- scrape metrics at regular intervals
+- retain historical metric data
+- monitor backend availability
+- alert on elevated error rates
+- alert on abnormal latency
+- correlate metrics with request logs during incident investigations
+
+---
+
+## Example monitoring workflow
+
+```text
+Traffic Increase
+        ↓
+Higher Request Rate
+        ↓
+Latency Metrics Rise
+        ↓
+Backend Health Degrades
+        ↓
+Alert Triggered
+```
+
+Historical metrics provide the context needed to identify when and why the system changed.
+
+---
+
+## Future metrics
+
+As Torus evolves, additional metrics may be introduced for features such as:
+
+- advanced routing
+- connection pools
+- TLS handshakes
+- transport performance
+- configuration reload latency
+
+The goal is to expand observability while maintaining backward compatibility whenever practical.
+
+---
+
+## Related documentation
+
+- **Observability** — observability overview.
+- **Logging** — request and operational logs.
+- **Health Endpoint** — readiness reporting.

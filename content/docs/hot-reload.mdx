@@ -1,0 +1,197 @@
+---
+title: Hot Reload
+description: Applying configuration changes without interrupting active traffic.
+updated: 2026-08-04
+package: internal/reload
+files:
+  - internal/reload/reloader.go
+  - internal/runtime/builder.go
+related:
+  - runtime
+  - configuration
+  - architecture
+---
+
+# Hot Reload
+
+Torus supports zero-downtime configuration reloads.
+
+Rather than modifying the active runtime in place, Torus constructs an entirely new runtime snapshot from the updated configuration and atomically replaces the current runtime.
+
+Requests already in progress continue using the previous runtime, while new requests immediately begin using the updated configuration.
+
+No listener restart is required.
+
+---
+
+## Why hot reload?
+
+Configuration changes are operational events.
+
+Examples include:
+
+- adding a new route
+- adding or removing backend servers
+- enabling TLS
+- updating health check settings
+- enabling observability
+
+Restarting the proxy for each change would interrupt traffic and terminate active requests.
+
+Hot reload avoids this by replacing the runtime instead of restarting the process.
+
+---
+
+## Reload pipeline
+
+Every configuration update follows the same sequence.
+
+```text
+Configuration Changed
+        ↓
+ Read Configuration
+        ↓
+    Parse YAML
+        ↓
+     Validate
+        ↓
+Build Runtime Snapshot
+        ↓
+Atomic Pointer Swap
+        ↓
+New Requests Use Updated Runtime
+```
+
+Only after the new runtime has been fully constructed is it published.
+
+---
+
+## Atomic publication
+
+The active runtime is stored behind an atomic pointer.
+
+Initially:
+
+<RequestFlow steps={["Active Pointer", "Runtime v1"]} />
+
+After reload:
+
+<RequestFlow steps={["Active Pointer", "Runtime v2"]} />
+
+The pointer swap is effectively instantaneous.
+
+New requests observe the updated runtime immediately.
+
+---
+
+## Active requests
+
+Requests already executing are never interrupted.
+
+```
+Request A
+────────────── Runtime v1 ──────────────► completes
+
+Reload Occurs
+
+Request B
+────────────── Runtime v2 ──────────────► completes
+```
+
+Each request finishes using the runtime snapshot it started with.
+
+This guarantees consistent behavior throughout the lifetime of a request.
+
+---
+
+## Failed reloads
+
+If parsing or validation fails:
+
+<RequestFlow
+  steps={[
+    "Configuration Changed",
+    "Validation Failed",
+    "Discard New Runtime",
+    "Continue Using Existing Runtime",
+  ]}
+/>
+
+The active runtime remains unchanged.
+
+No client requests are affected.
+
+---
+
+## Runtime generations
+
+Each successful reload creates a new runtime generation.
+
+```text
+Runtime v1
+
+    ↓
+
+Runtime v2
+
+    ↓
+
+Runtime v3
+
+    ↓
+
+Runtime v4
+```
+
+Older generations remain alive only while active requests still reference them.
+
+Once no requests are using a generation, it becomes eligible for garbage collection.
+
+---
+
+## Concurrency
+
+Hot reload does not block request processing.
+
+Request handlers only read immutable runtime snapshots.
+
+Reload operations construct new snapshots independently before publishing them.
+
+This separation keeps request latency predictable even while configuration changes are being applied.
+
+---
+
+## Performance considerations
+
+Runtime construction is intentionally more expensive than runtime access.
+
+Configuration changes are relatively infrequent.
+
+Request processing is continuous.
+
+Torus therefore optimizes for fast runtime reads rather than inexpensive runtime construction.
+
+---
+
+## Design rationale
+
+Building a new runtime for every configuration change provides several advantages.
+
+- zero request interruption
+- immutable execution context
+- simplified concurrency
+- no request-level locking
+- deterministic request behavior
+- safe rollback when validation fails
+
+This architecture separates configuration management from request processing, allowing each subsystem to evolve independently.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Runtime** — immutable runtime snapshots.
+- **Configuration** — how runtime snapshots are constructed.
+- **Architecture** — complete request and reload pipelines.

@@ -1,12 +1,177 @@
 ---
 title: Logging
-description: Request and operational logs.
+description: Request and operational logging in Torus.
+updated: 2026-08-04
+package: internal/logging
+files:
+  - internal/logging
+related:
+  - observability
+  - observability/metrics
+  - observability/health-endpoint
 ---
 
 # Logging
 
-This page will document structured logging fields and which events are emitted during request handling.
+Logging provides a chronological record of events occurring within a running Torus instance.
 
-## Configuration
+While metrics answer questions about **system behavior over time**, logs explain **what happened at a specific moment**.
 
-Logging configuration examples will appear here.
+Torus records operational events and request activity to assist with debugging, incident response, and day-to-day operations.
+
+---
+
+## Logging philosophy
+
+The logging system is designed around several principles:
+
+- Produce meaningful operational events.
+- Keep log entries structured and machine-readable.
+- Avoid excessive verbosity during normal operation.
+- Make debugging production incidents straightforward.
+
+Logs should provide enough context to understand what occurred without exposing unnecessary information.
+
+---
+
+## Types of logs
+
+Torus generates two primary categories of logs.
+
+### Request logs
+
+Request logs describe traffic flowing through the proxy.
+
+Typical request information includes:
+
+- request method
+- request path
+- selected route
+- upstream destination
+- response status
+- request duration
+- client address
+
+These logs help operators understand how requests move through the proxy.
+
+---
+
+### Operational logs
+
+Operational logs describe events occurring within the proxy itself.
+
+Examples include:
+
+- startup
+- shutdown
+- configuration reloads
+- backend health changes
+- runtime generation updates
+- unexpected errors
+
+Operational logs provide visibility into the internal state of the proxy.
+
+---
+
+## Logging flow
+
+```text
+Incoming Request
+        ↓
+   Request Processed
+        ↓
+ Structured Log Entry
+        ↓
+ stdout / journald
+        ↓
+ Log Collection Platform
+```
+
+Every request contributes to the operational history of the system.
+
+---
+
+## Log lifecycle
+
+During normal operation, logs are continuously produced as requests are processed and runtime events occur.
+
+```text
+Client Request
+        ↓
+Route Selected
+        ↓
+Backend Selected
+        ↓
+Response Returned
+        ↓
+Request Logged
+```
+
+Operational events follow a similar lifecycle whenever Torus starts, reloads configuration, or detects changes in backend health.
+
+---
+
+## Operational use cases
+
+Logs are particularly valuable when investigating:
+
+- unexpected request failures
+- backend outages
+- routing issues
+- configuration reload problems
+- startup failures
+- graceful shutdown events
+
+Combining logs with runtime metrics provides a more complete understanding of system behavior.
+
+---
+
+## Log collection
+
+In production environments, logs are typically collected by the host operating system or container runtime.
+
+Examples include:
+
+- journald
+- Docker logs
+- Kubernetes logging
+- centralized log aggregation platforms
+
+Centralized collection simplifies searching, filtering, and long-term retention.
+
+---
+
+## Best practices
+
+For production deployments:
+
+- retain request logs for troubleshooting
+- monitor operational errors
+- rotate logs regularly
+- synchronize system clocks
+- correlate logs with runtime metrics
+- avoid logging sensitive information
+
+A consistent logging strategy improves operational visibility and simplifies incident analysis.
+
+---
+
+## Future enhancements
+
+Future versions of Torus may introduce additional logging capabilities, including:
+
+- configurable log levels
+- structured JSON output
+- request correlation identifiers
+- distributed tracing integration
+- log sampling
+
+These features will improve observability while maintaining low runtime overhead.
+
+---
+
+## Related documentation
+
+- **Observability** — overview of Torus observability.
+- **Metrics** — quantitative runtime measurements.
+- **Health Endpoint** — readiness reporting.

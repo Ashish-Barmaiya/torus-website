@@ -57,6 +57,14 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
     loader: () => import("../../../content/docs/services.mdx"),
     filePath: path.join(docsRoot, "services.mdx"),
   },
+  "load-balancing": {
+    loader: () => import("../../../content/docs/load-balancing.mdx"),
+    filePath: path.join(docsRoot, "load-balancing.mdx"),
+  },
+  "health-checks": {
+    loader: () => import("../../../content/docs/health-checks.mdx"),
+    filePath: path.join(docsRoot, "health-checks.mdx"),
+  },
   "reverse-proxy": {
     loader: () => import("../../../content/docs/reverse-proxy.mdx"),
     filePath: path.join(docsRoot, "reverse-proxy.mdx"),
@@ -73,14 +81,11 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
     loader: () => import("../../../content/docs/tls.mdx"),
     filePath: path.join(docsRoot, "tls.mdx"),
   },
-  "load-balancing": {
-    loader: () => import("../../../content/docs/load-balancing.mdx"),
-    filePath: path.join(docsRoot, "load-balancing.mdx"),
+  "hot-reload": {
+    loader: () => import("../../../content/docs/hot-reload.mdx"),
+    filePath: path.join(docsRoot, "hot-reload.mdx"),
   },
-  "health-checks": {
-    loader: () => import("../../../content/docs/health-checks.mdx"),
-    filePath: path.join(docsRoot, "health-checks.mdx"),
-  },
+
   deployment: {
     loader: () => import("../../../content/docs/deployment.mdx"),
     filePath: path.join(docsRoot, "deployment.mdx"),

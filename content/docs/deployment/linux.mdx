@@ -1,12 +1,200 @@
 ---
 title: Linux
-description: Linux process and filesystem considerations.
+description: Running Torus directly on a Linux host.
+updated: 2026-08-04
+package: cmd/torus
+files:
+  - cmd/torus/main.go
+related:
+  - deployment
+  - deployment/docker
+  - deployment/systemd
 ---
 
 # Linux
 
-This page will document Linux capabilities, resource limits, filesystem paths, and signal handling.
+Torus can run as a standalone Linux process without requiring a container runtime.
 
-## Implementation Notes
+Native deployments provide full control over the operating environment and are well suited for dedicated servers, virtual machines, and development systems.
 
-Platform-specific guidance will be maintained here.
+---
+
+## Prerequisites
+
+Before running Torus, ensure:
+
+- Go 1.26.1 or newer (when building from source)
+- A compiled Torus binary
+- A valid configuration file
+- Reachable backend services
+
+---
+
+## Build the binary
+
+Compile Torus from the project root.
+
+```bash
+go build -o torus ./cmd/torus
+```
+
+Verify that the binary was created.
+
+```bash
+ls -lh torus
+```
+
+---
+
+## Prepare the configuration
+
+The repository provides sample configurations in the `configs/` directory.
+
+For a basic HTTP deployment:
+
+```text
+configs/
+└── torus-http.yaml
+```
+
+For HTTPS:
+
+```text
+configs/
+└── torus-https.yaml
+```
+
+Review the configuration before starting the proxy and update:
+
+- listening address
+- backend URLs
+- health check settings
+- TLS configuration (if enabled)
+
+---
+
+## Start Torus
+
+Run the proxy with the desired configuration.
+
+```bash
+./torus -config configs/torus-http.yaml
+```
+
+The process remains attached to the current terminal until interrupted.
+
+---
+
+## Verify operation
+
+Confirm that Torus has started successfully.
+
+Readiness endpoint:
+
+```bash
+curl http://localhost:8080/readyz
+```
+
+Forward a request through the proxy:
+
+```bash
+curl http://localhost:8080/api/hello
+```
+
+A successful response confirms that routing, load balancing, and proxying are functioning correctly.
+
+---
+
+## Running in the background
+
+For testing purposes, Torus can be started in the background.
+
+```bash
+./torus -config configs/torus-http.yaml &
+```
+
+Check that the process is running.
+
+```bash
+ps aux | grep torus
+```
+
+Stop the process when finished.
+
+```bash
+kill <pid>
+```
+
+For production deployments, use **systemd** instead of background processes.
+
+---
+
+## Log output
+
+By default, Torus writes structured logs to standard output.
+
+To capture logs in a file:
+
+```bash
+./torus -config configs/torus-http.yaml > torus.log 2>&1
+```
+
+Real-time monitoring:
+
+```bash
+tail -f torus.log
+```
+
+---
+
+## Configuration updates
+
+Configuration changes do not require restarting the process.
+
+The reload pipeline performs:
+
+```text
+Configuration Updated
+        ↓
+ Parse & Validate
+        ↓
+ Build Runtime Snapshot
+        ↓
+ Atomic Runtime Swap
+        ↓
+ New Requests Use Updated Configuration
+```
+
+Requests already being processed continue using the previous runtime until completion.
+
+---
+
+## Security considerations
+
+For production Linux deployments:
+
+- Run Torus as a dedicated non-root user.
+- Restrict access to configuration files.
+- Protect TLS private keys with appropriate file permissions.
+- Limit inbound firewall rules to required ports.
+- Enable request logging and metrics.
+- Keep the Go runtime and operating system updated.
+
+---
+
+## Next steps
+
+For production environments, run Torus under **systemd** to obtain:
+
+- automatic startup on boot
+- service supervision
+- centralized logging
+- automatic restart after failures
+
+---
+
+## Related documentation
+
+- **Deployment** — deployment overview
+- **Docker** — containerized deployments
+- **systemd** — managing Torus as a Linux service
