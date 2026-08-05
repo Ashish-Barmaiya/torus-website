@@ -1,12 +1,151 @@
 ---
-title: ADRs
-description: Architecture decision records.
+title: Architecture Decision Records
+description: How Torus documents and evaluates significant architectural decisions.
+package: docs/engineering
+files:
+  - docs/engineering/decision-records
+related:
+  - architecture
+  - runtime
+  - benchmarking/methodology
+  - roadmap
+updated: August 2026
 ---
 
-# ADRs
+# Architecture Decision Records
 
-This page will index architecture decision records, their status, and the documentation affected by each decision.
+Architecture Decision Records (ADRs) are engineering documents that capture the reasoning behind significant architectural decisions made during the development of Torus.
 
-## Design Decision
+Source code explains **how** the system is implemented.
 
-ADRs preserve the context behind durable engineering choices.
+An ADR explains **why** it was implemented that way.
+
+For a long-lived infrastructure project, preserving that reasoning is as important as preserving the implementation itself. Future contributors should be able to understand not only the current architecture, but also the constraints, alternatives, and trade-offs that led to it.
+
+---
+
+## Why Torus uses ADRs
+
+Reverse proxies evolve through hundreds of design decisions.
+
+Examples include:
+
+- choosing a concurrency model
+- defining runtime ownership
+- selecting synchronization primitives
+- determining reload behaviour
+- balancing simplicity against performance
+
+Without written records, those decisions eventually become implicit knowledge. As the project evolves, it becomes increasingly difficult to understand whether a piece of architecture exists because it is fundamentally necessary or simply because it has never been revisited.
+
+ADRs preserve that engineering context.
+
+They provide a durable explanation of why a particular approach was chosen and what consequences that decision introduced.
+
+---
+
+## What qualifies as an ADR?
+
+Not every implementation detail becomes an Architecture Decision Record.
+
+Torus records only decisions that have a significant impact on the architecture, behaviour, or long-term evolution of the project.
+
+Typical examples include:
+
+- architectural patterns
+- concurrency models
+- runtime ownership
+- synchronization strategies
+- technology selection
+- performance-oriented design decisions
+
+Small refactorings, bug fixes, and implementation details are documented through commits and pull requests rather than ADRs.
+
+---
+
+## How decisions are evaluated
+
+Every architectural decision follows the same engineering process.
+
+```text
+Problem
+    ↓
+Context
+    ↓
+Alternative Solutions
+    ↓
+Decision
+    ↓
+Engineering Rationale
+    ↓
+Trade-offs
+    ↓
+Validation
+```
+
+Whenever practical, decisions are supported by measurable evidence rather than intuition.
+
+This may include:
+
+- benchmark results
+- profiling data
+- concurrency testing
+- race detector execution
+- implementation complexity
+- maintainability considerations
+
+The goal is to make architectural decisions repeatable and explainable.
+
+---
+
+## Relationship to benchmarking
+
+Many architectural decisions in Torus are accompanied by benchmark reports.
+
+Benchmarking answers questions such as:
+
+- Did the change improve throughput?
+- Did latency increase?
+- What was the CPU overhead?
+- Was the engineering trade-off worthwhile?
+
+The benchmark provides the evidence.
+
+The ADR records the decision.
+
+Together they document both the reasoning and the outcome.
+
+---
+
+## Relationship to architecture documentation
+
+The documentation is organized so that each type of document answers a different question.
+
+| Document                      | Primary Question                                     |
+| ----------------------------- | ---------------------------------------------------- |
+| Architecture                  | How does Torus work?                                 |
+| Benchmark Reports             | How does Torus perform?                              |
+| Architecture Decision Records | Why was Torus designed this way?                     |
+| Reference                     | What interfaces and configuration does Torus expose? |
+
+Each document complements the others without duplicating their purpose.
+
+---
+
+## Evolution
+
+An ADR represents the project's understanding at the time the decision was made.
+
+Architectural decisions are expected to evolve as Torus grows.
+
+When a previous decision is no longer appropriate, a new ADR is created describing the revised approach and its rationale rather than rewriting historical records.
+
+This preserves the engineering history of the project while documenting its evolution over time.
+
+---
+
+## Next steps
+
+The current collection of Architecture Decision Records documents major decisions covering language selection, concurrency, runtime management, synchronization, and other foundational aspects of Torus.
+
+Future ADRs will accompany significant architectural changes as the project continues to evolve.

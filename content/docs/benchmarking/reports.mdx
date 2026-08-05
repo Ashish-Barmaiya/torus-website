@@ -1,12 +1,210 @@
 ---
 title: Benchmark Reports
-description: Published benchmark reports placeholder.
+description: How Torus publishes benchmark reports, interprets performance data, and documents engineering conclusions.
+package: docs/benchmarking
+updated: 2026-07-14
+
+files:
+  - docs/benchmarking/report-template.md
+  - docs/benchmarking/benchmark-automation.md
+  - docs/benchmarking/benchmark-matrix.md
+  - docs/benchmarking/benchmark-tooling.md
+
+related:
+  - benchmarking/methodology
+  - benchmarking/datasets
 ---
 
 # Benchmark Reports
 
-Published reports, report IDs, and their dataset links will be listed here.
+Benchmark reports are the primary record of performance investigations in Torus.
 
-## Related Benchmark
+Each report documents an engineering question, the methodology used to answer it, the collected evidence, and the conclusions drawn from the results. Rather than publishing isolated benchmark numbers, Torus treats every report as a reproducible engineering document.
 
-<BenchmarkCard id="TBD" title="First published report" summary="Benchmark reports are pending." />
+<Info>
+  Every published report is backed by an accompanying benchmark dataset containing the raw benchmark
+  outputs, statistical summaries, and generated visualizations used during analysis.
+</Info>
+
+---
+
+## Purpose
+
+Every benchmark report exists to answer a specific engineering question.
+
+Typical investigations include:
+
+- Measuring the cost of enabling TLS termination.
+- Evaluating the impact of observability instrumentation.
+- Comparing alternative implementations.
+- Quantifying the performance effects of architectural changes.
+- Detecting regressions between releases.
+
+A report is considered complete only when it documents both the measurements and the reasoning behind the conclusions.
+
+---
+
+## Benchmark Workflow
+
+Each report is produced from the same benchmark pipeline.
+
+Engineering Question
+
+↓
+
+Experiment Design
+
+↓
+
+Benchmark Execution
+
+↓
+
+Raw Dataset
+
+↓
+
+Statistical Analysis
+
+↓
+
+Generated Visualizations
+
+↓
+
+Engineering Interpretation
+
+↓
+
+Published Benchmark Report
+
+This workflow separates measurement from interpretation and ensures that conclusions remain traceable to the collected evidence.
+
+---
+
+## Benchmark Automation
+
+Benchmark execution is largely automated.
+
+The automation framework coordinates:
+
+- benchmark validation
+- metadata collection
+- workload execution
+- system monitoring
+- statistical analysis
+- visualization generation
+- automated report generation
+
+The automated report serves as the starting point for the final engineering report, which adds context, interpretation, and discussion.
+
+---
+
+## Standard Report Structure
+
+Every benchmark report follows the same high-level structure.
+
+1. Benchmark information
+2. Objective
+3. Executive summary
+4. Background
+5. Hypothesis
+6. Experimental variables
+7. System configuration
+8. Benchmark procedure
+9. Raw results
+10. Statistical summary
+11. Performance metrics
+12. Resource utilization
+13. Analysis
+14. Threats to validity
+15. Conclusion
+16. Reproducibility
+
+Using a consistent structure makes reports easier to compare across different experiments.
+
+---
+
+## Performance Categories
+
+Benchmark reports are grouped according to the engineering characteristics being evaluated.
+
+| Category               | Purpose                                         |
+| ---------------------- | ----------------------------------------------- |
+| Throughput             | Maximum request processing capability           |
+| Latency                | Response-time behaviour                         |
+| Resource Usage         | CPU, memory, and runtime efficiency             |
+| Scalability            | Behaviour under increasing workload             |
+| Reliability            | Behaviour during failures and recovery          |
+| Regression             | Performance changes across releases             |
+| Comparative            | Evaluation against alternative implementations  |
+| Correctness Under Load | Functional correctness while processing traffic |
+
+A single report may belong to multiple categories.
+
+---
+
+## Benchmark Tooling
+
+Different benchmark tools are selected according to the engineering question.
+
+| Tool        | Primary Purpose                      |
+| ----------- | ------------------------------------ |
+| **wrk**     | Maximum throughput measurement       |
+| **Vegeta**  | Controlled-rate latency testing      |
+| **pidstat** | CPU and memory monitoring            |
+| **vmstat**  | Operating system resource monitoring |
+| **pprof**   | Go runtime profiling                 |
+| **perf**    | Hardware performance counters        |
+
+Additional visualization and analysis scripts process the collected measurements into statistical summaries and plots.
+
+---
+
+## Published Reports
+
+Torus currently includes the following benchmark reports.
+
+| Benchmark         | Objective                                |
+| ----------------- | ---------------------------------------- |
+| **Benchmark-001** | Node.js to Go performance evaluation     |
+| **Benchmark-002** | HTTP versus HTTPS performance evaluation |
+| **Benchmark-003** | Observability overhead evaluation        |
+
+Each report investigates a single engineering hypothesis while holding all other experimental variables constant.
+
+---
+
+## Engineering Interpretation
+
+Benchmark reports intentionally separate measurements from conclusions.
+
+Every conclusion is expected to answer three questions:
+
+- What changed?
+- Why did it change?
+- Is the observed change significant?
+
+This distinction helps prevent unsupported claims and ensures that performance discussions remain grounded in measured evidence.
+
+---
+
+## Historical Integrity
+
+Published benchmark reports are treated as permanent engineering records.
+
+After publication:
+
+- Results are not modified.
+- Historical measurements are preserved.
+- Methodology changes are versioned rather than applied retroactively.
+- New investigations produce new benchmark reports.
+
+This policy makes long-term performance evolution traceable across releases.
+
+---
+
+## Related Documentation
+
+- **Benchmark Methodology** — Experimental design and statistical methodology.
+- **Benchmark Datasets** — Raw benchmark artifacts accompanying published reports.

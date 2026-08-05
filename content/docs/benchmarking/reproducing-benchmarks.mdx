@@ -1,0 +1,261 @@
+---
+title: Reproducing Benchmarks
+description: Execute the same benchmark scenarios used for Torus benchmark reports.
+package: docs/benchmarking
+files:
+  - docs/benchmarking/scripts
+  - docs/benchmarking/scenarios
+related:
+  - benchmarking/methodology
+  - benchmarking/reports
+  - benchmarking/datasets
+updated: August 2026
+---
+
+# Reproducing Benchmarks
+
+Every published benchmark in Torus can be reproduced using the benchmarking framework included in the repository.
+
+Benchmark execution is scenario-driven. Each scenario defines the workload, environment, monitoring configuration, and output location required for a specific experiment.
+
+---
+
+## Before you begin
+
+Complete the Getting Started guide first.
+
+You should already know how to:
+
+- build Torus
+- start the mock backends
+- run Torus with a configuration file
+
+Those steps are not repeated here.
+
+---
+
+## Step 1 — Choose a benchmark scenario
+
+Benchmark scenarios are stored in:
+
+```text
+docs/
+└── benchmarking/
+    └── scenarios/
+```
+
+Each scenario describes one benchmark configuration.
+
+Example:
+
+```yaml
+id: benchmark-003-observability-disabled
+
+title: Observability Disabled
+
+benchmark:
+  tools:
+    - wrk
+    - vegeta
+
+torus:
+  config: torus-http-observability-disabled.yaml
+
+workload:
+  threads: 2
+  connections: 100
+  duration: 30s
+  iterations: 20
+
+output:
+  dataset: benchmark-003-observability-disabled
+```
+
+The scenario specifies:
+
+- benchmark tools
+- workload parameters
+- Torus configuration
+- monitoring
+- output dataset
+- generated report
+
+The benchmark automation framework reads this file and executes the complete experiment.
+
+---
+
+## Step 2 — Start the mock backends
+
+Launch the mock backend servers.
+
+```bash
+go run ./cmd/mock-backend 3001
+```
+
+In another terminal:
+
+```bash
+go run ./cmd/mock-backend 3002
+```
+
+These services act as upstream backends during benchmarking.
+
+---
+
+## Step 3 — Build Torus
+
+```bash
+go build -o torus ./cmd/torus
+```
+
+---
+
+## Step 4 — Start Torus
+
+Run Torus using the configuration referenced by the selected benchmark scenario.
+
+For the `benchmark-003-observability-disabled` scenario:
+
+```bash
+./torus -config configs/torus-http-observability-disabled.yaml
+```
+
+For the `benchmark-003-observability-enabled` scenario:
+
+```bash
+./torus -config configs/torus-http-observability-enabled.yaml
+```
+
+Each benchmark configuration intentionally enables or disables specific features while keeping all other variables unchanged.
+
+---
+
+## Step 5 — Start supporting infrastructure (if required)
+
+Some benchmarks require additional services.
+
+For example, the observability benchmark requires Prometheus.
+
+Start the observability stack:
+
+```bash
+docker compose -f docker/compose.yml up -d
+```
+
+If the selected scenario does not require Prometheus, this step can be skipped.
+
+Always follow the requirements documented by the benchmark scenario.
+
+---
+
+## Step 6 — Execute the benchmark
+
+Run the benchmark automation script using the scenario name (without the `.yaml` extension).
+
+Example:
+
+```bash
+./docs/benchmarking/scripts/benchmark.sh benchmark-003-observability-disabled
+```
+
+or
+
+```bash
+./docs/benchmarking/scripts/benchmark.sh benchmark-003-observability-enabled
+```
+
+The automation framework performs the complete benchmark pipeline.
+
+<RequestFlow
+  steps={[
+    "Validate",
+    "Collect metadata",
+    "Run wrk / Vegeta",
+    "Monitor system",
+    "Parse results",
+    "Compute statistics",
+    "Generate plots",
+    "Generate report",
+  ]}
+/>
+
+At this point the benchmark is fully automated.
+
+The only thing left to do is wait for it to complete.
+
+---
+
+## Step 7 — Inspect the generated dataset
+
+When execution finishes, a dataset is generated locally.
+
+Example:
+
+```text
+docs/
+└── benchmarking/
+    └── datasets/
+        └── benchmark-003-observability-disabled/
+```
+
+A typical dataset contains:
+
+```text
+benchmark-003-observability-disabled/
+
+├── metadata.json
+├── summary.json
+├── report-auto.md
+│
+├── raw/
+│   ├── wrk/
+│   └── vegeta/
+│
+└── plots/
+```
+
+Generated artifacts include:
+
+- benchmark metadata
+- raw benchmark outputs
+- parsed benchmark results
+- statistical summaries
+- generated plots
+- automated report
+
+Datasets are generated automatically and are never edited manually.
+
+---
+
+## Local datasets
+
+The `docs/benchmarking/datasets` directory is intentionally excluded from version control.
+
+Benchmark datasets are generated on demand and remain local to the machine that executed the benchmark.
+
+This keeps the repository lightweight while allowing every benchmark execution to preserve its complete evidence.
+
+---
+
+## Published datasets
+
+Datasets corresponding to published benchmark reports are distributed separately as GitHub Release assets.
+
+Each benchmark report references exactly one published dataset.
+
+A published dataset contains the complete evidence supporting the conclusions presented in the report, including raw outputs, statistical summaries, generated plots, and the automated report.
+
+Future versions of the documentation may also make these datasets directly downloadable from the Benchmark Reports section.
+
+---
+
+## Next steps
+
+Once a benchmark has completed you can:
+
+- inspect the generated plots
+- review the automated report
+- compare results with previously published benchmarks
+- use the dataset for further analysis or verification
+
+The methodology, statistical analysis, and interpretation of benchmark results are described in the Benchmarking documentation.

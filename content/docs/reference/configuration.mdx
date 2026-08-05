@@ -1,12 +1,371 @@
 ---
 title: Configuration Reference
-description: Configuration fields, defaults and requirements.
+description: Complete reference for the Torus configuration schema, including every supported field, validation rule, and example.
+package: internal/config
 ---
 
 # Configuration Reference
 
-This reference will provide the complete configuration schema with defaults, requirements, and version history.
+This document defines the complete configuration schema supported by Torus.
 
-## Configuration
+Configuration files are written in YAML and validated during startup. Invalid configurations are rejected before the proxy begins accepting requests.
 
-<ConfigReference fields={[]} />
+The current configuration schema version is **v1**.
+
+---
+
+## Configuration Structure
+
+A typical configuration file is organized as follows.
+
+```yaml
+apiVersion: v1
+
+server:
+  addr: ":8080"
+
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+
+observability:
+  enabled: true
+
+routes:
+  - path: /api
+    upstream:
+      - http://localhost:3001
+      - http://localhost:3002
+
+tls:
+  cert_file: server.crt
+  key_file: server.key
+  min_version: "1.2"
+```
+
+---
+
+## `apiVersion`
+
+Identifies the configuration schema version.
+
+| Property         | Value    |
+| ---------------- | -------- |
+| Type             | `string` |
+| Required         | Yes      |
+| Supported Values | `v1`     |
+
+Torus validates the schema version before processing any configuration.
+
+Example:
+
+```yaml
+apiVersion: v1
+```
+
+---
+
+## `server`
+
+Network listener configuration.
+
+### `addr`
+
+| Property | Value    |
+| -------- | -------- |
+| Type     | `string` |
+| Required | Yes      |
+
+Specifies the TCP address on which Torus listens for incoming requests.
+
+Example:
+
+```yaml
+server:
+  addr: ":8080"
+```
+
+---
+
+## `tls`
+
+Optional TLS termination configuration.
+
+When omitted, Torus serves plain HTTP.
+
+### `cert_file`
+
+| Property | Value                       |
+| -------- | --------------------------- |
+| Type     | `string`                    |
+| Required | Yes (when `tls` is present) |
+
+Path to the server certificate.
+
+Example:
+
+```yaml
+tls:
+  cert_file: certs/server.crt
+```
+
+---
+
+### `key_file`
+
+| Property | Value                       |
+| -------- | --------------------------- |
+| Type     | `string`                    |
+| Required | Yes (when `tls` is present) |
+
+Path to the corresponding private key.
+
+Example:
+
+```yaml
+tls:
+  key_file: certs/server.key
+```
+
+---
+
+### `min_version`
+
+| Property | Value    |
+| -------- | -------- |
+| Type     | `string` |
+| Required | No       |
+| Default  | `1.2`    |
+
+Minimum supported TLS version.
+
+Supported values are:
+
+- `1.2`
+- `1.3`
+
+Example:
+
+```yaml
+tls:
+  min_version: "1.3"
+```
+
+---
+
+## `health`
+
+Controls active backend health checking.
+
+### `interval_ms`
+
+| Property | Value     |
+| -------- | --------- |
+| Type     | `integer` |
+| Required | Yes       |
+
+Interval between consecutive health checks, expressed in milliseconds.
+
+Example:
+
+```yaml
+health:
+  interval_ms: 5000
+```
+
+---
+
+### `timeout_ms`
+
+| Property | Value     |
+| -------- | --------- |
+| Type     | `integer` |
+| Required | Yes       |
+
+Maximum duration to wait for a backend health check before considering it failed.
+
+The timeout must not exceed the configured health check interval.
+
+Example:
+
+```yaml
+health:
+  timeout_ms: 2000
+```
+
+---
+
+### `path`
+
+| Property | Value    |
+| -------- | -------- |
+| Type     | `string` |
+| Required | Yes      |
+
+HTTP endpoint used when probing backend health.
+
+The value must begin with `/`.
+
+Example:
+
+```yaml
+health:
+  path: /health
+```
+
+---
+
+## `observability`
+
+Controls Prometheus metrics collection.
+
+### `enabled`
+
+| Property | Value     |
+| -------- | --------- |
+| Type     | `boolean` |
+| Required | No        |
+| Default  | `true`    |
+
+Enables or disables runtime metrics collection.
+
+When omitted, observability is enabled.
+
+Example:
+
+```yaml
+observability:
+  enabled: true
+```
+
+---
+
+## `routes`
+
+Defines the routing table.
+
+Each route associates a request path prefix with one or more backend servers.
+
+### `path`
+
+| Property | Value    |
+| -------- | -------- |
+| Type     | `string` |
+| Required | Yes      |
+
+Incoming requests whose URL begins with this prefix are forwarded to the corresponding service.
+
+Routing uses longest-prefix matching.
+
+Example:
+
+```yaml
+routes:
+  - path: /api
+```
+
+---
+
+### `upstream`
+
+| Property | Value           |
+| -------- | --------------- |
+| Type     | `array[string]` |
+| Required | Yes             |
+
+Defines one or more backend servers that may receive requests for the route.
+
+Each upstream must:
+
+- be a valid URL
+- use either `http` or `https`
+- include a hostname
+- include a port number
+
+Example:
+
+```yaml
+routes:
+  - path: /api
+    upstream:
+      - http://localhost:3001
+      - http://localhost:3002
+```
+
+---
+
+# Validation Rules
+
+Every configuration is validated before startup.
+
+The following rules are enforced.
+
+## Server
+
+- `server.addr` must not be empty.
+
+## Health Checks
+
+- `health.interval_ms` must be greater than `0`.
+- `health.timeout_ms` must be greater than `0`.
+- `health.timeout_ms` must not exceed `health.interval_ms`.
+- `health.path` must not be empty.
+- `health.path` must begin with `/`.
+
+## Routes
+
+- At least one route must be configured.
+- Route paths must be unique.
+- Every route must define at least one upstream.
+- Every upstream URL must:
+  - be a valid URL
+  - use either `http` or `https`
+  - include a hostname
+  - include a port between `1` and `65535`
+
+## TLS
+
+When TLS is configured:
+
+- `tls.cert_file` is required.
+- `tls.key_file` is required.
+- `tls.min_version` must be either `1.2` or `1.3`.
+
+---
+
+# Complete Example
+
+```yaml
+apiVersion: v1
+
+server:
+  addr: ":8080"
+
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+
+observability:
+  enabled: true
+
+routes:
+  - path: /api
+    upstream:
+      - http://localhost:3001
+      - http://localhost:3002
+
+tls:
+  cert_file: certs/server.crt
+  key_file: certs/server.key
+  min_version: "1.2"
+```
+
+---
+
+# Versioning
+
+The configuration schema is versioned through the `apiVersion` field.
+
+Future releases may introduce additional schema versions while maintaining compatibility with previously published documentation. Unsupported schema versions are rejected during configuration loading.

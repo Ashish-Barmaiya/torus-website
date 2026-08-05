@@ -1,12 +1,183 @@
 ---
 title: CLI Reference
-description: Command-line reference placeholder.
+description: Command-line interface reference for Torus and the development mock backend.
+package: cmd
 ---
 
 # CLI Reference
 
-This page will list commands, flags, environment variables, and exit behavior.
+Torus provides two executable programs:
 
-## Example
+- **`torus`** — the reverse proxy server.
+- **`mock-backend`** — a lightweight HTTP server used for development, testing, and benchmarking.
 
-<Command>torus serve --config ./torus.yaml</Command>
+---
+
+# Torus
+
+Starts the Torus reverse proxy.
+
+## Usage
+
+```bash
+torus [flags]
+```
+
+---
+
+## Flags
+
+### `--config`
+
+| Property | Value        |
+| -------- | ------------ |
+| Type     | `string`     |
+| Required | No           |
+| Default  | `torus.yaml` |
+
+Path to the configuration file.
+
+Example:
+
+```bash
+torus --config configs/torus-http.yaml
+```
+
+---
+
+## Startup Sequence
+
+When Torus starts, it performs the following initialization sequence:
+
+1. Parses command-line flags.
+2. Loads and validates the configuration file.
+3. Builds the initial runtime.
+4. Starts the HTTP or HTTPS server.
+5. Starts the configuration watcher.
+6. Waits for shutdown signals (`SIGINT` or `SIGTERM`).
+
+If configuration validation fails, Torus exits immediately with a non-zero status.
+
+---
+
+## Graceful Shutdown
+
+Torus performs graceful shutdown when it receives:
+
+- `SIGINT`
+- `SIGTERM`
+
+Shutdown consists of:
+
+1. Stopping configuration watching.
+2. Stopping acceptance of new connections.
+3. Waiting for in-flight requests to complete.
+4. Stopping background workers.
+5. Releasing runtime resources.
+
+The default shutdown timeout is **25 seconds**.
+
+---
+
+# Mock Backend
+
+The mock backend is a small HTTP server used throughout the documentation, integration tests, and benchmarking framework.
+
+It is not part of the production proxy.
+
+---
+
+## Usage
+
+```bash
+mock-backend [port]
+```
+
+If no port is specified, the server listens on **3001**.
+
+Examples:
+
+```bash
+mock-backend
+```
+
+```bash
+mock-backend 3002
+```
+
+---
+
+## Endpoints
+
+### `GET /`
+
+Returns a simple JSON response identifying the backend.
+
+Example response:
+
+```json
+{
+  "status": "ok",
+  "backend": "localhost:3001"
+}
+```
+
+---
+
+### `GET /health`
+
+Health endpoint used by Torus active health checks.
+
+Example response:
+
+```json
+{
+  "status": "ok",
+  "backend": "localhost:3001"
+}
+```
+
+---
+
+### Simulating Slow Responses
+
+The mock backend supports an optional `sleep` query parameter for introducing artificial response latency.
+
+Example:
+
+```text
+GET /?sleep=500ms
+```
+
+```text
+GET /?sleep=2s
+```
+
+This is primarily used when testing:
+
+- request timeouts
+- health checking
+- load balancing
+- latency measurements
+- benchmarking scenarios
+
+---
+
+# Exit Status
+
+Torus exits with a non-zero status when:
+
+- the configuration file cannot be loaded;
+- the configuration is invalid;
+- the initial runtime cannot be constructed;
+- the HTTP server fails during startup;
+- graceful shutdown encounters an unrecoverable error.
+
+---
+
+# Related Documentation
+
+- Getting Started
+- Configuration Reference
+- Deployment
+- Benchmark Methodology

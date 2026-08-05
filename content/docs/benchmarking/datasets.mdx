@@ -1,12 +1,213 @@
 ---
-title: Datasets
-description: Benchmark datasets and fixtures placeholder.
+title: Benchmark Datasets
+description: Benchmark datasets contain the raw evidence supporting every published Torus benchmark report.
+package: docs/benchmarking
+updated: 2026-07-14
+
+files:
+  - docs/benchmarking/datasets.md
+
+related:
+  - benchmarking/methodology
+  - benchmarking/reports
 ---
 
-# Datasets
+# Benchmark Datasets
 
-This page will define maintained workload fixtures and their intended use.
+Every published benchmark report is accompanied by a benchmark dataset containing the evidence used during analysis.
 
-## Notes
+While benchmark reports present engineering interpretation, datasets preserve the underlying measurements, generated statistics, and supporting artifacts required to independently inspect and reproduce the reported results.
 
-Every report should link its exact dataset revision.
+<Info>
+  The source repository contains the benchmarking framework and documentation. Published datasets
+  are distributed separately as GitHub Release assets to keep the repository lightweight while
+  preserving reproducibility.
+</Info>
+
+---
+
+## Purpose
+
+A benchmark dataset represents a complete benchmark execution.
+
+Typical contents include:
+
+- Benchmark metadata
+- Raw benchmark outputs
+- Parsed benchmark results
+- Statistical summaries
+- Generated plots
+- Monitoring data
+- Automatically generated reports
+
+Together, these artifacts provide the evidence supporting a published benchmark report.
+
+---
+
+## Dataset Structure
+
+A typical dataset follows the structure below.
+
+```text
+benchmark-002-http/
+
+├── metadata.json
+├── summary.json
+├── report-auto.md
+│
+├── raw/
+│   ├── wrk/
+│   └── vegeta/
+│
+├── plots/
+│
+└── monitoring/
+```
+
+Future benchmark datasets may additionally include:
+
+- CPU profiles
+- Heap profiles
+- Allocation profiles
+- Flamegraphs
+- Hardware counter recordings
+
+---
+
+## Repository Policy
+
+Benchmark datasets are intentionally **not committed** to the source repository.
+
+Instead, the repository contains:
+
+- Benchmark methodology
+- Benchmark automation
+- Benchmark reports
+- Dataset schema
+- Analysis tooling
+
+Keeping datasets separate prevents repository growth while allowing benchmark artifacts to remain publicly accessible.
+
+---
+
+## Publication
+
+Each published benchmark report references exactly one benchmark dataset.
+
+```text
+Benchmark Report
+
+        ↓
+
+Benchmark Dataset
+
+        ↓
+
+Supporting Evidence
+```
+
+Datasets are published alongside benchmark reports as GitHub Release assets.
+
+This relationship ensures that every published conclusion can be traced back to the measurements from which it was derived.
+
+---
+
+## Dataset Lifecycle
+
+Every benchmark execution produces a new dataset.
+
+Benchmark Execution
+
+↓
+
+Raw Benchmark Outputs
+
+↓
+
+Statistical Analysis
+
+↓
+
+Generated Visualizations
+
+↓
+
+Automated Report
+
+↓
+
+Published Dataset
+
+Datasets are generated automatically by the benchmarking framework, reducing manual work while maintaining consistency across benchmark runs.
+
+---
+
+## Immutability
+
+Published datasets are treated as permanent benchmark evidence.
+
+After publication:
+
+- Raw benchmark outputs are never modified.
+- Statistical summaries are not regenerated using different inputs.
+- Generated plots remain unchanged.
+- Historical datasets are preserved.
+
+If the benchmarking methodology changes, a new benchmark execution produces a new dataset rather than replacing an existing one.
+
+---
+
+## Reproducibility
+
+Every published dataset contains sufficient information to reproduce the benchmark analysis.
+
+Typical metadata includes:
+
+| Artifact                | Purpose                              |
+| ----------------------- | ------------------------------------ |
+| Benchmark configuration | Defines the experiment               |
+| Hardware profile        | Documents the execution platform     |
+| Environment profile     | Describes the benchmark topology     |
+| Software versions       | Records runtime dependencies         |
+| Git commit              | Identifies the exact source revision |
+| Raw outputs             | Preserves original measurements      |
+| Statistical summaries   | Documents computed metrics           |
+| Generated plots         | Visualizes benchmark results         |
+
+Running the analysis pipeline on the dataset should reproduce the published statistical summaries and visualizations.
+
+---
+
+## Relationship to Benchmark Reports
+
+Benchmark reports and benchmark datasets serve different purposes.
+
+| Benchmark Report           | Benchmark Dataset         |
+| -------------------------- | ------------------------- |
+| Engineering interpretation | Supporting evidence       |
+| Conclusions                | Raw measurements          |
+| Performance discussion     | Generated artifacts       |
+| Human-readable analysis    | Machine-generated outputs |
+
+Publishing both allows readers to understand not only _what_ changed, but also _why_ those conclusions were reached.
+
+---
+
+## Engineering Principles
+
+The dataset publication policy follows several principles.
+
+- Preserve raw benchmark evidence.
+- Keep generated artifacts reproducible.
+- Separate engineering interpretation from measured data.
+- Maintain immutable historical records.
+- Make published results independently verifiable.
+
+These principles ensure that Torus benchmark reports remain transparent, reproducible, and trustworthy as the project evolves.
+
+---
+
+## Related Documentation
+
+- **Benchmark Methodology** — Experimental design and statistical methodology.
+- **Benchmark Reports** — Engineering reports derived from published benchmark datasets.

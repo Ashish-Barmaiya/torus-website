@@ -1,12 +1,1189 @@
 ---
 title: Package Reference
-description: Go package reference placeholder.
+description: A reference to the packages and subsystem boundaries that make up Torus.
+package: internal
 ---
 
 # Package Reference
 
-This page will index the stable Go package boundaries and link to generated API material.
+Torus is organized as a collection of small Go packages, each responsible for a specific part of the proxy.
 
-## Source Files
+The package structure follows the same boundaries used throughout the Torus architecture:
 
-Package references will be mapped to their owning module directories.
+- configuration is parsed independently from runtime construction;
+- runtime generations own the state required to process requests;
+- routing resolves requests to services;
+- services delegate backend selection to load balancers;
+- upstreams represent backend servers;
+- the proxy coordinates request execution;
+- health checking, observability, and configuration reload operate around this core request path.
+
+This separation keeps individual packages focused while making dependencies between subsystems explicit.
+
+```text
+cmd/
+├── mock-backend/
+│   └── main.go
+└── torus/
+    └── main.go
+
+configs/
+├── torus-http-observability-disabled.yaml
+├── torus-http-observability-enabled.yaml
+├── torus-http.yaml
+└── torus-https.yaml
+
+integration/
+├── helpers_test.go
+├── hot_reload_test.go
+└── observability_test.go
+
+internal/
+├── config/
+├── configwatcher/
+├── health/
+├── loadbalancer/
+├── middleware/
+├── observability/
+├── proxy/
+├── reload/
+├── routing/
+├── runtime/
+├── service/
+├── transport/
+└── upstream/
+```
+
+---
+
+## Repository layout
+
+The Torus repository separates executable entry points, configuration, implementation packages, integration tests, and engineering documentation.
+
+| Directory      | Responsibility                                                         |
+| -------------- | ---------------------------------------------------------------------- |
+| `cmd/`         | Executable entry points for Torus and supporting development programs. |
+| `configs/`     | Example Torus configuration files.                                     |
+| `internal/`    | Core proxy implementation.                                             |
+| `integration/` | Integration tests spanning multiple Torus subsystems.                  |
+| `docs/`        | Architecture, benchmarking, engineering, and project documentation.    |
+| `docker/`      | Docker-related project assets.                                         |
+| `node/`        | Historical Node.js implementation retained from before the Go rewrite. |
+
+The majority of Torus is implemented under `internal/`.
+
+Because these packages use Go's `internal` package mechanism, they are implementation details of the Torus executable rather than a public Go library API.
+
+---
+
+## Command packages
+
+### `cmd/torus`
+
+`cmd/torus` is the main executable entry point for Torus.
+
+It connects the major subsystems required to start and operate the proxy.
+
+At startup, the executable is responsible for initializing the application around the configuration, runtime, proxy server, reload manager, and configuration watcher.
+
+The detailed implementation of those responsibilities remains inside the corresponding `internal` packages.
+
+---
+
+### `cmd/mock-backend`
+
+`cmd/mock-backend` provides the mock HTTP backend used during local development, integration testing, and benchmarking.
+
+The mock backend makes it possible to run the complete request path locally:
+
+```text
+Client
+  ↓
+Torus
+  ↓
+Mock Backend
+```
+
+The same backend setup is used by the development and benchmarking workflows documented elsewhere in the project.
+
+---
+
+## Configuration
+
+### `internal/config`
+
+The `config` package owns Torus configuration representation, loading, validation, and TLS configuration loading.
+
+Important types include:
+
+```go
+type Config struct {
+    // ...
+}
+
+type ServerConfig struct {
+    Addr string `yaml:"addr"`
+}
+
+type HealthCheckConfig struct {
+    // ...
+}
+
+type RouteConfig struct {
+    Path      string   `yaml:"path"`
+    Upstreams []string `yaml:"upstream"`
+}
+
+type TlsConfig struct {
+    // ...
+}
+
+type ObservabilityConfig struct {
+    Enabled *bool `yaml:"enabled,omitempty"`
+}
+```
+
+The package exposes the current configuration API version:
+
+```go
+const CurrentAPIVersion = "v1"
+```
+
+The primary configuration entry point is:
+
+```go
+func LoadConfig(path string) (*Config, error)
+```
+
+After loading, configuration can be validated through:
+
+```go
+func (c *Config) Validate() error
+```
+
+TLS configuration is constructed through:
+
+```go
+func (t *TlsConfig) LoadTlsConfig() (*tls.Config, error)
+```
+
+Health-check configuration also exposes duration helpers:
+
+```go
+func (h HealthCheckConfig) Interval() time.Duration
+
+func (h HealthCheckConfig) Timeout() time.Duration
+```
+
+The package therefore acts as the boundary between YAML configuration and the typed configuration consumed by runtime construction.
+
+---
+
+### `internal/configwatcher`
+
+The `configwatcher` package watches the active configuration file for changes.
+
+Its primary type is:
+
+```go
+type Watcher struct {
+    // ...
+}
+```
+
+A watcher is constructed with the configuration path, logger, and reload manager:
+
+```go
+func New(
+    configPath string,
+    logger *slog.Logger,
+    manager *reload.Manager,
+) *Watcher
+```
+
+Watching begins through:
+
+```go
+func (w *Watcher) Start(ctx context.Context) error
+```
+
+Filesystem changes are detected using `fsnotify`.
+
+The watcher itself does not construct or replace runtime state. It delegates that responsibility to the reload subsystem.
+
+```text
+Configuration File
+       ↓
+configwatcher
+       ↓
+reload.Manager
+       ↓
+New Runtime
+```
+
+This keeps filesystem monitoring separate from runtime lifecycle management.
+
+---
+
+## Runtime
+
+### `internal/runtime`
+
+The `runtime` package represents the complete immutable state used to process requests.
+
+Runtime construction begins with:
+
+```go
+func BuildRuntime(
+    cfg *config.Config,
+    logger *slog.Logger,
+) (*Runtime, error)
+```
+
+`BuildRuntime` transforms validated configuration into the runtime objects required by the proxy.
+
+A runtime is represented by:
+
+```go
+type Runtime struct {
+    // ...
+}
+```
+
+Runtime instances own the lifecycle of:
+
+- background workers;
+- health probes;
+- in-flight requests;
+- routing state;
+- runtime-specific configuration.
+
+Runtime creation is exposed through:
+
+```go
+func NewRuntime(
+    generation uint64,
+    addr string,
+    router *routing.Router,
+    tlsConfig *tls.Config,
+    observabilityEnabled bool,
+    cancel context.CancelFunc,
+) *Runtime
+```
+
+Each runtime has a generation identifier.
+
+Runtime generations allow Torus to replace the complete request-processing state without mutating the runtime currently being used by existing requests.
+
+Request lifetime is tracked through:
+
+```go
+func (r *Runtime) AcquireRequest()
+
+func (r *Runtime) ReleaseRequest()
+```
+
+Background worker lifetime is tracked independently:
+
+```go
+func (r *Runtime) AddWorker()
+
+func (r *Runtime) DoneWorker()
+```
+
+Runtime retirement is performed through:
+
+```go
+func (r *Runtime) Stop()
+```
+
+`Stop` cancels runtime workers and waits for workers and requests associated with that runtime to complete before returning.
+
+This lifecycle is fundamental to Torus' configuration reload model.
+
+---
+
+### `internal/reload`
+
+The `reload` package coordinates runtime construction and runtime replacement.
+
+Its primary type is:
+
+```go
+type Manager struct {
+    // ...
+}
+```
+
+A manager is created from the active configuration path:
+
+```go
+func NewManager(
+    configPath string,
+    logger *slog.Logger,
+) *Manager
+```
+
+The proxy server is associated with the manager through:
+
+```go
+func (m *Manager) SetServer(server *proxy.Server)
+```
+
+Initial runtime construction is handled by:
+
+```go
+func (m *Manager) BuildInitialRuntime() (*runtime.Runtime, error)
+```
+
+Subsequent configuration changes are applied through:
+
+```go
+func (m *Manager) Reload() error
+```
+
+Internally, runtime construction is shared through the manager's runtime-building path.
+
+Conceptually:
+
+```text
+Configuration Change
+        ↓
+reload.Manager
+        ↓
+Load Configuration
+        ↓
+Build New Runtime
+        ↓
+Server.Reload(...)
+        ↓
+Publish New Runtime
+        ↓
+Retire Previous Runtime
+```
+
+The reload manager therefore coordinates the transition between configuration and runtime generations without making configuration files themselves responsible for runtime state.
+
+---
+
+## Routing
+
+### `internal/routing`
+
+The `routing` package maps request paths to services.
+
+Its primary type is:
+
+```go
+type Router struct {
+    routes map[string]*service.Service
+}
+```
+
+A router is created through:
+
+```go
+func NewRouter() *Router
+```
+
+Routes are registered using:
+
+```go
+func (r *Router) AddRoute(
+    path string,
+    svc *service.Service,
+)
+```
+
+Request lookup is performed through:
+
+```go
+func (r *Router) Route(
+    path string,
+) (string, *service.Service)
+```
+
+Torus uses longest-prefix matching.
+
+For example, given:
+
+```text
+/api
+/api/users
+```
+
+a request to:
+
+```text
+/api/users/42
+```
+
+matches:
+
+```text
+/api/users
+```
+
+rather than `/api`.
+
+The router does not select individual backend servers. Its responsibility ends when the matching service has been identified.
+
+---
+
+### `internal/service`
+
+The `service` package forms the boundary between routing and backend selection.
+
+A service contains a load balancer:
+
+```go
+type Service struct {
+    lb loadbalancer.LoadBalancer
+}
+```
+
+Services are constructed from a backend set:
+
+```go
+func NewService(
+    backends []*upstream.Backend,
+) *Service
+```
+
+Backend selection is exposed through:
+
+```go
+func (s *Service) NextBackend() *upstream.Backend
+```
+
+This keeps the router independent from the specific load-balancing implementation.
+
+The resulting relationship is:
+
+```text
+Router
+  ↓
+Service
+  ↓
+Load Balancer
+  ↓
+Backend
+```
+
+---
+
+## Load balancing and upstreams
+
+### `internal/loadbalancer`
+
+The `loadbalancer` package defines backend-selection behavior.
+
+Load balancers implement:
+
+```go
+type LoadBalancer interface {
+    Next() *upstream.Backend
+}
+```
+
+The current implementation is round-robin selection.
+
+```go
+type RoundRobin struct {
+    backends []*upstream.Backend
+    index    atomic.Uint64
+}
+```
+
+A round-robin balancer is constructed through:
+
+```go
+func NewRoundRobin(
+    backends []*upstream.Backend,
+) *RoundRobin
+```
+
+Backend selection occurs through:
+
+```go
+func (r *RoundRobin) Next() *upstream.Backend
+```
+
+The atomic index allows selection state to be updated safely across concurrent requests.
+
+Backend health is considered during selection so unhealthy upstreams are not eligible for normal traffic.
+
+---
+
+### `internal/upstream`
+
+The `upstream` package represents backend servers available to Torus.
+
+The central type is:
+
+```go
+type Backend struct {
+    // ...
+}
+```
+
+Backends are created through:
+
+```go
+func NewBackend(
+    targetUrl string,
+    observabilityEnabled bool,
+) (*Backend, error)
+```
+
+Each backend owns the state required to represent and communicate with an upstream target, including its health state and reverse-proxy transport.
+
+Health state is exposed through:
+
+```go
+func (b *Backend) IsHealthy() bool
+
+func (b *Backend) SetHealthy(val bool)
+```
+
+Backend health uses atomic state so health-check updates and request-time reads can occur concurrently without requiring a mutex around the health flag.
+
+The package also contains an instrumented HTTP transport used to observe communication with backend servers.
+
+```go
+func newInstrumentedTransport(
+    base http.RoundTripper,
+    enabled bool,
+    backend string,
+) http.RoundTripper
+```
+
+The transport records backend-level observability information when instrumentation is enabled.
+
+---
+
+## Health checking
+
+### `internal/health`
+
+The `health` package performs active health checking of Torus backends.
+
+Health-check implementations satisfy:
+
+```go
+type Checker interface {
+    Check(ctx context.Context) error
+    Target() string
+}
+```
+
+The package currently provides an HTTP health checker:
+
+```go
+type HTTPChecker struct {
+    // ...
+}
+```
+
+A check is executed through:
+
+```go
+func (h *HTTPChecker) Check(
+    ctx context.Context,
+) error
+```
+
+The checker exposes its target through:
+
+```go
+func (h *HTTPChecker) Target() string
+```
+
+Periodic probing is coordinated by `StartProber`.
+
+The health subsystem also defines the worker lifecycle interface:
+
+```go
+type WorkerGroup interface {
+    AddWorker()
+    DoneWorker()
+}
+```
+
+`Runtime` implements these lifecycle operations, allowing health probes to belong to the runtime generation that created them.
+
+This relationship is important during reload:
+
+```text
+Runtime Generation
+       ↓
+Health Probers
+       ↓
+HTTP Checkers
+       ↓
+Backend Health State
+```
+
+When a runtime is retired, its associated background health workers are retired with it.
+
+---
+
+## Request processing
+
+### `internal/proxy`
+
+The `proxy` package owns the HTTP server and coordinates the request execution path.
+
+Its primary type is:
+
+```go
+type Server struct {
+    // ...
+}
+```
+
+A server is constructed with an initial runtime:
+
+```go
+func NewServer(
+    rt *runtime.Runtime,
+    logger *slog.Logger,
+) *Server
+```
+
+The HTTP handler is exposed through:
+
+```go
+func (s *Server) Handler() http.Handler
+```
+
+Server startup is performed through:
+
+```go
+func (s *Server) Start(addr string) error
+```
+
+Tests and startup coordination can wait until the listener is active through:
+
+```go
+func (s *Server) WaitStarted() string
+```
+
+Graceful shutdown is exposed through:
+
+```go
+func (s *Server) Shutdown(
+    timeout time.Duration,
+) error
+```
+
+Runtime replacement occurs through:
+
+```go
+func (s *Server) Reload(
+    newRuntime *runtime.Runtime,
+)
+```
+
+The server therefore forms the execution boundary between incoming HTTP traffic and the active runtime generation.
+
+Conceptually, request processing follows:
+
+```text
+HTTP Request
+     ↓
+proxy.Server
+     ↓
+Active Runtime
+     ↓
+Router
+     ↓
+Service
+     ↓
+Load Balancer
+     ↓
+Backend
+     ↓
+Reverse Proxy
+```
+
+---
+
+### `internal/transport`
+
+The `transport` package provides the final forwarding primitive used to send a request through a backend's reverse proxy.
+
+Its current API is intentionally small:
+
+```go
+func Forward(
+    w http.ResponseWriter,
+    r *http.Request,
+    proxy *httputil.ReverseProxy,
+)
+```
+
+`Forward` delegates request handling to the configured `httputil.ReverseProxy`.
+
+Keeping forwarding behind a package boundary separates the proxy's request orchestration from the actual transport operation.
+
+---
+
+## Middleware
+
+### `internal/middleware`
+
+The `middleware` package contains reusable HTTP request-processing components.
+
+Structured request logging is provided through:
+
+```go
+func LoggingMiddleware(
+    logger *slog.Logger,
+) func(http.Handler) http.Handler
+```
+
+The logging middleware associates requests with request identifiers and records request information using Go's structured logging facilities.
+
+The package also provides an HTTP status recorder.
+
+```go
+func NewStatusRecorder(
+    w http.ResponseWriter,
+) *statusRecorder
+```
+
+The final response status can be retrieved through:
+
+```go
+func (r *statusRecorder) Status() int
+```
+
+This allows surrounding request-processing infrastructure to observe the status written by downstream handlers.
+
+---
+
+## Observability
+
+### `internal/observability`
+
+The `observability` package owns Torus' Prometheus metrics infrastructure.
+
+Metrics are separated into three broad groups:
+
+```text
+HTTP Metrics
+Backend Metrics
+Runtime Metrics
+```
+
+The package maintains a Prometheus registry containing Torus collectors.
+
+The metrics endpoint is exposed through:
+
+```go
+func Handler() http.Handler
+```
+
+The returned handler exposes metrics using the Prometheus exposition format.
+
+### HTTP metrics
+
+Request counts are recorded through:
+
+```go
+func RecordHTTPRequest(
+    method string,
+    route string,
+    status int,
+)
+```
+
+End-to-end request duration is observed through:
+
+```go
+func ObserveHTTPRequestDuration(
+    method string,
+    route string,
+    duration time.Duration,
+)
+```
+
+In-flight requests are tracked through:
+
+```go
+func TrackInflight() func()
+```
+
+The returned cleanup function is intended to be deferred by the caller.
+
+### Backend metrics
+
+Backend traffic is recorded through:
+
+```go
+func RecordBackendRequest(
+    backend string,
+)
+```
+
+Backend request duration is observed through:
+
+```go
+func ObserveBackendRequestDuration(
+    // ...
+)
+```
+
+Backend errors are recorded through:
+
+```go
+func RecordBackendError(
+    backend string,
+)
+```
+
+Backend health is exported through:
+
+```go
+func SetBackendHealth(
+    backend string,
+    healthy bool,
+)
+```
+
+### Runtime metrics
+
+Configuration reload results are recorded through:
+
+```go
+func RecordRuntimeReload(
+    success bool,
+)
+```
+
+The active runtime generation is exported through:
+
+```go
+func SetRuntimeGeneration(
+    generation uint64,
+)
+```
+
+Runtime construction duration is observed through:
+
+```go
+func ObserveRuntimeBuildDuration(
+    duration time.Duration,
+)
+```
+
+The Prometheus registry and collectors are process-wide infrastructure.
+
+Whether instrumentation is active, however, belongs to the runtime generation. This preserves Torus' immutable runtime model while allowing metrics infrastructure to remain shared across reloads.
+
+The package also exposes:
+
+```go
+func ResetForTesting()
+```
+
+which recreates metrics and the registry for isolated tests.
+
+---
+
+## Integration tests
+
+The `integration/` directory contains tests that exercise behavior spanning multiple internal packages.
+
+Current integration tests include:
+
+```text
+integration/
+├── helpers_test.go
+├── hot_reload_test.go
+└── observability_test.go
+```
+
+These tests verify behavior that cannot be meaningfully isolated to a single package.
+
+### Hot reload
+
+`hot_reload_test.go` exercises runtime replacement while Torus is operating.
+
+It validates the interaction between:
+
+```text
+configwatcher
+      ↓
+reload
+      ↓
+runtime
+      ↓
+proxy
+```
+
+### Observability
+
+`observability_test.go` exercises metrics behavior across the running proxy and its runtime configuration.
+
+Unit tests remain colocated with the packages they test.
+
+---
+
+## Package relationships
+
+The internal packages form a dependency graph rather than independent modules.
+
+At the center is the runtime, which connects configuration-derived state to the request-processing pipeline.
+
+<Mermaid
+  chart={`
+flowchart TD
+    CMD["cmd/torus"]
+
+    CONFIG["internal/config"]
+    WATCHER["internal/configwatcher"]
+    RELOAD["internal/reload"]
+    RUNTIME["internal/runtime"]
+
+    PROXY["internal/proxy"]
+    ROUTING["internal/routing"]
+    SERVICE["internal/service"]
+    LB["internal/loadbalancer"]
+    UPSTREAM["internal/upstream"]
+    TRANSPORT["internal/transport"]
+
+    HEALTH["internal/health"]
+    MIDDLEWARE["internal/middleware"]
+    OBS["internal/observability"]
+
+    CMD --> CONFIG
+    CMD --> RUNTIME
+    CMD --> PROXY
+    CMD --> WATCHER
+    CMD --> RELOAD
+
+    WATCHER --> RELOAD
+    RELOAD --> CONFIG
+    RELOAD --> RUNTIME
+    RELOAD --> PROXY
+
+    RUNTIME --> ROUTING
+    RUNTIME --> HEALTH
+    RUNTIME --> UPSTREAM
+    RUNTIME --> OBS
+
+    ROUTING --> SERVICE
+    SERVICE --> LB
+    LB --> UPSTREAM
+
+    PROXY --> RUNTIME
+    PROXY --> MIDDLEWARE
+    PROXY --> TRANSPORT
+    PROXY --> OBS
+
+    UPSTREAM --> OBS
+
+`}
+/>
+
+The request-processing path can be reduced to:
+
+```text
+proxy
+  ↓
+runtime
+  ↓
+routing
+  ↓
+service
+  ↓
+loadbalancer
+  ↓
+upstream
+  ↓
+transport
+```
+
+Supporting subsystems operate around that path:
+
+```text
+config ───────────────► runtime
+
+configwatcher
+
+      ↓
+
+reload ───────────────► runtime replacement
+
+health ───────────────► backend state
+
+middleware ───────────► request processing
+
+observability ────────► HTTP / backend / runtime metrics
+```
+
+---
+
+## Architectural boundaries
+
+The package structure is intended to preserve several important boundaries.
+
+### Configuration does not process traffic
+
+`internal/config` describes desired state.
+
+`internal/runtime` converts that configuration into executable runtime state.
+
+This prevents configuration parsing concerns from leaking into the request path.
+
+### Routing does not select backends
+
+`internal/routing` selects a `Service`.
+
+The service delegates backend selection to `internal/loadbalancer`.
+
+This separates:
+
+```text
+Where should this request go?
+```
+
+from:
+
+```text
+Which backend should handle it?
+```
+
+### Health checking does not route requests
+
+`internal/health` determines backend availability.
+
+`internal/loadbalancer` consumes that state when selecting an upstream.
+
+The health subsystem therefore produces state rather than making routing decisions itself.
+
+### Runtime owns lifecycle
+
+Background workers and in-flight requests belong to a runtime generation.
+
+This allows an old runtime to remain alive while requests using it complete, even after a newer generation has been published.
+
+### Observability infrastructure is process-wide
+
+Prometheus collectors and the registry are shared by the process.
+
+The decision to record instrumentation belongs to the runtime generation.
+
+This distinction allows observability configuration to participate in immutable runtime replacement without recreating the Prometheus infrastructure.
+
+---
+
+## Request path
+
+The package boundaries become easiest to understand by following a request through Torus.
+
+<Mermaid
+  chart={`
+flowchart LR
+    A["Client"]
+    B["proxy"]
+    C["runtime"]
+    D["routing"]
+    E["service"]
+    F["loadbalancer"]
+    G["upstream"]
+    H["transport"]
+    I["Backend"]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+
+`}
+/>
+
+Each package answers a different question:
+
+| Package        | Question                                                          |
+| -------------- | ----------------------------------------------------------------- |
+| `proxy`        | How is the incoming request coordinated?                          |
+| `runtime`      | Which runtime generation owns this request?                       |
+| `routing`      | Which configured route matches the request?                       |
+| `service`      | Which logical service owns the route?                             |
+| `loadbalancer` | Which healthy backend should receive it?                          |
+| `upstream`     | What backend and reverse-proxy state represents that destination? |
+| `transport`    | How is the request forwarded?                                     |
+
+The separation is intentional: no single package needs to own the complete proxy execution pipeline.
+
+---
+
+## Runtime reload path
+
+Configuration reload follows a separate package path.
+
+<Mermaid
+  chart={`
+flowchart LR
+    A["Config File"]
+    B["configwatcher"]
+    C["reload"]
+    D["config"]
+    E["runtime.BuildRuntime"]
+    F["New Runtime"]
+    G["proxy.Server.Reload"]
+    H["Old Runtime Retirement"]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+
+`}
+/>
+
+This separation is what allows Torus to treat runtime generations as immutable.
+
+The active runtime is not incrementally modified when configuration changes. A replacement runtime is constructed and then published as a complete generation.
+
+---
+
+## Summary
+
+The Torus package structure follows the same architecture visible at runtime:
+
+```text
+Configuration
+      ↓
+   Runtime
+      ↓
+   Routing
+      ↓
+   Service
+      ↓
+Load Balancing
+      ↓
+   Upstream
+      ↓
+   Transport
+```
+
+Supporting packages provide:
+
+- configuration watching and reload;
+- backend health checking;
+- HTTP middleware;
+- Prometheus observability;
+- server lifecycle management.
+
+The result is a package hierarchy in which configuration, lifecycle, routing, backend selection, forwarding, and instrumentation remain separate concerns while participating in the same request-processing system.

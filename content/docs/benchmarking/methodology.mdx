@@ -1,12 +1,281 @@
 ---
 title: Benchmark Methodology
-description: How to read and reproduce Torus benchmarks.
+description: The methodology used to design, execute, analyze, and publish performance benchmarks for Torus.
+package: docs/benchmarking
+updated: 2026-07-14
+
+files:
+  - docs/benchmarking/benchmarking-standard.md
+  - docs/benchmarking/methodology.md
+  - docs/benchmarking/statistics.md
+
+related:
+  - benchmarking/reports
+  - benchmarking/datasets
 ---
 
 # Benchmark Methodology
 
-This page will document hardware, workload construction, warmup, measurement, and report review standards.
+Performance claims are only meaningful when they are reproducible.
 
-## Why this exists
+Every benchmark published for Torus follows a standardized methodology that defines how experiments are designed, executed, analyzed, and documented. The objective is to ensure that benchmark results remain reproducible, statistically meaningful, and comparable across time.
 
-Performance claims need a reproducible method before they can be useful.
+Rather than publishing isolated performance numbers, Torus treats benchmarking as an engineering discipline. Every published report can be traced back to a documented hypothesis, a controlled experimental setup, and an accompanying benchmark dataset.
+
+<Info>
+  Every benchmark report references the methodology version used during testing. Historical reports
+  continue to reference the methodology that was current when they were executed.
+</Info>
+
+---
+
+## Objectives
+
+The benchmarking methodology is designed to ensure that every published benchmark is:
+
+- Reproducible
+- Fair
+- Statistically meaningful
+- Transparent
+- Comparable across releases
+
+Benchmarking exists to answer engineering questions rather than to produce impressive performance numbers.
+
+Examples include:
+
+- What throughput overhead does TLS termination introduce?
+- Does observability instrumentation affect latency?
+- How does configuration hot reload impact request processing?
+- Does a runtime optimization reduce allocation pressure?
+
+Each benchmark investigates a single engineering hypothesis.
+
+---
+
+## Benchmark Lifecycle
+
+Every benchmark follows the same workflow.
+
+Engineering Question
+
+↓
+
+Hypothesis
+
+↓
+
+Experiment Design
+
+↓
+
+Benchmark Execution
+
+↓
+
+Raw Data Collection
+
+↓
+
+Statistical Analysis
+
+↓
+
+Engineering Interpretation
+
+↓
+
+Published Benchmark Report
+
+Each stage produces artifacts that become part of the published benchmark evidence.
+
+---
+
+## Controlled Experiments
+
+Torus benchmarks compare one independent variable at a time.
+
+For example, when measuring TLS overhead:
+
+| Variable         | Value        |
+| ---------------- | ------------ |
+| Protocol         | HTTP → HTTPS |
+| Hardware         | Unchanged    |
+| Operating System | Unchanged    |
+| Go Version       | Unchanged    |
+| Backend          | Unchanged    |
+| Payload          | Unchanged    |
+| Duration         | Unchanged    |
+| Concurrency      | Unchanged    |
+
+Changing multiple variables simultaneously makes it impossible to attribute observed performance differences to a single cause.
+
+---
+
+## Benchmark Execution
+
+Every benchmark follows a consistent execution process.
+
+1. Define the engineering objective.
+2. Formulate a hypothesis.
+3. Select benchmark tools.
+4. Prepare the environment.
+5. Warm up the system.
+6. Execute multiple benchmark iterations.
+7. Collect raw benchmark outputs.
+8. Perform statistical analysis.
+9. Interpret the results.
+10. Publish the benchmark report and dataset.
+
+The exact benchmark configuration is recorded alongside every published report.
+
+---
+
+## Warm-Up
+
+Measurements are never collected immediately after startup.
+
+Before recording benchmark results, Torus performs a warm-up phase to allow:
+
+- runtime initialization
+- cache warming
+- TCP connection establishment
+- memory allocation stabilization
+
+The default warm-up duration is **30 seconds** unless otherwise documented.
+
+---
+
+## Multiple Iterations
+
+Performance measurements naturally vary because of scheduling, background activity, and hardware behavior.
+
+To reduce measurement noise, benchmarks are executed repeatedly.
+
+Default configuration:
+
+| Parameter              |      Value |
+| ---------------------- | ---------: |
+| Warm-up                | 30 seconds |
+| Benchmark duration     | 30 seconds |
+| Minimum iterations     |         10 |
+| Recommended iterations |         20 |
+
+Published results summarize all benchmark runs rather than highlighting the single best execution.
+
+---
+
+## Statistical Analysis
+
+Every benchmark is treated as a statistical sample rather than a single measurement.
+
+Reported statistics typically include:
+
+- Mean
+- Median
+- Minimum
+- Maximum
+- Standard deviation
+- Coefficient of variation (CV)
+
+Latency-focused benchmarks additionally report:
+
+- p50
+- p90
+- p95
+- p99
+- Maximum latency
+
+Whenever two systems are compared, Torus reports both the absolute difference and the percentage difference.
+
+For example:
+
+| Metric     |         HTTP |        HTTPS |            Difference |
+| ---------- | -----------: | -----------: | --------------------: |
+| Throughput | 17,500 req/s | 16,300 req/s | −1,200 req/s (−6.86%) |
+
+Reporting only percentage changes can obscure the practical significance of a result.
+
+---
+
+## Result Interpretation
+
+Benchmark reports distinguish between observed measurements and engineering interpretation.
+
+Each report separates:
+
+Observed Result
+
+↓
+
+Supporting Evidence
+
+↓
+
+Engineering Interpretation
+
+↓
+
+Conclusion
+
+This structure helps prevent unsupported causal claims and keeps conclusions proportional to the available evidence.
+
+---
+
+## Threats to Validity
+
+Every benchmark documents the limitations of the experiment.
+
+Common examples include:
+
+- Localhost networking
+- Limited hardware
+- Single benchmark client
+- Virtualized environments
+- Thermal throttling
+- Background operating system activity
+
+These factors do not invalidate a benchmark, but they define the conditions under which its conclusions apply.
+
+---
+
+## Reproducibility
+
+Every published benchmark includes sufficient information to reproduce the experiment.
+
+Typical documentation includes:
+
+- benchmark objective
+- engineering hypothesis
+- hardware profile
+- environment profile
+- software versions
+- benchmark commands
+- workload configuration
+- methodology version
+- raw benchmark outputs
+- statistical summaries
+- generated visualizations
+
+Supporting datasets are published separately from the source repository as release assets.
+
+---
+
+## Engineering Principles
+
+The benchmarking framework follows several principles throughout the project lifecycle.
+
+- Measure before optimizing.
+- Evaluate one independent variable at a time.
+- Preserve immutable raw benchmark outputs.
+- Separate observed measurements from interpretation.
+- Maintain historical benchmark integrity.
+- Never modify published benchmark reports or datasets.
+
+These principles ensure that performance investigations remain reproducible and comparable as Torus evolves.
+
+---
+
+## Related Documentation
+
+- **Benchmark Reports** — Published engineering evaluations built on this methodology.
+- **Benchmark Datasets** — Raw benchmark artifacts and generated datasets used to reproduce published results.

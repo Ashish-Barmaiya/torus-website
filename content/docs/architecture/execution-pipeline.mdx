@@ -1,16 +1,235 @@
 ---
 title: Execution Pipeline
-description: How a request moves between runtime, router, service and proxy.
+description: How every request moves through Torus from acceptance to response.
+updated: 2026-08-04
+package: internal/runtime
+files:
+  - internal/runtime
+  - internal/routing
+  - internal/service
+  - internal/loadbalancer
+  - internal/proxy
+related:
+  - architecture
+  - runtime
+  - router
+  - services
+  - reverse-proxy
 ---
 
 # Execution Pipeline
 
-This page will describe the request pipeline in execution order and identify the data owned at each stage.
+Every request entering Torus follows the same deterministic execution pipeline.
 
-## Request Flow
+Rather than allowing components to make independent routing or forwarding decisions, Torus processes every request through a fixed sequence of stages. Each stage has a single responsibility and passes its result to the next stage.
 
-<RequestFlow>Placeholder pipeline visualization.</RequestFlow>
+This design keeps request processing predictable, simplifies debugging, and isolates responsibilities between subsystems.
 
-## Implementation Notes
+---
 
-Source ownership will be linked to `internal/runtime` and adjacent packages.
+## Request lifecycle
+
+```text
+Client
+   ↓
+HTTP Listener
+  ↓
+Runtime Snapshot
+   ↓
+Router
+   ↓
+Service
+   ↓
+Load Balancer
+   ↓
+Reverse Proxy
+   ↓
+Backend
+   ↓
+Response
+```
+
+The pipeline is identical for every incoming request.
+
+No stage skips another, and each stage performs a single well-defined task before passing control to the next component.
+
+---
+
+## Stage 1 — HTTP Listener
+
+The HTTP listener accepts incoming client connections and constructs an HTTP request.
+
+At this point, no routing decisions have been made.
+
+Its responsibilities are limited to:
+
+- accepting the connection
+- parsing the request
+- handing the request to the runtime
+
+---
+
+## Stage 2 — Runtime Snapshot
+
+The runtime provides an immutable snapshot of the active configuration.
+
+Rather than consulting configuration files during request processing, every request receives a reference to a fully constructed runtime snapshot.
+
+This guarantees that the entire request is processed against a consistent configuration, even if a configuration reload occurs concurrently.
+
+---
+
+## Stage 3 — Router
+
+The router determines which route matches the request.
+
+Route selection uses longest-prefix matching with path-segment boundaries to ensure deterministic behavior.
+
+The router does not select upstream servers.
+
+Its only responsibility is identifying the logical service associated with the request.
+
+---
+
+## Stage 4 — Service Resolution
+
+After routing completes, Torus resolves the selected service.
+
+A service represents a logical destination rather than a specific backend instance.
+
+Separating routes from services allows multiple routes to reuse the same backend pool while keeping routing independent from load balancing.
+
+---
+
+## Stage 5 — Load Balancer
+
+The load balancer selects one healthy backend from the service.
+
+Selection is performed only after unhealthy backends have been excluded.
+
+The currently implemented policy is round-robin, providing an even distribution of requests across healthy upstreams.
+
+---
+
+## Stage 6 — Reverse Proxy
+
+Once a backend has been selected, the reverse proxy forwards the request.
+
+Responsibilities include:
+
+- forwarding HTTP requests
+- injecting forwarding headers
+- streaming request bodies
+- streaming responses back to the client
+
+The reverse proxy does not perform routing or load balancing.
+
+---
+
+## Stage 7 — Backend
+
+The backend application processes the request and generates the response.
+
+From Torus' perspective, the backend is the final stage of request processing.
+
+The response is streamed back through the reverse proxy to the client.
+
+---
+
+## Configuration reload during request processing
+
+Configuration reloads occur independently of request processing.
+
+```text
+Running Requests
+        │
+        ▼
+Runtime Snapshot v1
+        │
+        ├─────────────┐
+        │             │
+        ▼             ▼
+ Continue       Build Runtime v2
+ Serving              │
+                      ▼
+              Atomic Runtime Swap
+                      │
+                      ▼
+          New Requests Use Runtime v2
+```
+
+Requests already in progress continue using the runtime snapshot they began with.
+
+New requests automatically use the newly activated runtime.
+
+No request observes a partially updated configuration.
+
+---
+
+## Design characteristics
+
+The execution pipeline is built around several architectural principles.
+
+### Deterministic
+
+Every request follows the same sequence of stages.
+
+There are no alternate execution paths for normal request processing.
+
+---
+
+### Immutable
+
+The active runtime never changes while a request is executing.
+
+Configuration reloads replace the entire runtime rather than modifying existing objects.
+
+---
+
+### Single responsibility
+
+Each component performs exactly one task.
+
+For example:
+
+- Router selects routes.
+- Service resolves logical destinations.
+- Load Balancer selects backends.
+- Reverse Proxy forwards requests.
+
+This separation simplifies implementation, testing, and future extension.
+
+---
+
+### Concurrent
+
+Multiple requests execute through the pipeline simultaneously.
+
+Because the runtime is immutable, concurrent requests can safely share the same runtime snapshot without synchronization.
+
+---
+
+## Failure handling
+
+A request may terminate before reaching the backend if any stage cannot complete successfully.
+
+Examples include:
+
+- no matching route
+- no healthy backend available
+- upstream connection failure
+- request timeout
+
+Each stage reports failures independently while preserving the integrity of the execution pipeline.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Runtime** — immutable runtime snapshots and configuration ownership.
+- **Router** — longest-prefix route matching.
+- **Services** — logical service abstraction.
+- **Load Balancing** — backend selection policies.
+- **Reverse Proxy** — request forwarding and response streaming.

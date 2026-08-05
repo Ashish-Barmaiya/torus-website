@@ -126,6 +126,10 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
     loader: () => import("../../../content/docs/benchmarking/methodology.mdx"),
     filePath: path.join(docsRoot, "benchmarking", "methodology.mdx"),
   },
+  "benchmarking/reproducing-benchmarks": {
+    loader: () => import("../../../content/docs/benchmarking/reproducing-benchmarks.mdx"),
+    filePath: path.join(docsRoot, "benchmarking", "reproducing-benchmarks.mdx"),
+  },
   "benchmarking/reports": {
     loader: () => import("../../../content/docs/benchmarking/reports.mdx"),
     filePath: path.join(docsRoot, "benchmarking", "reports.mdx"),
@@ -149,10 +153,6 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
   adrs: {
     loader: () => import("../../../content/docs/adrs.mdx"),
     filePath: path.join(docsRoot, "adrs.mdx"),
-  },
-  roadmap: {
-    loader: () => import("../../../content/docs/roadmap.mdx"),
-    filePath: path.join(docsRoot, "roadmap.mdx"),
   },
 };
 
