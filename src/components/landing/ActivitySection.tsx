@@ -4,13 +4,13 @@ import { SectionEyebrow } from "./SectionEyebrow";
 const activity = [
   {
     type: "New report",
-    title: "HTTP vs HTTPS Performance Evaluation",
-    href: "https://github.com/Ashish-Barmaiya/torus-proxy/blob/main/docs/benchmarking/reports/Benchmark-002-http-vs-https.md",
+    title: "Performance Impact of Observability",
+    href: "https://github.com/Ashish-Barmaiya/torus-proxy/blob/main/docs/benchmarking/reports/Benchmark-003-observability-overhead.md",
   },
   {
     type: "Release",
-    title: "v0.2.0 — Zero-Downtime Configuration Hot Reload",
-    href: "https://github.com/Ashish-Barmaiya/torus-proxy/releases/tag/v0.2.0",
+    title: "v0.3.0 — Observability & Engineering Infrastructure",
+    href: "https://github.com/Ashish-Barmaiya/torus-proxy/releases/tag/v0.3.0",
   },
   {
     type: "New Blog",

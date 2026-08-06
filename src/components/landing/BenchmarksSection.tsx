@@ -2,6 +2,12 @@ import { SectionEyebrow } from "./SectionEyebrow";
 
 const results = [
   {
+    benchmark: "B-003",
+    title: "Performance Impact of Observability",
+    highlight: "−3.45% throughput",
+    summary: "+3.60% mean latency • 100% request success",
+  },
+  {
     benchmark: "B-002",
     title: "HTTP vs HTTPS Performance",
     highlight: "−6.54% throughput",

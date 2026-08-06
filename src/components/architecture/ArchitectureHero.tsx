@@ -13,8 +13,7 @@ export function ArchitectureHero() {
           </div>
           <p className="mt-8 max-w-2xl text-lg leading-8 text-[var(--ink-soft)] sm:text-xl">
             Follow a request as it moves through every stage of Torus—from the HTTP listener to a
-            healthy upstream. Every component has a single responsibility, making request execution
-            predictable, observable and easy to reason about.
+            healthy upstream.
           </p>
           <a
             href="#execution-pipeline"

@@ -59,11 +59,29 @@ At this stage, all routing decisions have already been made.
 The reverse proxy performs the following operations:
 
 1. Receives the selected backend.
+
+↓
+
 2. Creates an outbound request.
+
+   ↓
+
 3. Rewrites the request destination.
+
+   ↓
+
 4. Injects forwarding headers.
+
+   ↓
+
 5. Sends the request upstream.
+
+   ↓
+
 6. Streams the response back to the client.
+
+   ↓
+
 7. Closes the upstream connection when complete.
 
 Because responses are streamed, Torus avoids buffering entire payloads in memory.
@@ -90,14 +108,13 @@ These headers allow upstream applications to identify the original client and pr
 Responses are streamed directly from the backend to the client.
 
 ```text
-Client
-    ▲
-    │
+    Client
+      ↑
 Response Stream
-    │
-Reverse Proxy
-    │
-Backend
+      ↑
+ Reverse Proxy
+      ↑
+    Backend
 ```
 
 Streaming reduces memory usage and allows large responses to be delivered efficiently.

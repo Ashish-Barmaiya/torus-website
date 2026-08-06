@@ -132,8 +132,17 @@ Configuration changes do not modify the active runtime.
 Instead, Torus:
 
 1. reads the updated configuration
+
+↓
+
 2. validates it
+
+↓
+
 3. builds a new runtime
+
+↓
+
 4. atomically publishes the new runtime
 
 Existing requests continue using the previous runtime until completion.

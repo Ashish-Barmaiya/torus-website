@@ -81,12 +81,27 @@ Configuration reloads occur without interrupting traffic.
 
 The reload sequence is:
 
-1. Detect configuration changes.
-2. Parse the updated configuration.
-3. Validate all configuration values.
-4. Construct a new runtime snapshot.
-5. Atomically replace the active runtime.
-6. Route all subsequent requests through the new runtime.
+Detect configuration changes.
+
+↓
+
+Parse the updated configuration.
+
+↓
+
+Validate all configuration values.
+
+↓
+
+Construct a new runtime snapshot.
+
+↓
+
+Atomically replace the active runtime.
+
+↓
+
+Route all subsequent requests through the new runtime.
 
 If any stage fails, Torus discards the new runtime and continues serving requests using the previous one.
 
