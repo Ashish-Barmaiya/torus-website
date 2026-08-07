@@ -1,165 +1,157 @@
 ---
 title: TLS
-description: Terminating HTTPS connections at the edge.
+description: Configuring HTTPS termination for Torus.
 updated: 2026-08-04
-package: internal/tls
+package: internal/config
 files:
-  - internal/config/tls.go
+  - internal/config/config.go
 related:
-  - configuration
-  - architecture/reverse-proxy
-  - deployment
+  - configuration/server
+  - configuration-reference
 ---
 
 # TLS
 
-Torus can terminate HTTPS connections at the edge, allowing backend services to receive normal HTTP traffic while clients communicate securely over TLS.
+Torus can terminate HTTPS connections by loading an X.509 certificate and private key during startup.
 
-TLS termination is configured entirely through the YAML configuration file and is enabled when certificate and private key files are provided.
+TLS is **optional**. If the `tls` section is omitted, Torus serves plain HTTP. When present, Torus validates the TLS configuration before accepting client connections.
 
----
-
-## What is TLS termination?
-
-Without TLS termination:
-
-<RequestFlow steps={["Client", "HTTPS", "Backend"]} />
-
-With Torus:
-
-<RequestFlow steps={["Client", "HTTPS", "Torus", "HTTP", "Backend"]} />
-
-The encrypted connection ends at Torus.
-
-Backend services receive standard HTTP requests while clients continue to communicate securely using HTTPS.
-
----
-
-## Responsibilities
-
-When TLS is enabled, Torus is responsible for:
-
-- accepting HTTPS connections
-- loading certificates
-- performing TLS handshakes
-- decrypting incoming traffic
-- forwarding requests to backend services
-- encrypting responses before returning them to clients
-
-Routing and backend selection remain unchanged.
-
----
-
-## Enabling TLS
-
-TLS is configured through the `tls` section.
-
-Example:
+Torus performs **TLS termination**. Client connections are encrypted up to Torus, after which requests are processed normally and forwarded to the configured upstream backends. Communication between Torus and upstream services is independent of client-side TLS and depends on the configured upstream URLs.
 
 ```yaml
-server:
-  addr: ":8443"
-
-  tls:
-    cert_file: cert.pem
-    key_file: key.pem
-    min_version: "1.2"
+tls:
+  cert_file: "configs/cert.pem"
+  key_file: "configs/key.pem"
+  min_version: "1.2"
 ```
 
-When both certificate and key files are present, Torus starts an HTTPS listener instead of a plain HTTP listener.
+---
+
+## Configuration
+
+The `tls` section supports the following fields.
+
+| Field         | Type   | Required | Description                                       |
+| ------------- | ------ | -------- | ------------------------------------------------- |
+| `cert_file`   | string | Yes      | Path to the X.509 certificate.                    |
+| `key_file`    | string | Yes      | Path to the corresponding private key.            |
+| `min_version` | string | No       | Minimum supported TLS version. Defaults to `1.2`. |
 
 ---
 
-## Request flow
+## Certificate and key
 
-<RequestFlow
-  steps={["HTTPS Client", "TLS Handshake", "Decrypt Request", "Runtime", "Router", "Backend"]}
-/>
+Torus requires both a certificate and its matching private key.
 
-TLS is processed before the request enters the normal execution pipeline.
+```yaml
+tls:
+  cert_file: "configs/cert.pem"
+  key_file: "configs/key.pem"
+```
 
-Once the handshake completes, request processing is identical to HTTP.
+During startup (or configuration reload), Torus loads the certificate pair using Go's standard TLS library.
 
----
-
-## Certificate loading
-
-During startup Torus loads:
-
-- the server certificate
-- the corresponding private key
-
-Startup fails if:
-
-- either file is missing
-- the certificate is invalid
-- the private key cannot be loaded
-- the certificate and key do not match
-
-This prevents the proxy from starting in an invalid state.
+If either file cannot be loaded, startup fails or the configuration reload is rejected.
 
 ---
 
 ## Minimum TLS version
 
-The minimum supported TLS protocol version can be configured.
+The optional `min_version` field controls the minimum TLS protocol version accepted by the server.
 
-For production deployments, newer protocol versions should be preferred whenever possible.
+Supported values are:
 
-The exact supported values are documented in the **Configuration Reference**.
+| Value   | Description        |
+| ------- | ------------------ |
+| `"1.2"` | TLS 1.2 and newer. |
+| `"1.3"` | TLS 1.3 only.      |
 
----
+If omitted, Torus defaults to TLS 1.2.
 
-## Backend communication
+```yaml
+tls:
+  cert_file: "configs/cert.pem"
+  key_file: "configs/key.pem"
+  min_version: "1.3"
+```
 
-TLS termination affects only client connections.
-
-After the request has been decrypted:
-
-<RequestFlow steps={["Client (HTTPS)", "Backend (HTTP)"]} />
-
-Backend communication remains unchanged unless future versions introduce upstream TLS support.
-
----
-
-## Performance considerations
-
-TLS introduces additional work compared to plain HTTP.
-
-Typical overhead includes:
-
-- TLS handshake
-- certificate validation
-- encryption
-- decryption
-
-Benchmark-002 evaluates the impact of TLS termination on throughput, latency, CPU utilization, and memory usage.
+Any other value is rejected during configuration validation.
 
 ---
 
-## Failure behavior
+## Validation
 
-TLS connections are rejected when:
+Before a runtime is built, Torus validates the TLS configuration.
 
-- certificate loading fails
-- the private key is invalid
-- protocol negotiation fails
-- the client does not support the configured minimum TLS version
+The following conditions must be satisfied:
 
-These failures occur before request routing begins.
+- `cert_file` must not be empty.
+- `key_file` must not be empty.
+- `min_version` must be one of:
+  - `1.2`
+  - `1.3`
+
+If validation succeeds, Torus attempts to load the certificate pair. Configuration loading fails if the certificate or key cannot be read or if they do not form a valid pair.
 
 ---
 
-## Design rationale
+## HTTP configuration
 
-TLS termination allows backend services to remain simple while providing secure client communication at the edge.
+To serve plain HTTP, simply omit the `tls` section.
 
-Centralizing TLS management also simplifies:
+```yaml
+server:
+  addr: ":8080"
+```
 
-- certificate rotation
-- deployment
-- observability
-- operational management
+No additional configuration is required.
+
+---
+
+## HTTPS configuration
+
+To enable HTTPS, provide a valid certificate and key.
+
+```yaml
+server:
+  addr: ":8443"
+
+tls:
+  cert_file: "configs/cert.pem"
+  key_file: "configs/key.pem"
+  min_version: "1.2"
+```
+
+Once loaded successfully, Torus accepts encrypted client connections on the configured listening address.
+
+---
+
+## Generating a self-signed certificate
+
+For local development, OpenSSL can be used to generate a self-signed certificate.
+
+```bash
+openssl req \
+  -x509 \
+  -newkey rsa:4096 \
+  -nodes \
+  -keyout configs/key.pem \
+  -out configs/cert.pem \
+  -days 365
+```
+
+These certificates are suitable for development and testing but should **not** be used in production.
+
+---
+
+## Production recommendations
+
+For production deployments:
+
+- Use certificates issued by a trusted Certificate Authority (CA).
+- Protect private key files with appropriate filesystem permissions.
+- Store certificates outside the application source code when possible.
+- Prefer TLS 1.3 when client compatibility allows.
 
 ---
 
@@ -167,6 +159,6 @@ Centralizing TLS management also simplifies:
 
 Continue with:
 
-- **Configuration** — configuring server behavior.
-- **Deployment** — deploying HTTPS in production.
-- **Benchmark Reports** — measuring TLS overhead.
+- **Server** — configuring the listening address.
+- **Configuration Reload** — applying certificate changes without restarting Torus.
+- **Configuration Reference** — complete YAML schema.

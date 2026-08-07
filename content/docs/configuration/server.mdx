@@ -1,8 +1,141 @@
 ---
 title: Server
-description: Server configuration placeholder.
+description: Configuring the HTTP or HTTPS listener for Torus.
+updated: 2026-08-04
+package: internal/config
+files:
+  - internal/config/config.go
+related:
+  - configuration/api-version
+  - configuration/tls
+  - configuration-reference
 ---
 
 # Server
 
-Server configuration documentation will be added in a future release.
+The `server` section configures the network address on which Torus accepts incoming client connections.
+
+Every Torus configuration must define exactly one server address.
+
+```yaml
+server:
+  addr: ":8080"
+```
+
+---
+
+## Configuration
+
+The `server` section currently supports a single field.
+
+| Field  | Type   | Required | Description                                              |
+| ------ | ------ | -------- | -------------------------------------------------------- |
+| `addr` | string | Yes      | Address on which Torus listens for incoming connections. |
+
+---
+
+## Listening address
+
+The address follows Go's standard `host:port` format.
+
+The most common configuration listens on all network interfaces.
+
+```yaml
+server:
+  addr: ":8080"
+```
+
+This makes Torus available on every network interface using port `8080`.
+
+---
+
+### Bind to a specific interface
+
+To listen only on the loopback interface:
+
+```yaml
+server:
+  addr: "127.0.0.1:8080"
+```
+
+This is useful for local development or when Torus is deployed behind another reverse proxy.
+
+---
+
+### Listen on a different port
+
+```yaml
+server:
+  addr: ":8443"
+```
+
+When TLS is enabled, ports such as `8443` or `443` are commonly used.
+
+The configured port is independent of whether Torus serves HTTP or HTTPS. TLS is enabled separately through the `tls` configuration.
+
+---
+
+## Validation
+
+The listening address is validated during configuration loading.
+
+The following configuration is valid.
+
+```yaml
+server:
+  addr: ":8080"
+```
+
+The following configuration is rejected.
+
+```yaml
+server:
+  addr: ""
+```
+
+because the listening address must not be empty.
+
+If validation fails, Torus aborts startup (or rejects the configuration reload) and continues using the previous runtime.
+
+---
+
+## Examples
+
+HTTP listener:
+
+```yaml
+server:
+  addr: ":8080"
+```
+
+HTTPS listener:
+
+```yaml
+server:
+  addr: ":8443"
+
+tls:
+  cert_file: "configs/cert.pem"
+  key_file: "configs/key.pem"
+```
+
+The server configuration determines **where** Torus listens. Whether connections are encrypted depends entirely on the `tls` section.
+
+---
+
+## Best practices
+
+- Listen on `127.0.0.1` when Torus should only be accessible locally.
+- Use a dedicated port for development and testing environments.
+- Use standard HTTPS ports (`443` or `8443`) when TLS is enabled.
+- Avoid changing the listening address unnecessarily, as clients must reconnect to the new endpoint.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **TLS** — enabling HTTPS and configuring certificates.
+- **Configuration Reload** — applying configuration changes without interrupting traffic.
+- **Configuration Reference** — complete YAML schema.

@@ -85,25 +85,38 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
     loader: () => import("../../../content/docs/configuration/overview.mdx"),
     filePath: path.join(docsRoot, "configuration", "overview.mdx"),
   },
+  "configuration/api-version": {
+    loader: () => import("../../../content/docs/configuration/api-version.mdx"),
+    filePath: path.join(docsRoot, "configuration", "api-version.mdx"),
+  },
   "configuration/server": {
     loader: () => import("../../../content/docs/configuration/server.mdx"),
     filePath: path.join(docsRoot, "configuration", "server.mdx"),
-  },
-  "configuration/routing": {
-    loader: () => import("../../../content/docs/configuration/routing.mdx"),
-    filePath: path.join(docsRoot, "configuration", "routing.mdx"),
-  },
-  "configuration/health": {
-    loader: () => import("../../../content/docs/configuration/health.mdx"),
-    filePath: path.join(docsRoot, "configuration", "health.mdx"),
   },
   "configuration/tls": {
     loader: () => import("../../../content/docs/configuration/tls.mdx"),
     filePath: path.join(docsRoot, "configuration", "tls.mdx"),
   },
+
+  "configuration/health": {
+    loader: () => import("../../../content/docs/configuration/health.mdx"),
+    filePath: path.join(docsRoot, "configuration", "health.mdx"),
+  },
+  "configuration/observability": {
+    loader: () => import("../../../content/docs/configuration/observability.mdx"),
+    filePath: path.join(docsRoot, "configuration", "observability.mdx"),
+  },
+  "configuration/routing": {
+    loader: () => import("../../../content/docs/configuration/routing.mdx"),
+    filePath: path.join(docsRoot, "configuration", "routing.mdx"),
+  },
   "configuration/configuration-reload": {
     loader: () => import("../../../content/docs/configuration/configuration-reload.mdx"),
     filePath: path.join(docsRoot, "configuration", "configuration-reload.mdx"),
+  },
+  "configuration/graceful-shutdown": {
+    loader: () => import("../../../content/docs/configuration/graceful-shutdown.mdx"),
+    filePath: path.join(docsRoot, "configuration", "graceful-shutdown.mdx"),
   },
 
   deployment: {

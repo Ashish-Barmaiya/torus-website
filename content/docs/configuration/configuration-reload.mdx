@@ -1,65 +1,104 @@
 ---
 title: Configuration Reload
-description: Update Torus configuration without restarting the proxy or interrupting active requests.
+description: Applying configuration changes without restarting Torus or interrupting active requests.
 updated: 2026-08-04
 package: internal/reload
 related:
-  - configuration
-  - architecture/runtime
-  - architecture
+  - configuration/overview
+  - core-concepts/runtime
+  - core-concepts/architecture
 ---
 
 # Configuration Reload
 
-Torus automatically reloads its configuration whenever the configuration file changes.
+Torus supports automatic, zero-downtime configuration reloads.
 
-Instead of modifying the active runtime in place, Torus validates the updated configuration, constructs a completely new runtime, and atomically replaces the current runtime.
+Whenever the configuration file changes, Torus reads the updated configuration, validates it, constructs a completely new immutable runtime, and atomically replaces the active runtime.
 
-Existing requests continue executing against the previous runtime, while new requests immediately begin using the updated configuration.
+Existing requests continue executing against the runtime they started with, while all new requests immediately begin using the newly published runtime.
 
-No process restart or listener restart is required.
+At no point is the running process restarted or the listening socket recreated.
 
 ---
 
-## Supported configuration changes
+## Why configuration reload?
 
-Most operational changes can be applied through configuration reload.
+Configuration changes are routine operational tasks.
 
 Examples include:
 
 - adding or removing routes
 - adding or removing upstream servers
-- changing health check settings
+- updating health check settings
 - enabling or disabling observability
-- enabling TLS
 - updating TLS certificates
-- modifying listening addresses
+- modifying server configuration
 
-Once the updated configuration has been validated successfully, the new runtime becomes active immediately.
+Restarting the proxy for every configuration change would interrupt active traffic and terminate requests in progress.
+
+Instead, Torus replaces the runtime without restarting the process.
+
+---
+
+## Automatic configuration watching
+
+Torus continuously monitors the configured YAML file for filesystem changes.
+
+When a change is detected, the reload process begins automatically.
+
+No manual command, API call, or process restart is required.
+
+Only configurations that successfully complete parsing, validation, and runtime construction are published.
 
 ---
 
 ## Reload lifecycle
 
-Every configuration change follows the same lifecycle.
+Every configuration update follows the same sequence.
 
 ```text
-Configuration File Saved
-          ↓
-    Read Configuration
-          ↓
-       Parse YAML
-          ↓
+Configuration File Changed
+            ↓
+     Read Configuration
+            ↓
+        Parse YAML
+            ↓
  Validate Configuration
-          ↓
- Build Runtime Snapshot
-          ↓
+            ↓
+  Build Runtime Snapshot
+            ↓
  Publish New Runtime
-          ↓
-New Requests Use Updated Runtime
+            ↓
+ New Requests Use Runtime
 ```
 
-The active runtime is replaced only after the new runtime has been successfully constructed.
+The active runtime is replaced only after the new runtime has been constructed successfully.
+
+At no point is a partially initialized runtime exposed to incoming requests.
+
+---
+
+## Runtime publication
+
+The active runtime is stored behind an atomic pointer.
+
+Initially:
+
+```text
+Active Runtime
+      ↓
+ Runtime v1
+```
+
+After a successful reload:
+
+```text
+Active Runtime
+      ↓
+ Runtime v2
+```
+
+Publishing a new runtime requires only an atomic pointer swap, allowing new requests to begin using the updated configuration immediately.
 
 ---
 
@@ -77,254 +116,125 @@ Request B
 ──────────── Runtime v2 ───────────► completes
 ```
 
-Each request continues using the runtime it acquired when processing began.
+Each request retains a reference to the runtime it acquired when processing began.
 
-This guarantees consistent request behavior throughout its lifetime.
-
----
-
-## Configuration validation
-
-Every configuration file is validated before a reload is allowed to proceed.
-
-If any validation step fails:
-
-- the new configuration is rejected;
-- the new runtime is discarded;
-- the existing runtime continues serving requests.
-
-No partial configuration is ever applied.
+As a result, every request executes against a consistent configuration from start to finish, even if a reload occurs while it is in progress.
 
 ---
 
-## Validation rules
+## Runtime generations
 
-### API Version
+Every successful reload creates a new runtime generation.
 
-The configuration schema version must match the version supported by the running Torus binary.
-
-Currently supported:
-
-```yaml
-apiVersion: v1
+```text
+Generation 1
+      ↓
+Generation 2
+      ↓
+Generation 3
 ```
+
+Older generations continue serving requests that began before the reload.
+
+Once no active requests reference an older generation, it is retired and becomes eligible for garbage collection.
 
 ---
 
-### Server
+## Validation
 
-The server address must not be empty.
+Every configuration is validated before a new runtime is constructed.
 
-✔ Valid
+Validation includes:
 
-```yaml
-server:
-  addr: ":8080"
-```
+- configuration schema version
+- server configuration
+- routing configuration
+- upstream definitions
+- health check configuration
+- TLS configuration
+- observability configuration
 
-✘ Invalid
+Configuration validation is an all-or-nothing operation.
 
-```yaml
-server:
-  addr: ""
-```
+If any validation step fails, the reload is aborted before the new runtime becomes visible.
 
----
-
-### Health checks
-
-Health check configuration must satisfy the following rules:
-
-- `interval_ms` must be greater than zero.
-- `timeout_ms` must be greater than zero.
-- `timeout_ms` must not exceed `interval_ms`.
-- `path` must not be empty.
-- `path` must begin with `/`.
-
-✔ Valid
-
-```yaml
-health:
-  interval_ms: 5000
-  timeout_ms: 2000
-  path: /health
-```
-
-✘ Invalid
-
-```yaml
-health:
-  interval_ms: 1000
-  timeout_ms: 2000
-  path: health
-```
-
-The timeout exceeds the interval and the health endpoint does not begin with `/`.
-
----
-
-### Routes
-
-Every configuration must define at least one route.
-
-Each route must satisfy the following rules:
-
-- `path` must not be empty.
-- route paths must be unique.
-- every route must define at least one upstream.
-
-✔ Valid
-
-```yaml
-routes:
-  - path: /api
-    upstream:
-      - http://localhost:3001
-```
-
-✘ Invalid
-
-```yaml
-routes:
-  - path: /api
-    upstream:
-      - http://localhost:3001
-
-  - path: /api
-    upstream:
-      - http://localhost:3002
-```
-
-Duplicate route paths are not permitted.
-
----
-
-### Upstream servers
-
-Every upstream must:
-
-- be a valid URL;
-- use either `http` or `https`;
-- include a hostname;
-- include a port between `1` and `65535`.
-
-✔ Valid
-
-```yaml
-upstream:
-  - http://localhost:3001
-  - https://backend.example.com:8443
-```
-
-✘ Invalid
-
-Missing port
-
-```yaml
-upstream:
-  - http://localhost
-```
-
-✘ Invalid
-
-Unsupported scheme
-
-```yaml
-upstream:
-  - ftp://localhost:3001
-```
-
----
-
-### TLS
-
-When TLS is configured:
-
-- `cert_file` is required;
-- `key_file` is required;
-- `min_version` must be `1.2` or `1.3`.
-
-✔ Valid
-
-```yaml
-tls:
-  cert_file: certs/server.crt
-  key_file: certs/server.key
-  min_version: "1.3"
-```
-
-✘ Invalid
-
-```yaml
-tls:
-  cert_file: certs/server.crt
-  min_version: "1.1"
-```
-
-The private key is missing and the TLS version is unsupported.
+Detailed validation rules for each configuration section are documented throughout the **Configuration** documentation.
 
 ---
 
 ## Failed reloads
 
-If parsing, validation, or runtime construction fails, the reload is aborted.
+If parsing, validation, or runtime construction fails, the reload is cancelled.
 
 ```text
-   Configuration Changed
+Configuration Changed
           ↓
-     Validation Failed
+ Validation Failed
           ↓
-    Discard New Runtime
+Discard New Runtime
           ↓
-Continue Using Existing Runtime
+Continue Serving Runtime vN
 ```
 
-The currently running proxy continues serving traffic without interruption.
+The previous runtime remains active and continues serving requests without interruption.
+
+No partial configuration is ever applied.
 
 ---
 
-## Configuration guidelines
+## Reload logging
 
-When editing configuration files:
+Every configuration reload generates operational log entries.
 
-- Keep route prefixes unique.
-- Always specify explicit ports for upstream servers.
-- Use valid HTTP or HTTPS URLs.
-- Keep health check timeouts smaller than their intervals.
-- Group related routes together for readability.
-- Apply changes incrementally whenever practical.
+A successful reload records the previous and new runtime generations.
 
-Following these guidelines reduces the likelihood of validation failures and simplifies operational maintenance.
+```json
+{
+  "level": "INFO",
+  "msg": "runtime reloaded",
+  "old_generation": 2,
+  "new_generation": 3
+}
+```
+
+When the previous runtime is no longer referenced by active requests, Torus logs its retirement.
+
+```json
+{
+  "level": "INFO",
+  "msg": "runtime retired",
+  "generation": 2
+}
+```
+
+If a reload fails, the validation or runtime construction error is logged and the existing runtime continues serving traffic.
+
+```json
+{
+  "level": "ERROR",
+  "msg": "failed to reload configuration",
+  "error": "routes[0].upstream[2]: missing port"
+}
+```
+
+These log entries provide a complete audit trail of configuration changes and simplify operational troubleshooting.
 
 ---
 
-## Example configuration
+## Design rationale
 
-```yaml
-apiVersion: v1
+Torus rebuilds the entire runtime instead of modifying it in place.
 
-server:
-  addr: ":8080"
+This design provides several advantages:
 
-health:
-  interval_ms: 5000
-  timeout_ms: 2000
-  path: /health
+- zero request interruption
+- immutable execution context
+- simplified concurrency
+- atomic runtime publication
+- deterministic request behavior
+- safe rollback when configuration is invalid
 
-observability:
-  enabled: true
-
-routes:
-  - path: /api
-    upstream:
-      - http://localhost:3001
-      - http://localhost:3002
-
-tls:
-  cert_file: certs/server.crt
-  key_file: certs/server.key
-  min_version: "1.2"
-```
+Although runtime construction is more expensive than mutating existing objects, configuration changes occur infrequently compared to request processing. Torus therefore optimizes for fast, lock-free runtime access rather than inexpensive reloads.
 
 ---
 
@@ -332,7 +242,6 @@ tls:
 
 Continue with:
 
-- **Configuration** — configuration file structure.
-- **Configuration Reference** — complete schema reference.
 - **Runtime** — immutable runtime snapshots.
-- **Architecture** — request execution and runtime management.
+- **Architecture** — the complete request execution pipeline.
+- **Configuration Reference** — complete YAML schema.

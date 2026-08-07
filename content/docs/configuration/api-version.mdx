@@ -1,0 +1,93 @@
+---
+title: API Version
+description: Configuration schema versioning in Torus.
+updated: 2026-08-04
+package: internal/config
+files:
+  - internal/config/config.go
+related:
+  - configuration-overview
+  - configuration-reference
+---
+
+# API Version
+
+Every Torus configuration begins with an API version declaration.
+
+```yaml
+apiVersion: v1
+```
+
+The API version identifies the configuration schema used by the file.
+
+Before parsing the remainder of the configuration, Torus verifies that the declared version is supported.
+
+---
+
+## Why version the configuration?
+
+Configuration formats evolve over time.
+
+New releases may introduce additional fields, modify existing behavior, or remove deprecated options.
+
+Versioning allows Torus to distinguish between different configuration schemas while maintaining predictable behavior.
+
+Without an explicit version, Torus would have no reliable way to determine how a configuration should be interpreted.
+
+---
+
+## Supported versions
+
+The current release supports:
+
+| Version | Status    |
+| ------- | --------- |
+| `v1`    | Supported |
+
+Using any other value causes startup or configuration reload to fail.
+
+For example:
+
+```yaml
+apiVersion: v2
+```
+
+produces a validation error because the schema is not recognized.
+
+---
+
+## Validation
+
+API version validation is performed before runtime construction begins.
+
+```text
+Read Configuration
+        ↓
+Check apiVersion
+        ↓
+Supported?
+   │         │
+  Yes        No
+   ↓         ↓
+Continue   Validation Error
+```
+
+If the version is unsupported, Torus does not parse the remaining configuration or build a new runtime.
+
+---
+
+## Best practices
+
+- Always specify the API version explicitly.
+- Use the version supported by your installed Torus release.
+- Update the configuration version only after upgrading Torus and reviewing any migration guidance.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Server** — configure the listening address.
+- **Configuration Reload** — how validated configurations become new runtime generations.
+- **Configuration Reference** — complete YAML schema.

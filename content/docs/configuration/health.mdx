@@ -1,8 +1,245 @@
 ---
 title: Health
-description: Health-check configuration placeholder.
+description: Configuring active health checks for upstream backends.
+updated: 2026-08-04
+package: internal/config
+files:
+  - internal/config/config.go
+related:
+  - core-concepts/health-checks
+  - configuration/routing
+  - configuration-reference
 ---
 
 # Health
 
-Health-check configuration documentation will be added in a future release.
+The `health` section configures how Torus monitors the availability of upstream backends.
+
+Health checks run independently of client requests. Their results are used by the load balancer to determine which backends are eligible to receive traffic.
+
+```yaml
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+```
+
+---
+
+## Configuration
+
+The `health` section supports three fields.
+
+| Field         | Type    | Required | Description                                    |
+| ------------- | ------- | -------- | ---------------------------------------------- |
+| `interval_ms` | integer | Yes      | Time between successive health check cycles.   |
+| `timeout_ms`  | integer | Yes      | Maximum time to wait for a backend to respond. |
+| `path`        | string  | Yes      | HTTP path used when probing every backend.     |
+
+---
+
+## Probe interval
+
+`interval_ms` specifies how frequently Torus checks the health of every configured backend.
+
+```yaml
+health:
+  interval_ms: 5000
+```
+
+In this example, every backend is probed once every **5 seconds**.
+
+Shorter intervals detect failures more quickly but generate more health check traffic. Longer intervals reduce overhead but increase the time required to detect failures.
+
+---
+
+## Probe timeout
+
+`timeout_ms` specifies how long Torus waits for a health check response before considering the probe unsuccessful.
+
+```yaml
+health:
+  timeout_ms: 2000
+```
+
+In this example, a backend has **2 seconds** to respond.
+
+If the timeout expires before a response is received, the probe fails and the backend is marked unhealthy.
+
+---
+
+## Health endpoint path
+
+`path` specifies the endpoint requested on every backend during a health check.
+
+```yaml
+health:
+  path: /health
+```
+
+For a backend configured as:
+
+```text
+http://localhost:3001
+```
+
+Torus sends health probes to:
+
+```text
+http://localhost:3001/health
+```
+
+The same path is used for every configured backend.
+
+---
+
+## Validation
+
+Before constructing a runtime, Torus validates the health configuration.
+
+The following rules are enforced:
+
+- `interval_ms` must be greater than `0`.
+- `timeout_ms` must be greater than `0`.
+- `timeout_ms` cannot exceed `interval_ms`.
+- `path` must not be empty.
+- `path` must begin with `/`.
+
+Any validation failure prevents startup or causes the configuration reload to be rejected.
+
+---
+
+## Valid configuration
+
+```yaml
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+```
+
+---
+
+## Invalid configurations
+
+Timeout greater than interval:
+
+```yaml
+health:
+  interval_ms: 2000
+  timeout_ms: 5000
+  path: /health
+```
+
+Result:
+
+```text
+health.timeout_ms cannot be greater than health.interval_ms
+```
+
+---
+
+Missing leading slash:
+
+```yaml
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: health
+```
+
+Result:
+
+```text
+health.path must start with '/'
+```
+
+---
+
+Empty path:
+
+```yaml
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: ""
+```
+
+Result:
+
+```text
+health.path must not be empty
+```
+
+---
+
+## Choosing values
+
+There is no universally correct configuration. The appropriate values depend on how quickly backend failures should be detected and how much health-check traffic is acceptable.
+
+A reasonable starting point is:
+
+```yaml
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+```
+
+This configuration checks each backend every five seconds while allowing up to two seconds for a response.
+
+---
+
+## Relationship to request processing
+
+Health checks execute independently of client traffic.
+
+The result of each probe updates the backend's health status. When a client request arrives, the load balancer consults this status and forwards requests only to healthy backends.
+
+The request path never waits for a health probe to complete.
+
+For more information about how Torus performs active health checking, see **Core Concepts → Health Checks**.
+
+---
+
+---
+
+## Health check logging
+
+Health checks execute continuously in the background.
+
+To avoid excessive log volume, successful health checks are **not** logged. Torus only emits log entries when a health check fails.
+
+A typical warning looks like:
+
+```json
+{
+  "level": "WARN",
+  "msg": "health check failed",
+  "checker": "http://localhost:3002",
+  "error": "dial tcp [::1]:3002: connectex: No connection could be made because the target machine actively refused it."
+}
+```
+
+These log entries identify the affected backend together with the underlying error returned by the HTTP client, making it easier to diagnose connectivity failures, crashed services, or network problems.
+
+Because only failures are logged, operators can quickly identify unhealthy backends without successful probes generating unnecessary log noise.
+
+---
+
+## Best practices
+
+- Implement a lightweight health endpoint in every backend service.
+- Use a timeout comfortably smaller than the probe interval.
+- Keep health endpoints fast and free of expensive operations.
+- Use the same health endpoint across instances of the same service whenever possible.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Routing** — configuring routes and upstream backends.
+- **Health Checks** — how Torus performs active health monitoring.
+- **Configuration Reload** — applying health configuration changes without restarting Torus.
