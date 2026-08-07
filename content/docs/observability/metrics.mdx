@@ -1,6 +1,6 @@
 ---
 title: Metrics
-description: Runtime metrics exported by Torus for monitoring and alerting.
+description: Metrics exported by Torus for monitoring runtime behavior and performance.
 updated: 2026-08-04
 package: internal/observability
 files:
@@ -13,190 +13,311 @@ related:
 
 # Metrics
 
-Torus exposes operational metrics that describe the current state and performance of the proxy.
+Torus exports metrics in the Prometheus exposition format, allowing the behavior of a running proxy to be monitored continuously.
 
-These metrics are intended for continuous collection by monitoring systems such as Prometheus and can be visualized using dashboards or used to trigger alerts.
+Unlike logs, which describe individual events, metrics provide quantitative measurements that can be aggregated, visualized, and alerted on over time.
 
-Unlike request logs, metrics provide a quantitative view of system behavior over time.
+Torus exposes three categories of metrics:
 
----
-
-## Why metrics matter
-
-Metrics answer operational questions such as:
-
-- Is Torus receiving traffic?
-- Are requests succeeding?
-- Are backends healthy?
-- Has latency increased?
-- Did configuration reload successfully?
-- Is resource usage changing over time?
-
-Monitoring these signals allows operators to identify performance regressions and infrastructure failures before they impact users.
+- **Application metrics** implemented by Torus itself.
+- **Go runtime metrics** exported by the Prometheus Go collector.
+- **Process metrics** exported by the Prometheus process collector.
 
 ---
 
 ## Metrics architecture
 
 ```text
-                 Torus
-
-                   ↓
-
-        Runtime Measurements
-
-                   ↓
-
+               Torus
+                 │
+      - Application Metrics
+      - Go Runtime Metrics
+      - Process Metrics
+                 ↓
           /metrics endpoint
-
-                   ↓
-
-             Prometheus
-
-                   ↓
-
-               Grafana
+                 ↓
+            Prometheus
+                 ↓
+              Grafana
 ```
 
-Metrics are generated continuously while Torus processes requests.
+The three metric categories complement each other by exposing application behavior, runtime characteristics, and process resource usage.
 
 ---
 
-## Metric categories
+# Application metrics
 
-Torus groups its metrics into several logical categories.
+Application metrics describe the behavior of Torus itself.
 
-### HTTP traffic
-
-These metrics describe incoming client traffic.
-
-Typical measurements include:
-
-- total requests
-- response status codes
-- request duration
-- throughput
-
-These metrics help operators understand traffic patterns and application performance.
+These metrics are grouped into HTTP, backend, and runtime categories.
 
 ---
 
-### Backend health
+## HTTP metrics
 
-Backend metrics describe the state of upstream services.
+### `torus_http_requests_total`
+
+**Type:** Counter
+
+**Labels**
+
+- `method`
+- `route`
+- `status`
+
+Counts every HTTP request processed by Torus.
+
+---
+
+### `torus_http_request_duration_seconds`
+
+**Type:** Histogram
+
+**Labels**
+
+- `method`
+- `route`
+
+Measures end-to-end request latency through the proxy.
+
+Histogram buckets:
+
+- 100 µs
+- 250 µs
+- 500 µs
+- 1 ms
+- 2.5 ms
+- 5 ms
+- 10 ms
+- 25 ms
+- 50 ms
+- 100 ms
+- 250 ms
+- 500 ms
+- 1 s
+
+---
+
+### `torus_http_requests_in_flight`
+
+**Type:** Gauge
+
+Tracks the number of requests currently being processed.
+
+---
+
+## Backend metrics
+
+Backend metrics are recorded independently for every configured upstream.
+
+### `torus_backend_requests_total`
+
+**Type:** Counter
+
+**Labels**
+
+- `backend`
+
+Counts requests forwarded to each backend.
+
+---
+
+### `torus_backend_request_duration_seconds`
+
+**Type:** Histogram
+
+**Labels**
+
+- `backend`
+
+Measures backend response latency.
+
+Histogram buckets:
+
+- 100 µs
+- 250 µs
+- 500 µs
+- 1 ms
+- 2.5 ms
+- 5 ms
+- 10 ms
+- 25 ms
+- 50 ms
+- 100 ms
+- 250 ms
+- 500 ms
+- 1 s
+
+---
+
+### `torus_backend_errors_total`
+
+**Type:** Counter
+
+**Labels**
+
+- `backend`
+
+Counts forwarding failures for each backend.
+
+---
+
+### `torus_backend_up`
+
+**Type:** Gauge
+
+**Labels**
+
+- `backend`
+
+Represents backend health.
+
+| Value | Meaning   |
+| ----: | --------- |
+|   `1` | Healthy   |
+|   `0` | Unhealthy |
+
+---
+
+## Runtime metrics
+
+Runtime metrics describe the internal operation of Torus.
+
+### `torus_runtime_reloads_total`
+
+**Type:** Counter
+
+**Labels**
+
+- `result`
+
+Possible values:
+
+- `success`
+- `failure`
+
+Counts configuration reload attempts.
+
+---
+
+### `torus_runtime_generation`
+
+**Type:** Gauge
+
+Represents the currently active immutable runtime generation.
+
+---
+
+### `torus_runtime_build_duration_seconds`
+
+**Type:** Histogram
+
+Measures the time required to construct a new runtime during startup or configuration reload.
+
+Histogram buckets:
+
+- 1 ms
+- 2.5 ms
+- 5 ms
+- 10 ms
+- 25 ms
+- 50 ms
+- 100 ms
+- 250 ms
+- 500 ms
+- 1 s
+- 2.5 s
+- 5 s
+
+---
+
+# Go runtime metrics
+
+In addition to Torus-specific metrics, the `/metrics` endpoint exports the standard metrics provided by Prometheus' Go collector.
+
+These describe the behavior of the Go runtime itself.
 
 Examples include:
 
-- healthy backend count
-- unhealthy backend count
-- health probe results
-- backend availability
+### Goroutines
 
-Health metrics help identify failing or overloaded upstream services.
+- `go_goroutines`
 
----
+### Heap
+
+- `go_memstats_heap_alloc_bytes`
+- `go_memstats_heap_inuse_bytes`
+- `go_memstats_heap_idle_bytes`
+- `go_memstats_heap_objects`
+
+### Memory allocation
+
+- `go_memstats_alloc_bytes`
+- `go_memstats_alloc_bytes_total`
+
+### Garbage collection
+
+- `go_gc_duration_seconds`
+- `go_gc_gogc_percent`
+- `go_gc_gomemlimit_bytes`
+- `go_memstats_next_gc_bytes`
+- `go_memstats_last_gc_time_seconds`
 
 ### Runtime
 
-Runtime metrics describe the internal state of the proxy.
+- `go_threads`
+- `go_info`
+
+The Go collector exports many additional runtime statistics beyond those listed above.
+
+---
+
+# Process metrics
+
+Process metrics are exported through the Prometheus process collector.
+
+These describe the operating system process running Torus.
 
 Examples include:
 
-- active runtime generation
-- successful reloads
-- failed reloads
-- active requests
+### CPU
 
-These metrics are useful when diagnosing configuration changes or operational issues.
+- `process_cpu_seconds_total`
 
----
+### Memory
 
-### Process
+- `process_resident_memory_bytes`
+- `process_virtual_memory_bytes`
+- `process_virtual_memory_max_bytes`
 
-Process-level metrics describe the Torus process itself.
+### Process information
 
-Examples include:
+- `process_open_fds`
+- `process_max_fds`
+- `process_start_time_seconds`
 
-- memory usage
-- goroutine count
-- CPU utilization
-- uptime
-
-These measurements help detect resource exhaustion and performance regressions.
+The exact set of process metrics may vary depending on the operating system.
 
 ---
 
-## Collecting metrics
+## Why three metric categories?
 
-Metrics are exposed through the HTTP endpoint:
+Each metric category answers different operational questions.
 
-```text
-GET /metrics
-```
+| Category    | Purpose                                       |
+| ----------- | --------------------------------------------- |
+| Application | How Torus is behaving.                        |
+| Go runtime  | How the Go runtime is behaving.               |
+| Process     | How many system resources Torus is consuming. |
 
-The endpoint is designed for automated polling by monitoring systems.
-
-A typical deployment looks like:
-
-```text
-Torus
-   ↓
-/metrics
-   ↓
-Prometheus
-   ↓
-Grafana
-```
-
----
-
-## Operational recommendations
-
-For production environments:
-
-- scrape metrics at regular intervals
-- retain historical metric data
-- monitor backend availability
-- alert on elevated error rates
-- alert on abnormal latency
-- correlate metrics with request logs during incident investigations
-
----
-
-## Example monitoring workflow
-
-```text
-Traffic Increase
-        ↓
-Higher Request Rate
-        ↓
-Latency Metrics Rise
-        ↓
-Backend Health Degrades
-        ↓
-Alert Triggered
-```
-
-Historical metrics provide the context needed to identify when and why the system changed.
-
----
-
-## Future metrics
-
-As Torus evolves, additional metrics may be introduced for features such as:
-
-- advanced routing
-- connection pools
-- TLS handshakes
-- transport performance
-- configuration reload latency
-
-The goal is to expand observability while maintaining backward compatibility whenever practical.
+Together, they provide a comprehensive view of proxy behavior, runtime characteristics, and process health.
 
 ---
 
 ## Related documentation
 
-- **Observability** — observability overview.
-- **Logging** — request and operational logs.
-- **Health Endpoint** — readiness reporting.
+Continue with:
+
+- **Observability Overview** — how metrics fit into Torus' observability model.
+- **Logging** — structured request and operational logs.
+- **Health Endpoint** — endpoint used to verify proxy availability.

@@ -1,0 +1,150 @@
+---
+title: Load Balancing
+description: Selecting a healthy upstream backend for every request.
+updated: 2026-08-04
+package: internal/loadbalancer
+files:
+  - internal/loadbalancer/round_robin.go
+related:
+  - architecture/services
+  - architecture/health-checks
+  - architecture/reverse-proxy
+  - configuration/routing
+---
+
+# Load Balancing
+
+After the router selects a service, Torus must choose which backend server should handle the request.
+
+This responsibility belongs to the load balancer.
+
+The load balancer operates on the backend pool owned by a service and selects one healthy backend before request forwarding begins.
+
+---
+
+## Responsibilities
+
+The load balancer is responsible for:
+
+- selecting an upstream backend
+- distributing requests across available backends
+- excluding unhealthy backends from selection
+
+It does **not**:
+
+- match request paths
+- perform health checks
+- forward HTTP requests
+
+Those responsibilities belong to other components of the request pipeline.
+
+---
+
+## Position in the request pipeline
+
+Every request passes through the load balancer after routing has completed.
+
+<RequestFlow steps={["Router", "Service", "Load Balancer", "Backend", "Reverse Proxy"]} />
+
+By this stage, Torus already knows **which service** should receive the request.
+
+The remaining task is selecting one healthy backend from that service's backend pool.
+
+---
+
+## Round-robin scheduling
+
+Torus currently implements **round-robin** load balancing.
+
+Each request is forwarded to the next healthy backend in the pool.
+
+For example:
+
+```text
+Backend Pool
+
+A
+B
+C
+```
+
+Incoming requests are distributed as:
+
+```text
+Request 1 → A
+Request 2 → B
+Request 3 → C
+Request 4 → A
+Request 5 → B
+Request 6 → C
+```
+
+Over time, requests are distributed evenly across all healthy backends.
+
+---
+
+## Health-aware selection
+
+The load balancer never selects backends that have been marked unhealthy.
+
+For example:
+
+```text
+A ✓
+B ✗
+C ✓
+```
+
+Requests are distributed as:
+
+```text
+Request 1 → A
+Request 2 → C
+Request 3 → A
+Request 4 → C
+```
+
+Backend **B** is excluded until the health checking subsystem marks it healthy again.
+
+This avoids forwarding requests to upstream servers that are known to be unavailable.
+
+---
+
+## Failure handling
+
+If every backend in the service is unhealthy, Torus cannot forward the request.
+
+Rather than attempting connections that are expected to fail, request processing stops immediately and an error response is returned to the client.
+
+---
+
+## Design rationale
+
+Round-robin was chosen because it provides:
+
+- deterministic behaviour
+- even request distribution
+- minimal runtime overhead
+- predictable performance
+- straightforward implementation
+
+The load balancer is intentionally independent of both routing and request forwarding, preserving clear separation of responsibilities throughout the request pipeline.
+
+---
+
+## Configuration
+
+This document explains how load balancing works internally.
+
+To learn how backend pools are configured for a service, see **Configuration → Routing**.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Services** — backend pool ownership.
+- **Health Checks** — determining backend availability.
+- **Reverse Proxy** — forwarding requests to the selected backend.
+- **Configuration → Routing** — configuring upstream backends.

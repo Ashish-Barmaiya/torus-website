@@ -1,0 +1,338 @@
+---
+title: Configuration Reload
+description: Update Torus configuration without restarting the proxy or interrupting active requests.
+updated: 2026-08-04
+package: internal/reload
+related:
+  - configuration
+  - architecture/runtime
+  - architecture
+---
+
+# Configuration Reload
+
+Torus automatically reloads its configuration whenever the configuration file changes.
+
+Instead of modifying the active runtime in place, Torus validates the updated configuration, constructs a completely new runtime, and atomically replaces the current runtime.
+
+Existing requests continue executing against the previous runtime, while new requests immediately begin using the updated configuration.
+
+No process restart or listener restart is required.
+
+---
+
+## Supported configuration changes
+
+Most operational changes can be applied through configuration reload.
+
+Examples include:
+
+- adding or removing routes
+- adding or removing upstream servers
+- changing health check settings
+- enabling or disabling observability
+- enabling TLS
+- updating TLS certificates
+- modifying listening addresses
+
+Once the updated configuration has been validated successfully, the new runtime becomes active immediately.
+
+---
+
+## Reload lifecycle
+
+Every configuration change follows the same lifecycle.
+
+```text
+Configuration File Saved
+          ↓
+    Read Configuration
+          ↓
+       Parse YAML
+          ↓
+ Validate Configuration
+          ↓
+ Build Runtime Snapshot
+          ↓
+ Publish New Runtime
+          ↓
+New Requests Use Updated Runtime
+```
+
+The active runtime is replaced only after the new runtime has been successfully constructed.
+
+---
+
+## Active requests
+
+Configuration reloads never interrupt requests that are already executing.
+
+```text
+Request A
+──────────── Runtime v1 ───────────► completes
+
+Configuration Reload
+
+Request B
+──────────── Runtime v2 ───────────► completes
+```
+
+Each request continues using the runtime it acquired when processing began.
+
+This guarantees consistent request behavior throughout its lifetime.
+
+---
+
+## Configuration validation
+
+Every configuration file is validated before a reload is allowed to proceed.
+
+If any validation step fails:
+
+- the new configuration is rejected;
+- the new runtime is discarded;
+- the existing runtime continues serving requests.
+
+No partial configuration is ever applied.
+
+---
+
+## Validation rules
+
+### API Version
+
+The configuration schema version must match the version supported by the running Torus binary.
+
+Currently supported:
+
+```yaml
+apiVersion: v1
+```
+
+---
+
+### Server
+
+The server address must not be empty.
+
+✔ Valid
+
+```yaml
+server:
+  addr: ":8080"
+```
+
+✘ Invalid
+
+```yaml
+server:
+  addr: ""
+```
+
+---
+
+### Health checks
+
+Health check configuration must satisfy the following rules:
+
+- `interval_ms` must be greater than zero.
+- `timeout_ms` must be greater than zero.
+- `timeout_ms` must not exceed `interval_ms`.
+- `path` must not be empty.
+- `path` must begin with `/`.
+
+✔ Valid
+
+```yaml
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+```
+
+✘ Invalid
+
+```yaml
+health:
+  interval_ms: 1000
+  timeout_ms: 2000
+  path: health
+```
+
+The timeout exceeds the interval and the health endpoint does not begin with `/`.
+
+---
+
+### Routes
+
+Every configuration must define at least one route.
+
+Each route must satisfy the following rules:
+
+- `path` must not be empty.
+- route paths must be unique.
+- every route must define at least one upstream.
+
+✔ Valid
+
+```yaml
+routes:
+  - path: /api
+    upstream:
+      - http://localhost:3001
+```
+
+✘ Invalid
+
+```yaml
+routes:
+  - path: /api
+    upstream:
+      - http://localhost:3001
+
+  - path: /api
+    upstream:
+      - http://localhost:3002
+```
+
+Duplicate route paths are not permitted.
+
+---
+
+### Upstream servers
+
+Every upstream must:
+
+- be a valid URL;
+- use either `http` or `https`;
+- include a hostname;
+- include a port between `1` and `65535`.
+
+✔ Valid
+
+```yaml
+upstream:
+  - http://localhost:3001
+  - https://backend.example.com:8443
+```
+
+✘ Invalid
+
+Missing port
+
+```yaml
+upstream:
+  - http://localhost
+```
+
+✘ Invalid
+
+Unsupported scheme
+
+```yaml
+upstream:
+  - ftp://localhost:3001
+```
+
+---
+
+### TLS
+
+When TLS is configured:
+
+- `cert_file` is required;
+- `key_file` is required;
+- `min_version` must be `1.2` or `1.3`.
+
+✔ Valid
+
+```yaml
+tls:
+  cert_file: certs/server.crt
+  key_file: certs/server.key
+  min_version: "1.3"
+```
+
+✘ Invalid
+
+```yaml
+tls:
+  cert_file: certs/server.crt
+  min_version: "1.1"
+```
+
+The private key is missing and the TLS version is unsupported.
+
+---
+
+## Failed reloads
+
+If parsing, validation, or runtime construction fails, the reload is aborted.
+
+```text
+   Configuration Changed
+          ↓
+     Validation Failed
+          ↓
+    Discard New Runtime
+          ↓
+Continue Using Existing Runtime
+```
+
+The currently running proxy continues serving traffic without interruption.
+
+---
+
+## Configuration guidelines
+
+When editing configuration files:
+
+- Keep route prefixes unique.
+- Always specify explicit ports for upstream servers.
+- Use valid HTTP or HTTPS URLs.
+- Keep health check timeouts smaller than their intervals.
+- Group related routes together for readability.
+- Apply changes incrementally whenever practical.
+
+Following these guidelines reduces the likelihood of validation failures and simplifies operational maintenance.
+
+---
+
+## Example configuration
+
+```yaml
+apiVersion: v1
+
+server:
+  addr: ":8080"
+
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+
+observability:
+  enabled: true
+
+routes:
+  - path: /api
+    upstream:
+      - http://localhost:3001
+      - http://localhost:3002
+
+tls:
+  cert_file: certs/server.crt
+  key_file: certs/server.key
+  min_version: "1.2"
+```
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Configuration** — configuration file structure.
+- **Configuration Reference** — complete schema reference.
+- **Runtime** — immutable runtime snapshots.
+- **Architecture** — request execution and runtime management.

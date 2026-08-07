@@ -1,162 +1,131 @@
 ---
 title: Health Endpoint
-description: Readiness reporting and health monitoring in Torus.
+description: Reporting the operational readiness of a running Torus instance.
 updated: 2026-08-04
-package: internal/health
+package: internal/proxy
 files:
-  - internal/health
+  - internal/proxy/server.go
 related:
-  - observability
+  - observability-overview
   - observability/metrics
   - health-checks
 ---
 
 # Health Endpoint
 
-Torus exposes a dedicated HTTP endpoint that reports whether the proxy is ready to receive traffic.
+Torus exposes a lightweight readiness endpoint that reports whether the proxy is ready to receive client traffic.
 
-Unlike backend health checks, which monitor upstream services, the readiness endpoint reflects the operational state of the Torus process itself.
+Unlike active health checks, which continuously monitor upstream backends, the health endpoint reports the operational state of the Torus process itself.
 
-This endpoint is intended for load balancers, orchestration platforms, and monitoring systems.
+It is intended for automated systems such as load balancers, container orchestrators, deployment pipelines, and monitoring tools.
 
 ---
 
 ## Endpoint
 
-By default, Torus exposes the following endpoint:
-
 ```text
 GET /readyz
 ```
 
-The endpoint is lightweight and can be polled frequently without affecting request processing.
+The endpoint always returns a simple plain-text response.
+
+| Status                    | Response    |
+| ------------------------- | ----------- |
+| `200 OK`                  | `ready`     |
+| `503 Service Unavailable` | `not ready` |
 
 ---
 
 ## Purpose
 
-The readiness endpoint answers a single operational question:
+The endpoint answers a single question:
 
-> **Can this Torus instance safely receive client traffic?**
+> **Can this Torus instance safely receive new requests?**
 
-A successful readiness response indicates that:
+External systems can use this endpoint before routing traffic to the proxy.
 
-- the server has started successfully
-- configuration has been loaded
-- the runtime has been initialized
-- the proxy is ready to accept requests
+Unlike application requests, readiness probes are inexpensive and do not involve routing or proxying to upstream services.
 
 ---
 
-## Readiness lifecycle
+## Readiness state
 
-During startup, Torus transitions through several initialization stages before becoming ready.
+Internally, Torus maintains a simple readiness state.
 
 ```text
-Process Started
-        ↓
-Load Configuration
-        ↓
+Process Starts
+       ↓
 Build Runtime
-        ↓
-Initialize Services
-        ↓
-Ready
+       ↓
+Start HTTP Server
+       ↓
+ready = true
 ```
 
-Only after initialization completes should external systems begin routing traffic to the instance.
+During shutdown, Torus marks itself as unavailable before terminating.
+
+```text
+Shutdown Begins
+       ↓
+ready = false
+       ↓
+Graceful Shutdown
+       ↓
+Process Exit
+```
+
+This allows external systems to stop sending new traffic while existing requests complete.
+
+---
+
+## Health endpoint vs backend health checks
+
+Although their names are similar, they serve different purposes.
+
+| Health Endpoint                             | Backend Health Checks                         |
+| ------------------------------------------- | --------------------------------------------- |
+| Reports whether the Torus process is ready. | Reports whether upstream servers are healthy. |
+| Intended for external systems.              | Used internally by the load balancer.         |
+| One endpoint for the proxy.                 | One health state per backend.                 |
+
+A healthy Torus instance may still have unhealthy upstreams.
+
+Likewise, healthy upstreams are irrelevant if the proxy itself is not ready to accept requests.
 
 ---
 
 ## Typical deployment
 
-A common production deployment looks like:
-
 ```text
-          Load Balancer
-                │
-     Readiness Probe (/readyz)
-                ↓
-             Torus
+                 Load Balancer
+                       │
+          GET /readyz every few seconds
+                       ↓
+                     Torus
 ```
 
-Load balancers periodically query the endpoint before forwarding requests.
+Only instances reporting `200 OK` should receive new traffic.
 
 ---
 
-## Difference from backend health checks
+## Design characteristics
 
-These two concepts serve different purposes.
+The readiness endpoint is intentionally simple.
 
-| Feature               | Purpose                                                     |
-| --------------------- | ----------------------------------------------------------- |
-| `/readyz`             | Reports whether the Torus process is ready to serve traffic |
-| Backend health checks | Monitor the availability of upstream services               |
+- lightweight HTTP handler
+- constant-time response
+- no backend communication
+- safe for frequent polling
+- independent of request traffic
 
-A healthy Torus instance may still report unhealthy backends, and vice versa.
-
----
-
-## Common integrations
-
-The readiness endpoint is commonly used by:
-
-- Docker health checks
-- Kubernetes readiness probes
-- cloud load balancers
-- reverse proxies
-- external monitoring systems
-
-These systems rely on a lightweight endpoint to determine whether traffic should be routed to the proxy.
-
----
-
-## Operational workflow
-
-A typical readiness workflow is:
-
-```text
-Torus Starts
-      ↓
-Runtime Initialized
-      ↓
-/readyz Returns Success
-      ↓
-Load Balancer Sends Traffic
-```
-
-If the proxy is not ready, traffic should remain directed to healthy instances.
-
----
-
-## Monitoring recommendations
-
-For production environments:
-
-- monitor the readiness endpoint continuously
-- alert on repeated readiness failures
-- combine readiness checks with runtime metrics
-- investigate failures using request and operational logs
-
-The readiness endpoint should be considered one component of a broader monitoring strategy rather than the sole indicator of application health.
-
----
-
-## Future enhancements
-
-Future versions of Torus may extend health reporting with additional operational information, including:
-
-- startup diagnostics
-- runtime generation information
-- dependency status
-- optional detailed health responses
-
-The endpoint will remain lightweight and suitable for automated polling.
+Its purpose is to expose the state of the proxy itself, not the applications behind it.
 
 ---
 
 ## Related documentation
 
-- **Observability** — overview of monitoring capabilities.
-- **Metrics** — runtime measurements.
-- **Health Checks** — monitoring backend availability.
+Continue with:
+
+- **Metrics** — runtime measurements exported by Torus.
+- **Logging** — structured request and operational logs.
+- **Health Checks** — monitoring upstream backend availability.

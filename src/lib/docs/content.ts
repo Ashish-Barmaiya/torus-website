@@ -38,57 +38,77 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
     filePath: path.join(docsRoot, "getting-started", "quick-start.mdx"),
   },
   architecture: {
-    loader: () => import("../../../content/docs/architecture.mdx"),
-    filePath: path.join(docsRoot, "architecture.mdx"),
+    loader: () => import("../../../content/docs/architecture/overview.mdx"),
+    filePath: path.join(docsRoot, "architecture", "overview.mdx"),
   },
-  "architecture/execution-pipeline": {
-    loader: () => import("../../../content/docs/architecture/execution-pipeline.mdx"),
-    filePath: path.join(docsRoot, "architecture", "execution-pipeline.mdx"),
+  "architecture/runtime": {
+    loader: () => import("../../../content/docs/architecture/runtime.mdx"),
+    filePath: path.join(docsRoot, "architecture", "runtime.mdx"),
   },
-  runtime: {
-    loader: () => import("../../../content/docs/runtime.mdx"),
-    filePath: path.join(docsRoot, "runtime.mdx"),
+  "architecture/router": {
+    loader: () => import("../../../content/docs/architecture/router.mdx"),
+    filePath: path.join(docsRoot, "architecture", "router.mdx"),
   },
-  router: {
-    loader: () => import("../../../content/docs/router.mdx"),
-    filePath: path.join(docsRoot, "router.mdx"),
+  "architecture/services": {
+    loader: () => import("../../../content/docs/architecture/services.mdx"),
+    filePath: path.join(docsRoot, "architecture", "services.mdx"),
   },
-  services: {
-    loader: () => import("../../../content/docs/services.mdx"),
-    filePath: path.join(docsRoot, "services.mdx"),
+  "architecture/load-balancing": {
+    loader: () => import("../../../content/docs/architecture/load-balancing.mdx"),
+    filePath: path.join(docsRoot, "architecture", "load-balancing.mdx"),
   },
-  "load-balancing": {
-    loader: () => import("../../../content/docs/load-balancing.mdx"),
-    filePath: path.join(docsRoot, "load-balancing.mdx"),
+  "architecture/health-checks": {
+    loader: () => import("../../../content/docs/architecture/health-checks.mdx"),
+    filePath: path.join(docsRoot, "architecture", "health-checks.mdx"),
   },
-  "health-checks": {
-    loader: () => import("../../../content/docs/health-checks.mdx"),
-    filePath: path.join(docsRoot, "health-checks.mdx"),
+  "architecture/reverse-proxy": {
+    loader: () => import("../../../content/docs/architecture/reverse-proxy.mdx"),
+    filePath: path.join(docsRoot, "architecture", "reverse-proxy.mdx"),
   },
-  "reverse-proxy": {
-    loader: () => import("../../../content/docs/reverse-proxy.mdx"),
-    filePath: path.join(docsRoot, "reverse-proxy.mdx"),
+  observability: {
+    loader: () => import("../../../content/docs/observability/overview.mdx"),
+    filePath: path.join(docsRoot, "observability", "overview.mdx"),
+  },
+  "observability/logging": {
+    loader: () => import("../../../content/docs/observability/logging.mdx"),
+    filePath: path.join(docsRoot, "observability", "logging.mdx"),
+  },
+  "observability/metrics": {
+    loader: () => import("../../../content/docs/observability/metrics.mdx"),
+    filePath: path.join(docsRoot, "observability", "metrics.mdx"),
+  },
+  "observability/health-endpoint": {
+    loader: () => import("../../../content/docs/observability/health-endpoint.mdx"),
+    filePath: path.join(docsRoot, "observability", "health-endpoint.mdx"),
   },
   configuration: {
-    loader: () => import("../../../content/docs/configuration.mdx"),
-    filePath: path.join(docsRoot, "configuration.mdx"),
+    loader: () => import("../../../content/docs/configuration/overview.mdx"),
+    filePath: path.join(docsRoot, "configuration", "overview.mdx"),
   },
-  routing: {
-    loader: () => import("../../../content/docs/routing.mdx"),
-    filePath: path.join(docsRoot, "routing.mdx"),
+  "configuration/server": {
+    loader: () => import("../../../content/docs/configuration/server.mdx"),
+    filePath: path.join(docsRoot, "configuration", "server.mdx"),
   },
-  tls: {
-    loader: () => import("../../../content/docs/tls.mdx"),
-    filePath: path.join(docsRoot, "tls.mdx"),
+  "configuration/routing": {
+    loader: () => import("../../../content/docs/configuration/routing.mdx"),
+    filePath: path.join(docsRoot, "configuration", "routing.mdx"),
   },
-  "hot-reload": {
-    loader: () => import("../../../content/docs/hot-reload.mdx"),
-    filePath: path.join(docsRoot, "hot-reload.mdx"),
+  "configuration/health": {
+    loader: () => import("../../../content/docs/configuration/health.mdx"),
+    filePath: path.join(docsRoot, "configuration", "health.mdx"),
+  },
+  "configuration/tls": {
+    loader: () => import("../../../content/docs/configuration/tls.mdx"),
+    filePath: path.join(docsRoot, "configuration", "tls.mdx"),
+  },
+  "configuration/configuration-reload": {
+    loader: () => import("../../../content/docs/configuration/configuration-reload.mdx"),
+    filePath: path.join(docsRoot, "configuration", "configuration-reload.mdx"),
   },
 
   deployment: {
-    loader: () => import("../../../content/docs/deployment.mdx"),
-    filePath: path.join(docsRoot, "deployment.mdx"),
+    loader: () => import("../../../content/docs/deployment/overview.mdx"),
+    filePath: path.join(docsRoot, "deployment", "overview.mdx"),
   },
   "deployment/docker": {
     loader: () => import("../../../content/docs/deployment/docker.mdx"),
@@ -105,22 +125,6 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
   "deployment/oracle-cloud": {
     loader: () => import("../../../content/docs/deployment/oracle-cloud.mdx"),
     filePath: path.join(docsRoot, "deployment", "oracle-cloud.mdx"),
-  },
-  observability: {
-    loader: () => import("../../../content/docs/observability.mdx"),
-    filePath: path.join(docsRoot, "observability.mdx"),
-  },
-  "observability/logging": {
-    loader: () => import("../../../content/docs/observability/logging.mdx"),
-    filePath: path.join(docsRoot, "observability", "logging.mdx"),
-  },
-  "observability/metrics": {
-    loader: () => import("../../../content/docs/observability/metrics.mdx"),
-    filePath: path.join(docsRoot, "observability", "metrics.mdx"),
-  },
-  "observability/health-endpoint": {
-    loader: () => import("../../../content/docs/observability/health-endpoint.mdx"),
-    filePath: path.join(docsRoot, "observability", "health-endpoint.mdx"),
   },
   "benchmarking/methodology": {
     loader: () => import("../../../content/docs/benchmarking/methodology.mdx"),

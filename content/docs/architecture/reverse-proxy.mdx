@@ -1,0 +1,165 @@
+---
+title: Reverse Proxy
+description: Forwarding client requests to upstream backends.
+updated: 2026-08-04
+package: internal/proxy
+files:
+  - internal/proxy/proxy.go
+related:
+  - architecture
+  - architecture/services
+  - architecture/load-balancing
+  - configuration/routing
+---
+
+# Reverse Proxy
+
+The reverse proxy is the final stage of Torus' request processing pipeline.
+
+After the router has selected a service and the load balancer has chosen a healthy backend, the reverse proxy forwards the client's request to that backend and streams the response back to the client.
+
+Torus currently supports **HTTP/1.1** request forwarding.
+
+Rather than implementing an HTTP proxy from scratch, Torus builds on Go's standard library while focusing its engineering effort on runtime management, routing, health checking, observability, and performance.
+
+---
+
+## Responsibilities
+
+The reverse proxy is responsible for:
+
+- forwarding client requests to the selected backend
+- receiving responses from the backend
+- streaming request and response bodies
+- preserving HTTP semantics
+- adding standard forwarding headers
+- returning backend responses to clients
+
+It does **not**:
+
+- match routes
+- select services
+- choose backends
+
+Those decisions have already been completed before request forwarding begins.
+
+---
+
+## Position in the architecture
+
+The reverse proxy is the final processing component before a request reaches the upstream application.
+
+<RequestFlow steps={["Router", "Service", "Load Balancer", "Reverse Proxy", "Backend"]} />
+
+At this stage, only request forwarding remains.
+
+---
+
+## Request forwarding
+
+Once a backend has been selected, the reverse proxy:
+
+- rewrites the request destination
+- establishes a connection to the upstream server
+- forwards the client request
+- receives the backend response
+- streams the response back to the client
+
+Because responses are streamed instead of buffered, Torus can efficiently handle large payloads without loading the entire response into memory.
+
+---
+
+## Forwarding headers
+
+Before forwarding a request, Torus adds standard proxy headers so upstream applications can identify the original client and request.
+
+Examples include:
+
+- `X-Forwarded-For`
+- `X-Forwarded-Host`
+- `X-Forwarded-Proto`
+
+These headers allow backend applications to determine information about the original request even though the client is communicating through a reverse proxy.
+
+---
+
+## Streaming
+
+Torus streams request and response bodies directly between the client and the upstream server.
+
+```text
+        Request
+Client ─────────► Reverse Proxy ─────────► Backend
+Client ◄───────── Reverse Proxy ◄───────── Backend
+                                          Response
+```
+
+Streaming minimizes memory usage and reduces latency by avoiding unnecessary buffering.
+
+---
+
+## Error handling
+
+The reverse proxy handles failures that occur after backend selection.
+
+Examples include:
+
+- connection failures
+- upstream timeouts
+- network interruptions
+- unexpected backend termination
+
+If forwarding fails, the request is terminated and an appropriate error response is returned to the client.
+
+Routing and backend selection are **not** repeated for the same request.
+
+---
+
+## Design rationale
+
+Torus intentionally builds on Go's standard library implementation:
+
+```go
+net/http/httputil.ReverseProxy
+```
+
+This provides:
+
+- mature HTTP/1.1 proxy implementation
+- correct protocol handling
+- efficient streaming
+- long-term maintenance by the Go project
+
+Using the standard library allows Torus to concentrate on higher-level infrastructure concerns rather than reimplementing HTTP forwarding.
+
+---
+
+## Current scope
+
+The reverse proxy currently supports:
+
+- HTTP/1.1
+- request forwarding
+- response streaming
+- TLS termination
+- forwarding headers
+
+Support for protocols such as HTTP/2, HTTP/3, WebSockets, or gRPC is not currently part of Torus.
+
+---
+
+## Configuration
+
+This document explains how request forwarding works.
+
+To configure routes and upstream backends, see **Configuration → Routing**.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Load Balancing** — selecting the backend that will receive the request.
+- **Configuration → Routing** — configuring routes and upstream servers.
+- **Architecture** — the complete request execution pipeline.

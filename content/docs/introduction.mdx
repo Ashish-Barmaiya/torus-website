@@ -11,7 +11,7 @@ related:
 
 # Introduction
 
-Torus is a Layer 7 reverse proxy and edge API gateway written entirely in Go.
+Torus is an HTTP/1.1 Layer 7 reverse proxy and edge API gateway written entirely in Go.
 
 The project was created to explore the engineering principles behind modern reverse proxies, including request routing, load balancing, runtime management, observability, and performance engineering.
 
@@ -36,7 +36,7 @@ The project treats implementation, documentation, and benchmarking as equally im
 
 Today, Torus includes support for:
 
-- Layer 7 HTTP reverse proxying
+- Layer 7 HTTP/1.1 reverse proxying
 - Longest-prefix route matching
 - Round-robin load balancing
 - Active backend health checking
@@ -48,7 +48,7 @@ Today, Torus includes support for:
 - Prometheus metrics
 - Comprehensive automated testing
 
-The feature set continues to evolve as new architectural work is completed.
+The current implementation focuses on HTTP/1.1 reverse proxying and a core set of production-oriented capabilities
 
 ---
 
@@ -105,9 +105,9 @@ Architecture documents, benchmark reports, and Architecture Decision Records (AD
 
 Torus is an actively developed engineering project.
 
-Although suitable for experimentation, learning, and benchmarking, it should not yet be considered a drop-in replacement for mature production reverse proxies.
+Although suitable for experimentation, learning, and benchmarking, Torus currently implements a focused subset of reverse proxy functionality.
 
-Future work includes additional routing capabilities, observability improvements, allocation reductions, and networking optimizations.
+Features commonly found in mature proxies—such as HTTP/2, HTTP/3, WebSockets, service discovery, distributed configuration, and advanced traffic management—are outside the current scope of the project.
 
 ---
 

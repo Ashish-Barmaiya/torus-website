@@ -1,177 +1,247 @@
 ---
 title: Logging
-description: Request and operational logging in Torus.
+description: Structured request and operational logging in Torus.
 updated: 2026-08-04
-package: internal/logging
+package: internal/middleware
 files:
-  - internal/logging
+  - internal/middleware/logging.go
+  - cmd/torus/main.go
 related:
-  - observability
+  - observability-overview
   - observability/metrics
   - observability/health-endpoint
 ---
 
 # Logging
 
-Logging provides a chronological record of events occurring within a running Torus instance.
+Torus emits structured JSON logs describing both client requests and internal runtime events.
 
-While metrics answer questions about **system behavior over time**, logs explain **what happened at a specific moment**.
+Logs record individual events as they occur. Together, they provide a complete picture of the behavior of a running proxy.
 
-Torus records operational events and request activity to assist with debugging, incident response, and day-to-day operations.
+Logs are written to standard output and are intended to be consumed directly during development or collected by external logging systems in production.
 
 ---
 
 ## Logging philosophy
 
-The logging system is designed around several principles:
+The logging system follows several design principles.
 
-- Produce meaningful operational events.
-- Keep log entries structured and machine-readable.
-- Avoid excessive verbosity during normal operation.
-- Make debugging production incidents straightforward.
+- Structured JSON output.
+- Human-readable event names.
+- Consistent field names.
+- Minimal logging overhead.
+- High-value operational events.
+- Avoid unnecessary log noise.
 
-Logs should provide enough context to understand what occurred without exposing unnecessary information.
+For example, successful health checks are intentionally **not** logged. Only failures are recorded.
 
 ---
 
-## Types of logs
+## Log categories
 
-Torus generates two primary categories of logs.
+Torus currently produces two categories of logs.
 
 ### Request logs
 
-Request logs describe traffic flowing through the proxy.
+A request log is emitted after every HTTP request processed by the proxy.
 
-Typical request information includes:
+Each entry includes:
 
-- request method
+- HTTP method
 - request path
-- selected route
-- upstream destination
 - response status
 - request duration
 - client address
+- request identifier
 
-These logs help operators understand how requests move through the proxy.
+Example:
+
+```json
+{
+  "time": "2026-08-07T16:21:44Z",
+  "level": "INFO",
+  "msg": "request",
+  "method": "GET",
+  "path": "/api/hello",
+  "status": 200,
+  "duration_ms": 2,
+  "request_id": "71f7866d-d674-4299-9a83-2ccf684eca24",
+  "client_ip": "[::1]:59255"
+}
+```
+
+These logs provide a chronological record of traffic flowing through the proxy.
 
 ---
 
 ### Operational logs
 
-Operational logs describe events occurring within the proxy itself.
+Operational logs describe events occurring within Torus itself.
 
 Examples include:
 
-- startup
-- shutdown
+- server startup
+- TLS initialization
+- configuration watcher startup
+- runtime creation
 - configuration reloads
-- backend health changes
-- runtime generation updates
-- unexpected errors
+- runtime retirement
+- health check failures
+- configuration validation failures
+- graceful shutdown
 
-Operational logs provide visibility into the internal state of the proxy.
+These events provide visibility into the internal behaviour of the proxy independently of client traffic.
 
 ---
 
-## Logging flow
+## Log levels
 
-```text
-Incoming Request
-        ↓
-   Request Processed
-        ↓
- Structured Log Entry
-        ↓
- stdout / journald
-        ↓
- Log Collection Platform
+Torus currently emits three log levels.
+
+| Level     | Purpose                                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------------------------- |
+| **INFO**  | Normal operational events and request logs.                                                                   |
+| **WARN**  | Recoverable conditions that may require operator attention, such as failed backend health checks.             |
+| **ERROR** | Failures that prevent an operation from completing successfully, such as invalid configuration during reload. |
+
+---
+
+## Startup logging
+
+During startup Torus records the initialization sequence.
+
+Typical events include:
+
+- TLS configuration loaded
+- configuration watcher started
+- runtime started
+- server listening
+
+For example:
+
+```json
+{
+  "level": "INFO",
+  "msg": "runtime started",
+  "generation": 1
+}
 ```
 
-Every request contributes to the operational history of the system.
+These logs confirm that the proxy has successfully initialized and is ready to receive traffic.
 
 ---
 
-## Log lifecycle
+## Runtime reload logging
 
-During normal operation, logs are continuously produced as requests are processed and runtime events occur.
+Every successful configuration reload generates operational events describing the transition between runtime generations.
 
-```text
-Client Request
-        ↓
-Route Selected
-        ↓
-Backend Selected
-        ↓
-Response Returned
-        ↓
-Request Logged
+Typical events include:
+
+- configuration loaded
+- runtime reloaded
+- previous runtime retired
+
+Example:
+
+```json
+{
+  "level": "INFO",
+  "msg": "runtime reloaded",
+  "old_generation": 2,
+  "new_generation": 3
+}
 ```
 
-Operational events follow a similar lifecycle whenever Torus starts, reloads configuration, or detects changes in backend health.
+If configuration parsing or validation fails, Torus logs the error and continues serving traffic using the existing runtime.
+
+Example:
+
+```json
+{
+  "level": "ERROR",
+  "msg": "failed to reload configuration",
+  "error": "routes[0].upstream[2]: missing port"
+}
+```
 
 ---
 
-## Operational use cases
+## Health check logging
 
-Logs are particularly valuable when investigating:
+Health checks execute continuously in the background.
 
-- unexpected request failures
-- backend outages
-- routing issues
-- configuration reload problems
-- startup failures
-- graceful shutdown events
+To avoid excessive log volume, successful probes are not logged.
 
-Combining logs with runtime metrics provides a more complete understanding of system behavior.
+Only failed health checks generate log entries.
+
+Example:
+
+```json
+{
+  "level": "WARN",
+  "msg": "health check failed",
+  "checker": "http://localhost:3002",
+  "error": "dial tcp ... connection refused"
+}
+```
+
+This allows backend failures to be identified immediately without flooding the logs during normal operation.
 
 ---
 
-## Log collection
+## Request identifiers
 
-In production environments, logs are typically collected by the host operating system or container runtime.
+Every request processed by Torus carries a request identifier.
 
-Examples include:
+If the incoming request already contains an `X-Request-ID` header, Torus preserves it.
 
+Otherwise, a new UUID is generated automatically.
+
+The request identifier is:
+
+- added to the request context
+- forwarded as the `X-Request-ID` header
+- included in the request log
+
+This makes it possible to correlate requests across multiple services.
+
+---
+
+## Shutdown logging
+
+Graceful shutdown is also fully logged.
+
+Typical events include:
+
+- shutdown signal received
+- graceful shutdown initiated
+- graceful shutdown completed
+- server shutdown complete
+
+These events provide a complete record of the server lifecycle.
+
+---
+
+## Collecting logs
+
+Because logs are written to standard output, Torus integrates naturally with common logging infrastructure, including:
+
+- Docker
 - journald
-- Docker logs
-- Kubernetes logging
-- centralized log aggregation platforms
+- Kubernetes
+- Fluent Bit
+- Vector
+- Loki
+- Elasticsearch
 
-Centralized collection simplifies searching, filtering, and long-term retention.
-
----
-
-## Best practices
-
-For production deployments:
-
-- retain request logs for troubleshooting
-- monitor operational errors
-- rotate logs regularly
-- synchronize system clocks
-- correlate logs with runtime metrics
-- avoid logging sensitive information
-
-A consistent logging strategy improves operational visibility and simplifies incident analysis.
-
----
-
-## Future enhancements
-
-Future versions of Torus may introduce additional logging capabilities, including:
-
-- configurable log levels
-- structured JSON output
-- request correlation identifiers
-- distributed tracing integration
-- log sampling
-
-These features will improve observability while maintaining low runtime overhead.
+No additional logging configuration is required.
 
 ---
 
 ## Related documentation
 
-- **Observability** — overview of Torus observability.
-- **Metrics** — quantitative runtime measurements.
-- **Health Endpoint** — readiness reporting.
+Continue with:
+
+- **Metrics** — quantitative measurements exported by Torus.
+- **Health Endpoint** — reporting proxy readiness.
+- **Health Checks** — monitoring upstream backend availability.

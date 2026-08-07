@@ -1,0 +1,91 @@
+---
+title: Overview
+description: An introduction to Torus' observability capabilities.
+updated: 2026-08-04
+package: internal/observability
+files:
+  - internal/observability
+related:
+  - observability/logging
+  - observability/metrics
+  - observability/health-endpoint
+---
+
+# Observability Overview
+
+Running a reverse proxy in production requires more than forwarding requests.
+
+Operators need visibility into how the proxy is behaving, whether backends are healthy, how traffic is flowing, and whether the system is operating correctly.
+
+Torus provides built-in observability features to expose this information without requiring changes to upstream applications.
+
+---
+
+## Observability signals
+
+Torus provides three complementary observability signals.
+
+### Metrics
+
+Metrics provide numerical measurements describing the current state and historical behaviour of the proxy.
+
+Examples include request throughput, request latency, backend health, and runtime information.
+
+Metrics are designed for collection by monitoring systems such as Prometheus and visualization tools such as Grafana.
+
+---
+
+### Logging
+
+Structured logs record individual requests and operational events.
+
+Logs help answer questions such as:
+
+- Which request failed?
+- Which backend handled the request?
+- How long did the request take?
+- When was the configuration reloaded?
+
+---
+
+### Health endpoint
+
+The health endpoint allows external systems to determine whether Torus itself is healthy and ready to receive traffic.
+
+Container orchestrators, load balancers, and monitoring systems commonly use this endpoint for readiness and health checks.
+
+---
+
+## How the components fit together
+
+```text
+                    Torus
+                      │
+      ┌───────────────┼───────────────┐
+      │               │               │
+      ▼               ▼               ▼
+   Metrics        Structured Logs   Health Endpoint
+      │               │               │
+      ▼               ▼               ▼
+ Prometheus     Log Collection    Orchestrators
+      │
+      ▼
+   Grafana
+```
+
+Each signal provides a different view of the running system.
+
+Metrics show trends over time, logs provide detailed event information, and the health endpoint exposes the current health of the proxy.
+
+Together they provide a comprehensive operational view of a Torus deployment.
+
+---
+
+## Related documentation
+
+The following documents describe each observability component in detail.
+
+- **Logging** — structured request and operational logs.
+- **Metrics** — Prometheus metrics exposed by Torus.
+- **Health Endpoint** — proxy health and readiness endpoint.
+- **Configuration → Observability** — enabling and configuring observability.

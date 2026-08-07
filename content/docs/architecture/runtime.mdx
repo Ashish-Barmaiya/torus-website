@@ -1,0 +1,134 @@
+---
+title: Runtime
+description: The immutable runtime snapshot used to process every request.
+updated: 2026-08-04
+package: internal/runtime
+files:
+  - internal/runtime/runtime.go
+  - internal/runtime/builder.go
+related:
+  - architecture
+  - configuration/configuration-reload
+---
+
+# Runtime
+
+The runtime is the central execution object used by Torus to process incoming requests.
+
+Rather than consulting configuration files while serving traffic, Torus builds a complete in-memory representation of the active configuration. Every request executes against this runtime snapshot from beginning to end.
+
+The runtime is immutable after construction, ensuring that request processing always observes a consistent view of the system.
+
+---
+
+## Why a runtime?
+
+Reading configuration files or rebuilding internal state for every request would be both inefficient and difficult to synchronize under concurrent workloads.
+
+Instead, Torus performs all configuration parsing and initialization before requests begin using the runtime.
+
+Once constructed, the runtime contains everything required to process requests efficiently.
+
+This design provides:
+
+- deterministic request processing
+- fast runtime lookups
+- clear ownership of runtime state
+- simplified concurrency
+
+---
+
+## Runtime ownership
+
+The runtime owns every component required to process a request.
+
+```text
+Runtime
+├── Router
+├── Services
+├── Load Balancers
+├── Backend Pools
+├── Health Check Workers
+├── TLS Configuration
+└── Observability Configuration
+```
+
+These components are created together, published together, and eventually retired together.
+
+Grouping related state into a single runtime simplifies lifecycle management and keeps subsystem ownership explicit.
+
+---
+
+## Immutable by design
+
+A runtime snapshot never changes after it has been published.
+
+Every request acquires a reference to the active runtime before processing begins and continues using that same runtime until the request completes.
+
+Because the runtime is immutable:
+
+- requests always observe a consistent configuration
+- concurrent requests safely share the same runtime
+- request processing requires minimal synchronization
+- configuration changes cannot affect requests already in progress
+
+Immutability is one of the core architectural principles of Torus.
+
+---
+
+## Runtime generations
+
+Every successful configuration reload creates a new runtime generation.
+
+```text
+Runtime v1
+
+    ↓
+
+Runtime v2
+
+    ↓
+
+Runtime v3
+```
+
+Older generations continue serving in-flight requests until they are no longer referenced.
+
+New requests immediately begin using the latest published generation.
+
+This approach allows Torus to replace configuration without interrupting active traffic.
+
+---
+
+## Relationship to configuration
+
+The runtime is not edited directly.
+
+Instead, it is constructed from a validated configuration file.
+
+Whenever the configuration changes, Torus builds an entirely new runtime rather than modifying the existing one.
+
+The complete reload process—including configuration parsing, validation, runtime construction, publication, and retirement—is described in **Configuration → Configuration Reload**.
+
+---
+
+## Design rationale
+
+Many reverse proxies update routing tables or backend state in place.
+
+Torus instead treats the runtime as an immutable snapshot.
+
+Although constructing a new runtime requires additional work during configuration reloads, reload operations occur infrequently compared to request processing.
+
+Optimizing for immutable runtime access keeps the critical request path simple, predictable, and highly concurrent.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Architecture** — how the runtime participates in request processing.
+- **Configuration Reload** — how new runtime generations are created and published.
+- **Router** — route resolution using the active runtime.
+- **Services** — backend grouping within the runtime.

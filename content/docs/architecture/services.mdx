@@ -1,0 +1,121 @@
+---
+title: Services
+description: The logical abstraction between routing and backend selection.
+updated: 2026-08-04
+package: internal/service
+files:
+  - internal/service/service.go
+related:
+  - architecture/router
+  - architecture/load-balancing
+  - architecture/reverse-proxy
+  - configuration/routing
+---
+
+# Services
+
+A service is the logical abstraction that connects routing to backend selection.
+
+After the router determines which route matches an incoming request, it returns the corresponding service. The service owns the pool of upstream backends that can handle that request and exposes them to the load balancer.
+
+By separating route resolution from backend management, Torus keeps each subsystem focused on a single responsibility.
+
+---
+
+## Responsibilities
+
+A service is responsible for:
+
+- representing a logical application
+- owning a pool of upstream backends
+- exposing those backends to the load balancer
+
+A service does **not**:
+
+- match request paths
+- perform load balancing
+- proxy HTTP requests
+- perform health checks
+
+Those responsibilities belong to other components of the request pipeline.
+
+---
+
+## Position in the request pipeline
+
+Every request passes through the service layer after routing.
+
+<RequestFlow steps={["Request", "Router", "Service", "Load Balancer", "Reverse Proxy"]} />
+
+At this point, Torus knows **which application** should handle the request, but it has not yet selected a specific backend instance.
+
+---
+
+## Backend ownership
+
+Each service owns one or more upstream backends.
+
+```text
+Service
+
+├── Backend A
+├── Backend B
+└── Backend C
+```
+
+The load balancer selects one healthy backend from this pool for every incoming request.
+
+Each service maintains its own independent backend pool.
+
+---
+
+## Why a service layer?
+
+The service layer separates routing from backend management.
+
+Without this abstraction, the router would need to understand backend pools, health state, and load balancing policies.
+
+Instead, responsibilities remain clearly divided:
+
+- the router decides **which service** should receive a request
+- the service owns the backend pool
+- the load balancer selects a backend
+- the reverse proxy forwards the request
+
+Keeping these concerns separate simplifies both the implementation and the request pipeline.
+
+---
+
+## Design rationale
+
+Services exist primarily to maintain clear architectural boundaries.
+
+This separation provides several advantages:
+
+- routing remains independent of backend topology
+- backend pools can evolve without affecting the router
+- load balancing policies remain isolated from routing
+- future backend management features can be added without changing route resolution
+
+Each component performs one well-defined responsibility before handing control to the next stage of the pipeline.
+
+---
+
+## Configuration
+
+Services are created automatically when Torus builds the runtime from the configuration file.
+
+There is no separate service configuration.
+
+To learn how routes and upstream backend pools are defined, see **Configuration → Routing**.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Router** — route resolution.
+- **Load Balancing** — backend selection.
+- **Reverse Proxy** — forwarding requests to upstream servers.
+- **Configuration → Routing** — defining routes and upstreams.

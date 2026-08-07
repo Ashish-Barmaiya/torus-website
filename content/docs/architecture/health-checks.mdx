@@ -1,0 +1,159 @@
+---
+title: Health Checks
+description: Monitoring backend availability through active health probing.
+updated: 2026-08-04
+package: internal/health
+files:
+  - internal/health/health.go
+related:
+  - architecture/load-balancing
+  - architecture/runtime
+  - configuration/health
+  - observability/health-endpoint
+---
+
+# Health Checks
+
+Torus continuously monitors every configured backend to determine whether it is capable of serving requests.
+
+This process is known as **active health checking**.
+
+Rather than discovering backend failures only after client requests begin failing, Torus probes every backend continuously in the background and maintains its current health state. The load balancer consults this state before selecting an upstream.
+
+---
+
+## Responsibilities
+
+The health subsystem is responsible for:
+
+- periodically probing every backend
+- determining backend availability
+- maintaining each backend's health state
+- providing that state to the load balancer
+
+It does **not**:
+
+- route requests
+- select backends
+- forward client traffic
+
+Those responsibilities belong to other components in the request pipeline.
+
+---
+
+## Active health probing
+
+Health checks execute independently of client traffic.
+
+Each backend is periodically sent a probe request.
+
+If the probe succeeds, the backend is considered **healthy**.
+
+If the probe fails or times out, the backend is marked **unhealthy**.
+
+<RequestFlow steps={["Health Worker", "Send Probe", "Receive Response", "Update Health State"]} />
+
+The resulting health state is continuously updated as probes succeed or fail.
+
+---
+
+## Position in the request pipeline
+
+Health checking is **not** part of normal request processing.
+
+Instead, it runs continuously in the background.
+
+```text
+            Background Workers
+                    ↓
+             Health Checkers
+                    ↓
+           Backend Health State
+                    ↓
+              Load Balancer
+                    ↓
+             Client Requests
+```
+
+Because health information has already been computed, client requests never wait for health probes to complete.
+
+---
+
+## Healthy and unhealthy backends
+
+Consider three configured backends.
+
+Initially:
+
+```text
+A ✓
+B ✓
+C ✓
+```
+
+All three are eligible to receive requests.
+
+If backend **B** later becomes unavailable:
+
+```text
+A ✓
+B ✗
+C ✓
+```
+
+The load balancer automatically excludes **B** from future backend selection.
+
+No routing changes are required.
+
+---
+
+## Automatic recovery
+
+Backend health is continuously re-evaluated.
+
+When an unhealthy backend begins responding successfully again, it is automatically returned to the healthy backend pool.
+
+No restart or manual intervention is required.
+
+---
+
+## Failure handling
+
+If every backend in a service becomes unhealthy, Torus cannot safely forward requests.
+
+Rather than attempting connections that are expected to fail, request processing stops immediately and an error response is returned to the client.
+
+This avoids unnecessary connection attempts while providing predictable failure behaviour.
+
+---
+
+## Design rationale
+
+Running health checks independently of request processing provides several advantages.
+
+- backend failures are detected proactively
+- unhealthy backends are removed before serving client traffic
+- backend recovery occurs automatically
+- load balancing remains simple because health has already been determined
+- request latency is unaffected by health probe execution
+
+Separating health monitoring from request forwarding also keeps each subsystem focused on a single responsibility.
+
+---
+
+## Configuration
+
+This document explains how health checking works conceptually.
+
+To configure probe intervals, timeouts, and health endpoints, see **Configuration → Health**.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Load Balancing** — selecting healthy backends.
+- **Reverse Proxy** — forwarding requests to the selected backend.
+- **Configuration → Health** — configuring health probes.
+- **Observability → Health Endpoint** — exposing Torus' own health status.

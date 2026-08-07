@@ -1,0 +1,63 @@
+---
+title: Overview
+description: An introduction to Torus configuration.
+updated: 2026-08-04
+package: internal/config
+files:
+  - internal/config/config.go
+related:
+  - configuration/server
+  - configuration/routing
+  - configuration/health
+  - configuration/tls
+  - configuration/observability
+  - configuration/configuration-reload
+---
+
+# Configuration Overview
+
+Torus is configured entirely through a declarative YAML configuration file.
+
+The configuration describes the desired state of the proxy, including how it listens for requests, where traffic is routed, how backend health is monitored, whether TLS is enabled, and whether observability features are active.
+
+During startup, Torus reads the configuration, validates it, and constructs an immutable runtime from it. The configuration file is never consulted while serving requests.
+
+---
+
+## Configuration lifecycle
+
+Every configuration follows the same lifecycle.
+
+<RequestFlow steps={["Read YAML", "Parse", "Validate", "Build Runtime", "Serve Requests"]} />
+
+If validation fails, Torus refuses to build a new runtime and continues using the existing one.
+
+---
+
+## Configuration structure
+
+A typical configuration consists of the following sections.
+
+| Section         | Purpose                                      |
+| --------------- | -------------------------------------------- |
+| `server`        | Configure the HTTP listener.                 |
+| `routes`        | Define request routing and upstream servers. |
+| `health`        | Configure active backend health checks.      |
+| `tls`           | Enable HTTPS termination.                    |
+| `observability` | Enable or disable metrics collection.        |
+
+Each section configures one aspect of the runtime.
+
+---
+
+## Learn more
+
+The following pages describe each configuration section in detail.
+
+- **Server** — configure the listening address.
+- **Routing** — configure routes and upstream backends.
+- **Health** — configure active backend health checks.
+- **TLS** — enable HTTPS termination.
+- **Observability** — enable metrics collection.
+- **Configuration Reload** — apply configuration changes without restarting the proxy.
+- **Configuration Reference** — complete YAML schema and field reference.

@@ -1,0 +1,130 @@
+---
+title: Router
+description: How Torus resolves incoming requests to logical services.
+updated: 2026-08-04
+package: internal/routing
+files:
+  - internal/routing/router.go
+related:
+  - architecture
+  - architecture/runtime
+  - architecture/services
+  - configuration/routing
+---
+
+# Router
+
+The router is responsible for determining which logical service should handle an incoming request.
+
+Every request entering Torus passes through the router exactly once. Given a request path, the router selects the most specific matching route and returns the associated service.
+
+The router performs only route selection. It does not perform load balancing, health checking, or request forwarding.
+
+---
+
+## Responsibilities
+
+The router has a single responsibility:
+
+- inspect the request path
+- find the best matching route
+- return the associated service
+
+Once a service has been selected, the router's work is complete.
+
+Subsequent stages of the request pipeline are responsible for backend selection and request forwarding.
+
+---
+
+## Longest-prefix matching
+
+Torus uses **longest-prefix matching** to resolve routes.
+
+When multiple routes match a request, the router selects the route with the longest valid prefix.
+
+For example:
+
+| Configured Route | Request      | Selected |
+| ---------------- | ------------ | -------- |
+| `/`              | `/api/users` | ❌       |
+| `/api`           | `/api/users` | ✅       |
+| `/api/v1`        | `/api/users` | ❌       |
+
+A request to:
+
+```text
+/api/v1/users
+```
+
+matches:
+
+```text
+/api/v1
+```
+
+because it is the most specific matching prefix.
+
+This behaviour remains deterministic regardless of the number of configured routes.
+
+---
+
+## Path boundaries
+
+Prefix matching respects path boundaries.
+
+A route matches only when the prefix ends at a directory boundary or the end of the request path.
+
+| Route  | Request      | Match |
+| ------ | ------------ | ----- |
+| `/api` | `/api`       | ✅    |
+| `/api` | `/api/users` | ✅    |
+| `/api` | `/api/v1`    | ✅    |
+| `/api` | `/apiv1`     | ❌    |
+| `/api` | `/apitest`   | ❌    |
+
+This prevents unrelated routes from matching simply because they begin with the same characters.
+
+---
+
+## Request flow
+
+<RequestFlow steps={["Request", "Router", "Longest-Prefix Match", "Service"]} />
+
+The selected service is then passed to the load balancer, which chooses a healthy backend for the request.
+
+---
+
+## Failure handling
+
+If no configured route matches the incoming request, routing stops immediately.
+
+Torus returns an HTTP **404 Not Found** response and no backend request is attempted.
+
+---
+
+## Design rationale
+
+The routing algorithm favors deterministic behaviour over expressive pattern matching.
+
+Longest-prefix routing is simple to reason about, efficient to evaluate, and aligns with the routing model used by many production reverse proxies.
+
+Keeping the router focused solely on route resolution also preserves clear architectural boundaries between routing, backend selection, and request forwarding.
+
+---
+
+## Configuration
+
+This document explains how routing works internally.
+
+To learn how routes and upstreams are defined in the configuration file, see **Configuration → Routing**.
+
+---
+
+## Related documentation
+
+Continue with:
+
+- **Architecture** — where routing fits into the request pipeline.
+- **Services** — logical destinations returned by the router.
+- **Load Balancing** — backend selection after routing.
+- **Configuration → Routing** — configuring routes and upstreams.
