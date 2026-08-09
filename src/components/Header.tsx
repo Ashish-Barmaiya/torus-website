@@ -4,9 +4,9 @@ import { MobileNavigation } from "./MobileNavigation";
 import ThemeToggle from "./ThemeToggle";
 
 const navigation = [
-  { href: "/#capabilities", label: "Capabilities" },
   { href: "/architecture", label: "Architecture" },
   { href: "/#benchmarks", label: "Benchmarks" },
+  { href: "/blog", label: "Blog" },
   { href: "/docs", label: "Documentation" },
 ];
 
