@@ -1,0 +1,522 @@
+---
+title: "Benchmark-003: Performance Impact of Observability"
+description: "A controlled benchmark measuring the runtime cost of enabling Torus observability."
+date: "2026-08-01"
+author: "Ashish Barmaiya"
+---
+
+# Benchmark-003: Performance Impact of Observability
+
+> **Status:** Complete
+
+This benchmark measures the runtime cost of enabling Torus observability by comparing otherwise equivalent deployments with observability disabled and enabled under identical benchmark conditions.
+
+## Benchmark Information
+
+| Field                   | Value                                                  |
+| ----------------------- | ------------------------------------------------------ |
+| **Benchmark ID**        | B-003                                                  |
+| **Date**                | 2026-08-01                                             |
+| **Author**              | Ashish Barmaiya                                        |
+| **Torus Version**       | v0.3.0                                                 |
+| **Git Branch**          | `feature/observability`                                |
+| **Git Commit**          | `984ebd0c89fb099b7a24d9fa1f1b07d83a830668`             |
+| **Methodology Version** | 1.0                                                    |
+| **Hardware Profile**    | H001                                                   |
+| **Environment Profile** | E001                                                   |
+| **Software Baseline**   | S001                                                   |
+| **Categories**          | Throughput, Latency, Resource Usage, Runtime Behaviour |
+| **Benchmark Tools**     | wrk, Vegeta, pidstat, vmstat, Prometheus, Grafana      |
+
+## Executive Summary
+
+Enabling observability introduced a **small but measurable runtime cost**.
+
+Under the saturated `wrk` workload, mean throughput decreased by approximately **3.45%**, while average request latency increased by **3.60%**. Under the controlled-rate `Vegeta` workload, throughput remained effectively unchanged and latency increased by only **2–4%** across the reported latency percentiles.
+
+Every benchmark iteration completed successfully, with a **100% request success rate** in both scenarios.
+
+The results indicate that the primary cost of observability is the additional CPU work required to update Prometheus counters, gauges, and histograms during request processing. Resource utilization remained bounded, latency distributions remained consistent across repeated executions, and no evidence of runtime instability or excessive memory growth was observed.
+
+### Key Results
+
+| Metric                   | Observability Disabled | Observability Enabled |              Δ |      Δ (%) |
+| ------------------------ | ---------------------: | --------------------: | -------------: | ---------: |
+| **wrk Throughput**       |       15,280.246 req/s |      14,753.677 req/s | −526.569 req/s | **−3.45%** |
+| **wrk Mean Latency**     |               6.771 ms |              7.015 ms |      +0.244 ms | **+3.60%** |
+| **wrk Transfer Rate**    |             2.185 MB/s |            2.111 MB/s |    −0.074 MB/s | **−3.39%** |
+| **Vegeta Throughput**    |          500.022 req/s |         500.024 req/s |   +0.002 req/s |     ~0.00% |
+| **Vegeta Mean Latency**  |               0.165 ms |              0.169 ms |      +0.004 ms | **+2.42%** |
+| **Vegeta P95 Latency**   |               0.221 ms |              0.226 ms |      +0.005 ms | **+2.26%** |
+| **Vegeta P99 Latency**   |               0.429 ms |              0.445 ms |      +0.016 ms | **+3.73%** |
+| **Request Success Rate** |                   100% |                  100% |      No change |          — |
+
+### Principal Findings
+
+- Peak throughput decreased by approximately **3.5%** with observability enabled.
+- At **500 requests/sec**, throughput remained effectively unchanged.
+- Mean latency increased modestly under both workloads.
+- Tail latency remained close to the baseline.
+- All requests completed successfully.
+- Memory usage remained stable.
+- Runtime behaviour remained stable across repeated executions.
+- The coefficient of variation for the primary `wrk` throughput measurements remained below **3%**.
+
+## What Was Tested?
+
+The benchmark isolates a single independent variable: the observability configuration.
+
+### Observability Disabled
+
+- Request instrumentation disabled.
+- Runtime metrics disabled.
+- Backend metrics disabled.
+- `/metrics` endpoint unavailable.
+
+### Observability Enabled
+
+- HTTP request metrics enabled.
+- Backend metrics enabled.
+- Runtime metrics enabled.
+- `/metrics` endpoint exposed.
+- Prometheus periodically scraped the exported metrics during benchmark execution.
+
+All other benchmark variables were held constant.
+
+### Hypothesis
+
+> Enabling observability will introduce a small but measurable runtime overhead due to additional metric collection performed during request processing.
+
+The expected effects were:
+
+- slightly lower peak throughput;
+- modestly higher request latency;
+- modestly higher CPU utilization;
+- stable memory consumption;
+- no significant impact on runtime stability or request correctness.
+
+## Experimental Setup
+
+The benchmark used a single-machine localhost topology.
+
+```text
+                     Benchmark Client
+                    (wrk / Vegeta)
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │      Torus      │
+                  │ Reverse Proxy   │
+                  └─────────────────┘
+                    │             │
+                    ▼             ▼
+             Mock Backend 1   Mock Backend 2
+```
+
+When observability was enabled, Torus additionally exposed Prometheus-compatible metrics through `/metrics`. Prometheus periodically scraped the endpoint and Grafana was used for runtime visualization.
+
+### Controlled Variables
+
+| Variable                    | Value                    |
+| --------------------------- | ------------------------ |
+| Torus Version               | Same build               |
+| Git Commit                  | Same commit              |
+| Go Version                  | Unchanged                |
+| Hardware                    | H001                     |
+| Operating System            | E001                     |
+| Software Baseline           | S001                     |
+| Reverse Proxy Configuration | Identical                |
+| Backend Implementation      | Identical                |
+| Backend Topology            | Two mock backend servers |
+| Request Payload             | 1 KB                     |
+| HTTP Protocol               | HTTP                     |
+| Benchmark Duration          | 30 seconds               |
+| Warm-up Duration            | 30 seconds               |
+| Iterations                  | 20                       |
+| Benchmark Tools             | wrk and Vegeta           |
+| Monitoring Tools            | pidstat, vmstat, ss      |
+| CPU Frequency Governor      | `performance`            |
+| Benchmark Client            | Same machine             |
+| Network Topology            | Localhost                |
+
+The CPU frequency governor was set to `performance` to reduce frequency-scaling variability between benchmark runs.
+
+## Workload
+
+### wrk
+
+`wrk` was used to measure maximum sustainable throughput and latency under continuous load.
+
+| Parameter   |      Value |
+| ----------- | ---------: |
+| Threads     |          2 |
+| Connections |        100 |
+| Duration    | 30 seconds |
+
+### Vegeta
+
+Vegeta was used for controlled-rate latency measurements.
+
+| Parameter    |            Value |
+| ------------ | ---------------: |
+| Request Rate | 500 requests/sec |
+| Duration     |       30 seconds |
+
+### Common Parameters
+
+| Parameter    |      Value |
+| ------------ | ---------: |
+| Warm-up      | 30 seconds |
+| Iterations   |         20 |
+| Payload Size |       1 KB |
+| HTTP Method  |        GET |
+
+# Results
+
+## Throughput
+
+The primary `wrk` workload measures maximum sustainable throughput.
+
+Enabling observability reduced mean throughput from **15,280.246 req/s** to **14,753.677 req/s**, a reduction of **526.569 req/s**, or **3.45%**.
+
+| Metric       |     Disabled |      Enabled |             Δ |      Δ (%) |
+| ------------ | -----------: | -----------: | ------------: | ---------: |
+| Requests/sec |   15,280.246 |   14,753.677 |      −526.569 | **−3.45%** |
+| Transfer/sec | 2.185 MB/sec | 2.111 MB/sec | −0.074 MB/sec | **−3.39%** |
+
+The result is consistent with the expected cost of performing additional metric updates during request processing.
+
+### Throughput Distribution
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-disabled/wrk-throughput-boxplot.png"
+  width="500"
+  alt="wrk throughput with observability disabled"
+/>
+
+_Throughput distribution — observability disabled._
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-enabled/wrk-throughput-boxplot.png"
+  width="500"
+  alt="wrk throughput with observability enabled"
+/>
+
+_Throughput distribution — observability enabled._
+
+Across 20 iterations, both scenarios remained stable. The observability-enabled configuration consistently achieved slightly lower throughput.
+
+## Latency
+
+Latency was evaluated under both saturated `wrk` and controlled-rate `Vegeta` workloads.
+
+`wrk` measures latency while the proxy is operating near maximum throughput. Vegeta's constant-rate workload helps isolate request-processing latency from client-side saturation.
+
+### wrk Latency
+
+| Metric       | Disabled |  Enabled |         Δ |      Δ (%) |
+| ------------ | -------: | -------: | --------: | ---------: |
+| Mean Latency | 6.771 ms | 7.015 ms | +0.244 ms | **+3.60%** |
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-disabled/wrk-latency-boxplot.png"
+  width="500"
+  alt="wrk latency distribution with observability disabled"
+/>
+
+_Latency distribution — observability disabled._
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-enabled/wrk-latency-boxplot.png"
+  width="500"
+  alt="wrk latency distribution with observability enabled"
+/>
+
+_Latency distribution — observability enabled._
+
+The distributions remain similar, with a modest upward shift in latency when observability is enabled.
+
+### Vegeta Latency
+
+| Metric  | Disabled |  Enabled |          Δ |
+| ------- | -------: | -------: | ---------: |
+| Mean    | 0.165 ms | 0.169 ms | **+2.42%** |
+| Median  | 0.148 ms | 0.151 ms | **+2.03%** |
+| P95     | 0.221 ms | 0.226 ms | **+2.26%** |
+| P99     | 0.429 ms | 0.445 ms | **+3.73%** |
+| Maximum | 3.197 ms | 3.294 ms | **+3.03%** |
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-disabled/latency-percentiles.png"
+  width="500"
+  alt="Vegeta latency percentiles with observability disabled"
+/>
+
+_Latency percentiles — observability disabled._
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-enabled/latency-percentiles.png"
+  width="500"
+  alt="Vegeta latency percentiles with observability enabled"
+/>
+
+_Latency percentiles — observability enabled._
+
+At 500 requests/sec, throughput remained effectively identical while latency increased only slightly across the reported percentiles.
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-disabled/latency-histogram.png"
+  width="500"
+  alt="Latency histogram with observability disabled"
+/>
+
+_Latency distribution — observability disabled._
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-enabled/latency-histogram.png"
+  width="500"
+  alt="Latency histogram with observability enabled"
+/>
+
+_Latency distribution — observability enabled._
+
+The histograms show nearly identical response-time distributions with only a slight rightward shift when observability is enabled.
+
+## CPU Utilization
+
+CPU utilization was monitored continuously using `pidstat`.
+
+Enabling observability increased CPU utilization slightly, consistent with the additional work required to update Prometheus counters, gauges, and latency histograms.
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-disabled/cpu-timeseries.png"
+  width="500"
+  alt="CPU utilization time series with observability disabled"
+/>
+
+_CPU utilization over time — observability disabled._
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-enabled/cpu-timeseries.png"
+  width="500"
+  alt="CPU utilization time series with observability enabled"
+/>
+
+_CPU utilization over time — observability enabled._
+
+No abnormal scheduler behaviour or CPU saturation was observed.
+
+## Memory Utilization
+
+Memory usage remained stable across both benchmark scenarios.
+
+No significant increase in resident memory usage was observed after enabling observability, and memory remained bounded throughout the benchmark.
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-disabled/memory-timeseries.png"
+  width="500"
+  alt="Memory utilization time series with observability disabled"
+/>
+
+_Memory utilization over time — observability disabled._
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/observability-enabled/memory-distribution.png"
+  width="500"
+  alt="Memory utilization over time with observability enabled"
+/>
+
+_Memory utilization over time — observability enabled._
+
+Both scenarios remained bounded with no evidence of progressive memory growth.
+
+## Go Runtime Behaviour
+
+The Go runtime was observed through the Grafana runtime dashboard to determine whether the measured overhead was accompanied by abnormal runtime behaviour.
+
+### Goroutines
+
+The active goroutine count increased as concurrent requests were processed and returned to its baseline level after the workload completed.
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/grafana/goroutines.png"
+  width="1000"
+  alt="Go runtime goroutine behaviour"
+/>
+
+### Heap Behaviour
+
+Heap usage remained bounded throughout execution. Allocation increased during request processing and the runtime returned to a stable operating range after the workload completed.
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/grafana/heap-memory.png"
+  width="1000"
+  alt="Go runtime heap memory behaviour"
+/>
+
+### Allocation Behaviour
+
+Object allocation increased substantially during sustained request processing, reaching approximately **600 MB/s** while the benchmark was active. Allocation activity returned rapidly toward its idle level after the workload completed.
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/grafana/allocation-rate.png"
+  width="1000"
+  alt="Go runtime allocation rate"
+/>
+
+### Garbage Collection
+
+The garbage collector remained stable throughout execution. Heap usage remained bounded and no evidence of excessive GC activity, allocation stalls, or runtime instability was observed.
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/grafana/next-gc.png"
+  width="1000"
+  alt="Go garbage collector behaviour"
+/>
+
+## Backend Behaviour
+
+Backend runtime metrics were monitored to verify that enabling observability did not alter request routing or upstream behaviour.
+
+Requests continued to be distributed across both backend instances, and backend response latency remained nearly identical.
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/grafana/backend-request-rate.png"
+  width="1000"
+  alt="Backend request rate"
+/>
+
+<img
+  src="/assets/Benchmark-003-observability-overhead/grafana/backend-latency.png"
+  width="1000"
+  alt="Backend latency"
+/>
+
+Because downstream latency remained unchanged while end-to-end latency increased slightly, the measured overhead can be attributed to processing performed inside Torus rather than by the upstream services.
+
+## Request Correctness
+
+Across all benchmark iterations:
+
+- Every benchmark completed successfully.
+- All requests were processed successfully.
+- No routing failures were observed.
+- No request or response corruption was detected.
+- No benchmark iteration reported unexpected behaviour.
+
+Both configurations maintained a **100% request success rate**.
+
+# Analysis
+
+## What the Results Mean
+
+The benchmark demonstrates a consistent but modest performance regression when observability is enabled.
+
+Under maximum throughput:
+
+- throughput decreased by **3.45%**;
+- mean latency increased by **3.60%**;
+- transfer rate decreased by **3.39%**.
+
+At the controlled rate of **500 requests/sec**:
+
+- throughput remained effectively unchanged;
+- mean latency increased by **2.42%**;
+- P95 latency increased by **2.26%**;
+- P99 latency increased by **3.73%**.
+
+Instrumentation overhead becomes more visible when the proxy is driven toward saturation, while at the controlled workload the available processing capacity absorbs most of the additional work.
+
+Supporting measurements show no evidence of a broader runtime regression: memory remained stable, goroutine counts returned to baseline, heap usage remained bounded, garbage collection remained stable, backend routing remained consistent, and request success remained at 100%.
+
+## Benchmark Stability
+
+Each scenario was executed for **20 independent iterations**.
+
+| Statistic                | Observability Disabled | Observability Enabled |
+| ------------------------ | ---------------------: | --------------------: |
+| Sample Size              |                     20 |                    20 |
+| Mean                     |       15,280.246 req/s |      14,753.677 req/s |
+| Median                   |       15,318.623 req/s |      14,741.004 req/s |
+| Minimum                  |       14,554.531 req/s |      14,108.653 req/s |
+| Maximum                  |       15,851.336 req/s |      15,489.208 req/s |
+| Standard Deviation       |          445.164 req/s |         434.975 req/s |
+| Coefficient of Variation |                  2.91% |                 2.95% |
+
+Both coefficients of variation remained below **3%**, indicating good measurement stability and repeatability.
+
+## Threats to Validity
+
+### Localhost Topology
+
+The benchmark client, Torus, and backend servers executed on the same physical machine. Real deployments introduce network latency, routing overhead, and additional operating-system variability.
+
+### Hardware Specificity
+
+The reported absolute performance values apply to Hardware Profile H001. Different processors, cache hierarchies, memory configurations, and operating systems may produce different results.
+
+### Workload Characteristics
+
+The benchmark uses a simple HTTP GET workload with a 1 KB payload. Larger payloads, streaming responses, TLS termination, or computationally intensive backends may produce different relative instrumentation costs.
+
+### Prometheus Scraping
+
+The observability-enabled configuration includes both metric instrumentation and active Prometheus collection through `/metrics`.
+
+Therefore, the reported overhead represents the operational cost of the complete observability configuration rather than instrumentation in isolation.
+
+### Benchmark Scope
+
+This benchmark does not evaluate:
+
+- long-running stability;
+- memory fragmentation;
+- scalability across multiple machines;
+- comparative performance against other reverse proxies;
+- profiling of individual instrumentation functions.
+
+# Conclusion
+
+Torus observability introduces a **small but measurable runtime overhead**.
+
+Under saturated load, enabling observability reduced average throughput by **3.45%** and increased mean request latency by **3.60%**. Under the controlled-rate Vegeta workload, throughput remained effectively unchanged while latency increased only marginally across the reported percentiles.
+
+CPU utilization increased slightly, consistent with the additional work required to maintain Prometheus metrics. Memory utilization remained stable, while runtime observations showed bounded heap growth, predictable goroutine behaviour, stable allocation patterns, and stable garbage collection.
+
+No evidence of runtime instability, resource exhaustion, routing problems, or instrumentation-induced correctness issues was observed.
+
+The measured trade-off is therefore predictable and modest: Torus gains continuous operational visibility while giving up a small amount of peak processing capacity.
+
+For deployments where monitoring and diagnostics are required, the benchmark supports enabling observability while recognizing its measurable cost under saturation.
+
+## Reproducibility
+
+This benchmark was executed using the Torus benchmarking framework and can be reproduced using the corresponding benchmark scenarios, datasets, and environment profiles.
+
+The complete reproducibility record includes:
+
+- Torus source at commit `984ebd0c89fb099b7a24d9fa1f1b07d83a830668`;
+- Hardware Profile H001;
+- Environment Profile E001;
+- Software Profile S001;
+- Benchmark Methodology v1.0;
+- benchmark scenarios for disabled and enabled observability;
+- raw benchmark outputs;
+- statistical summaries;
+- generated plots;
+- system monitoring data.
+
+See the **Benchmarking → Reproducing Benchmarks** documentation for execution instructions.
+
+## Dataset
+
+The complete benchmark datasets contain raw benchmark outputs, monitoring data, generated plots, statistical summaries, metadata, and automated reports.
+
+**Benchmark-003 dataset:**  
+https://github.com/Ashish-Barmaiya/torus-proxy/releases/tag/benchmark-003-observability-overhead
+
+## Full Benchmark Record
+
+This page is the curated publication of Benchmark-003.
+
+The complete benchmark record, including detailed execution data, full statistical analysis, benchmark commands, and all visual artifacts, remains available in the Torus repository and benchmark release.

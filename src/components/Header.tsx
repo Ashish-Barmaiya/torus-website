@@ -5,7 +5,7 @@ import ThemeToggle from "./ThemeToggle";
 
 const navigation = [
   { href: "/architecture", label: "Architecture" },
-  { href: "/#benchmarks", label: "Benchmarks" },
+  { href: "/benchmarks", label: "Benchmarks" },
   { href: "/blog", label: "Blog" },
   { href: "/docs", label: "Documentation" },
 ];

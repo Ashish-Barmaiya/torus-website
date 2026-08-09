@@ -1,0 +1,728 @@
+---
+title: "Benchmark-002: HTTP vs HTTPS Performance Evaluation"
+description: "A controlled benchmark measuring the performance cost of TLS termination in Torus."
+date: "2026-07-16"
+author: "Ashish Barmaiya"
+---
+
+# Benchmark-002: HTTP vs HTTPS Performance Evaluation
+
+> **Status:** Complete
+
+This benchmark measures the performance overhead introduced by TLS termination in Torus by comparing otherwise equivalent HTTP and HTTPS deployments under identical benchmark conditions.
+
+The study evaluates throughput, latency, CPU utilization, memory consumption, and request correctness while holding the rest of the system constant.
+
+## Benchmark Information
+
+| Field                   | Value                                      |
+| ----------------------- | ------------------------------------------ |
+| **Benchmark ID**        | B-002                                      |
+| **Date**                | 2026-07-16                                 |
+| **Author**              | Ashish Barmaiya                            |
+| **Torus Version**       | v0.1.0                                     |
+| **Git Commit**          | `c1aaa11d42b54ec9556caf15ed26435e1cadb615` |
+| **Methodology Version** | 1.0                                        |
+| **Hardware Profile**    | H001                                       |
+| **Environment Profile** | E001                                       |
+| **Software Baseline**   | S001                                       |
+| **Categories**          | Throughput, Latency, Resource Usage        |
+| **Benchmark Tools**     | wrk, Vegeta, pidstat, vmstat               |
+
+---
+
+## Executive Summary
+
+Enabling TLS termination introduced a **measurable but modest performance cost**.
+
+Under the saturated `wrk` workload, mean throughput decreased by **6.54%**, from **15,616.981 req/s** to **14,595.231 req/s**. Mean latency increased by **6.66%**, from **6.623 ms** to **7.064 ms**.
+
+Under the controlled-rate `Vegeta` workload at **500 req/s**, throughput remained effectively unchanged while mean latency increased from **0.157 ms** to **0.172 ms**.
+
+The resource measurements show that the primary cost of HTTPS was computational. Average CPU utilization increased by approximately **8.5%** under the controlled-rate workload and **21.5%** under peak throughput. Average resident memory increased by **20.4%** under Vegeta and **16.1%** under wrk.
+
+Despite this overhead, both configurations maintained a **100% request success rate**, and CPU and memory behaviour remained bounded throughout the benchmark.
+
+### Key Results
+
+| Metric                   |             HTTP |            HTTPS |                Δ |       Δ (%) |
+| ------------------------ | ---------------: | ---------------: | ---------------: | ----------: |
+| **wrk Throughput**       | 15,616.981 req/s | 14,595.231 req/s | −1,021.750 req/s |  **−6.54%** |
+| **wrk Mean Latency**     |         6.623 ms |         7.064 ms |        +0.441 ms |  **+6.66%** |
+| **wrk Transfer Rate**    |       2.234 MB/s |       2.089 MB/s |      −0.145 MB/s |  **−6.49%** |
+| **Vegeta Throughput**    |    500.027 req/s |    500.025 req/s |     −0.002 req/s |      ~0.00% |
+| **Vegeta Mean Latency**  |         0.157 ms |         0.172 ms |        +0.015 ms |  **+9.65%** |
+| **Vegeta P95 Latency**   |         0.199 ms |         0.219 ms |        +0.020 ms | **+10.29%** |
+| **Vegeta P99 Latency**   |         0.395 ms |         0.430 ms |        +0.035 ms |  **+8.78%** |
+| **Request Success Rate** |             100% |             100% |        No change |           — |
+
+### Principal Findings
+
+- Peak throughput decreased by approximately **6.5%** with TLS enabled.
+- At **500 requests/sec**, throughput remained effectively unchanged.
+- Mean latency increased modestly under both workloads.
+- Tail latency increased consistently but remained bounded.
+- CPU utilization increased, confirming additional cryptographic processing.
+- Resident memory increased modestly but remained stable.
+- No evidence of resource leaks or runtime instability was observed.
+- All benchmark requests completed successfully.
+- The primary `wrk` throughput measurements showed low run-to-run variability, with coefficients of variation of **2.46%** for HTTP and **2.49%** for HTTPS.
+
+---
+
+## Objective
+
+The objective is to quantify the performance cost of TLS termination in Torus while isolating HTTPS as the only independent variable.
+
+The benchmark answers four engineering questions:
+
+1. How much throughput is lost when TLS termination is enabled?
+2. How does HTTPS affect request latency?
+3. What additional CPU and memory resources are required?
+4. Is the measured overhead acceptable for the current implementation?
+
+The resulting measurements establish a baseline against which future TLS, connection-management, memory-allocation, and request-processing optimizations can be evaluated.
+
+---
+
+## Hypothesis
+
+> Enabling TLS termination will reduce maximum throughput and slightly increase request latency due to the additional cryptographic processing required by HTTPS. CPU utilization is expected to increase, while memory consumption should increase modestly because TLS introduces additional session state, cryptographic contexts, and temporary buffers.
+
+Expected effects:
+
+- lower peak throughput;
+- higher request latency;
+- higher CPU utilization;
+- modestly higher memory usage;
+- stable request correctness and runtime behaviour.
+
+---
+
+## Experimental Design
+
+### Independent Variable
+
+The independent variable is the transport protocol used between the benchmark client and Torus.
+
+| Configuration | Description                                 |
+| ------------- | ------------------------------------------- |
+| **HTTP**      | Plain HTTP without TLS termination          |
+| **HTTPS**     | HTTPS with TLS termination enabled in Torus |
+
+No other aspect of the proxy pipeline was intentionally changed.
+
+### Dependent Variables
+
+**Primary metrics**
+
+- Throughput
+- Transfer rate
+- Mean latency
+- P50 / P95 / P99 latency
+- Maximum latency
+- Request success rate
+
+**Supporting metrics**
+
+- CPU utilization
+- Resident memory (RSS)
+- Context switches
+- CPU user/system time
+- CPU idle time
+- Run queue length
+- Interrupt rate
+
+### Controlled Variables
+
+| Variable               | Value                           |
+| ---------------------- | ------------------------------- |
+| Torus Source           | Identical Git commit            |
+| Hardware               | H001                            |
+| Environment            | E001                            |
+| Software Baseline      | S001                            |
+| Backend Servers        | Two identical mock HTTP servers |
+| Load Balancing         | Round Robin                     |
+| Request Method         | GET                             |
+| Request Payload        | 1 KB                            |
+| Benchmark Duration     | 30 seconds                      |
+| Warm-up                | 30 seconds                      |
+| Iterations             | 20                              |
+| Threads                | 2                               |
+| Concurrent Connections | 100                             |
+| Vegeta Rate            | 500 requests/sec                |
+| Backend Protocol       | HTTP                            |
+| Monitoring             | pidstat, vmstat, ss             |
+
+---
+
+## Experimental Setup
+
+The benchmark client, Torus, and both mock backends executed on the same physical machine.
+
+```text
+                    Benchmark Client
+                     (wrk / Vegeta)
+                           │
+                     HTTP / HTTPS
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │      Torus      │
+                  │ Reverse Proxy   │
+                  └─────────────────┘
+                           │
+                    Round-Robin LB
+                       │       │
+                       ▼       ▼
+                Mock Backend 1  Mock Backend 2
+                localhost:3001  localhost:3002
+```
+
+Both backend servers executed identical binaries and returned identical responses.
+
+### HTTP Scenario
+
+- Torus accepted unencrypted HTTP connections.
+- Requests were forwarded to the backends over HTTP.
+
+### HTTPS Scenario
+
+- Torus terminated TLS using the configured X.509 certificate.
+- Requests were decrypted and then passed through the same routing and proxy pipeline.
+- Backends continued to receive HTTP traffic.
+
+The routing logic, load-balancing algorithm, backend implementation, and request-processing pipeline were unchanged between scenarios.
+
+---
+
+## System Configuration
+
+| Component        | Value                         |
+| ---------------- | ----------------------------- |
+| CPU              | 11th Gen Intel Core i3-1115G4 |
+| Logical CPUs     | 4                             |
+| Memory           | 8 GiB                         |
+| Operating System | Ubuntu 26.04 LTS              |
+| Kernel           | Linux 7.0.0-27-generic        |
+
+The benchmark used the documented H001, E001, and S001 profiles.
+
+The localhost topology was intentional: it minimizes network variability and focuses the comparison on proxy and TLS processing rather than network behaviour.
+
+---
+
+## Workload
+
+### wrk — Saturated Workload
+
+`wrk` was used to measure maximum sustainable throughput and latency.
+
+| Parameter   |      Value |
+| ----------- | ---------: |
+| Threads     |          2 |
+| Connections |        100 |
+| Duration    | 30 seconds |
+| Iterations  |         20 |
+
+### Vegeta — Controlled Workload
+
+Vegeta was used to measure latency at a fixed request rate.
+
+| Parameter    |      Value |
+| ------------ | ---------: |
+| Request Rate |  500 req/s |
+| Duration     | 30 seconds |
+| Iterations   |         20 |
+
+The two workloads provide complementary measurements:
+
+- `wrk` exposes the cost of TLS near saturation.
+- Vegeta measures the latency cost while the proxy remains well below its throughput ceiling.
+
+---
+
+# Results
+
+## Throughput
+
+The most significant external performance difference appeared under the saturated `wrk` workload.
+
+Mean throughput decreased from **15,616.981 req/s** for HTTP to **14,595.231 req/s** for HTTPS.
+
+| Metric       |         HTTP |        HTTPS |             Δ |      Δ (%) |
+| ------------ | -----------: | -----------: | ------------: | ---------: |
+| Requests/sec |   15,616.981 |   14,595.231 |    −1,021.750 | **−6.54%** |
+| Transfer/sec | 2.234 MB/sec | 2.089 MB/sec | −0.145 MB/sec | **−6.49%** |
+
+The controlled-rate Vegeta workload tells a different story:
+
+| Metric     |          HTTP |         HTTPS |            Δ |
+| ---------- | ------------: | ------------: | -----------: |
+| Throughput | 500.027 req/s | 500.025 req/s | −0.002 req/s |
+
+At 500 req/s, both configurations achieved essentially the same throughput, indicating that the proxy was operating well below saturation.
+
+### Throughput Distribution
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/http/wrk-throughput-boxplot.png"
+  width="500"
+  alt="HTTP throughput distribution"
+/>
+
+_HTTP throughput distribution._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/https/wrk-throughput-boxplot.png"
+  width="500"
+  alt="HTTPS throughput distribution"
+/>
+
+_HTTPS throughput distribution._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/wrk-throughput-comparison-boxplot.png"
+  width="500"
+  alt="HTTP versus HTTPS throughput comparison"
+/>
+
+_HTTP versus HTTPS throughput comparison._
+
+The run-to-run distributions remain relatively tight, with the HTTPS distribution shifted downward as expected.
+
+---
+
+## Latency
+
+Latency was measured using both `wrk` and `Vegeta`.
+
+### wrk — Saturated Latency
+
+| Metric |     HTTP |    HTTPS |         Δ |      Δ (%) |
+| ------ | -------: | -------: | --------: | ---------: |
+| Mean   | 6.623 ms | 7.064 ms | +0.441 ms | **+6.66%** |
+| P50    | 6.680 ms | 7.095 ms | +0.415 ms |          — |
+| P99    | 6.718 ms | 7.241 ms | +0.523 ms |          — |
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/http/wrk-latency-boxplot.png"
+  width="500"
+  alt="HTTP wrk latency distribution"
+/>
+
+_HTTP latency under the saturated workload._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/https/wrk-latency-boxplot.png"
+  width="500"
+  alt="HTTPS wrk latency distribution"
+/>
+
+_HTTPS latency under the saturated workload._
+
+The HTTPS configuration shows a small, consistent upward shift rather than a qualitatively different latency distribution.
+
+### Vegeta — Controlled Latency
+
+| Metric |     HTTP |    HTTPS |         Δ |       Δ (%) |
+| ------ | -------: | -------: | --------: | ----------: |
+| Mean   | 0.157 ms | 0.172 ms | +0.015 ms |  **+9.65%** |
+| P50    | 0.148 ms | 0.162 ms | +0.014 ms |  **+9.30%** |
+| P95    | 0.199 ms | 0.219 ms | +0.020 ms | **+10.29%** |
+| P99    | 0.395 ms | 0.430 ms | +0.035 ms |  **+8.78%** |
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/http/latency-boxplot.png"
+  width="500"
+  alt="HTTP Vegeta latency distribution"
+/>
+
+_HTTP latency distribution under the controlled-rate workload._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/https/latency-boxplot.png"
+  width="500"
+  alt="HTTPS Vegeta latency distribution"
+/>
+
+_HTTPS latency distribution under the controlled-rate workload._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/http/latency-percentiles.png"
+  width="500"
+  alt="HTTP latency percentiles"
+/>
+
+_HTTP latency percentiles._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/https/latency-percentiles.png"
+  width="500"
+  alt="HTTPS latency percentiles"
+/>
+
+_HTTPS latency percentiles._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/http/latency-histogram.png"
+  width="500"
+  alt="HTTP latency distribution histogram"
+/>
+
+_HTTP latency distribution._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/https/latency-histogram.png"
+  width="500"
+  alt="HTTPS latency distribution histogram"
+/>
+
+_HTTPS latency distribution._
+
+The controlled-rate results show a consistent latency increase across the reported percentiles. The overhead is small in absolute terms, even where the percentage increase appears larger because the HTTP baseline latency is very low.
+
+---
+
+## Request Success Rate
+
+Both configurations maintained a **100% request success rate** across all benchmark iterations.
+
+No proxy-attributable request failures or protocol errors were observed.
+
+This is important because the performance comparison represents successful request processing rather than a throughput measurement affected by failed requests.
+
+---
+
+# Resource Utilization
+
+## CPU Utilization
+
+CPU utilization was monitored throughout each benchmark iteration using `pidstat`.
+
+TLS introduces additional computation through operations such as:
+
+- TLS handshake processing;
+- key exchange;
+- certificate processing;
+- symmetric encryption and decryption;
+- message authentication;
+- TLS session management.
+
+### Controlled Rate — Vegeta
+
+| Metric      |   HTTP |  HTTPS | Relative Change |
+| ----------- | -----: | -----: | --------------: |
+| Average CPU | 1.805% | 1.958% |       **+8.5%** |
+| Median CPU  |  1.00% |  1.00% |       No change |
+| Maximum CPU | 11.00% | 10.00% |               — |
+
+### Peak Throughput — wrk
+
+| Metric      |    HTTP |   HTTPS | Relative Change |
+| ----------- | ------: | ------: | --------------: |
+| Average CPU | 23.563% | 28.640% |      **+21.5%** |
+| Median CPU  |   2.00% |   3.00% |               — |
+| Maximum CPU | 248.00% | 249.00% |               — |
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/http/wrk-cpu-timeseries.png"
+  width="500"
+  alt="HTTP CPU utilization during wrk"
+/>
+
+_HTTP CPU utilization — wrk._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/https/wrk-cpu-timeseries.png"
+  width="500"
+  alt="HTTPS CPU utilization during wrk"
+/>
+
+_HTTPS CPU utilization — wrk._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/http/vegeta-cpu-timeseries.png"
+  width="500"
+  alt="HTTP CPU utilization during Vegeta"
+/>
+
+_HTTP CPU utilization — Vegeta._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/https/vegeta-cpu-timeseries.png"
+  width="500"
+  alt="HTTPS CPU utilization during Vegeta"
+/>
+
+_HTTPS CPU utilization — Vegeta._
+
+The HTTPS configuration consistently consumed more CPU. The difference becomes substantially more visible as the proxy approaches peak throughput.
+
+No sustained CPU instability, runaway behaviour, or scheduling anomalies were observed.
+
+---
+
+## Memory Utilization
+
+Resident Set Size (RSS) was monitored throughout the benchmark.
+
+### Controlled Rate — Vegeta
+
+| Metric      |       HTTP |      HTTPS |                Change |
+| ----------- | ---------: | ---------: | --------------------: |
+| Average RSS |  25.750 MB |  31.005 MB | **+5.26 MB / +20.4%** |
+| Median RSS  |   6.457 MB |  13.547 MB |                     — |
+| Maximum RSS | 258.938 MB | 258.953 MB |                     — |
+
+### Peak Throughput — wrk
+
+| Metric      |       HTTP |      HTTPS |                Change |
+| ----------- | ---------: | ---------: | --------------------: |
+| Average RSS |  23.848 MB |  27.698 MB | **+3.85 MB / +16.1%** |
+| Median RSS  |   3.492 MB |   5.156 MB |                     — |
+| Maximum RSS | 258.953 MB | 258.969 MB |                     — |
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/http/wrk-memory-timeseries.png"
+  width="500"
+  alt="HTTP memory utilization during wrk"
+/>
+
+_HTTP memory utilization — wrk._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/https/wrk-memory-timeseries.png"
+  width="500"
+  alt="HTTPS memory utilization during wrk"
+/>
+
+_HTTPS memory utilization — wrk._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/http/vegeta-memory-timeseries.png"
+  width="500"
+  alt="HTTP memory utilization during Vegeta"
+/>
+
+_HTTP memory utilization — Vegeta._
+
+<img
+  src="/assets/Benchmark-002-http-vs-https/https/vegeta-memory-timeseries.png"
+  width="500"
+  alt="HTTPS memory utilization — Vegeta"
+/>
+
+_HTTPS memory utilization — Vegeta._
+
+HTTPS consistently consumed more resident memory, consistent with additional TLS session state, certificate structures, cryptographic contexts, and encryption/decryption buffers.
+
+The time-series measurements remained bounded, with no progressive growth indicative of a memory leak.
+
+---
+
+# Statistical Stability
+
+Each scenario was executed for **20 independent iterations**.
+
+### wrk Throughput
+
+| Statistic                |             HTTP |            HTTPS |
+| ------------------------ | ---------------: | ---------------: |
+| Sample Size              |               20 |               20 |
+| Mean                     | 15,616.981 req/s | 14,595.231 req/s |
+| Median                   | 15,471.530 req/s | 14,522.835 req/s |
+| Minimum                  | 15,407.860 req/s | 14,240.240 req/s |
+| Maximum                  | 17,089.010 req/s | 16,003.890 req/s |
+| Standard Deviation       |    384.261 req/s |    363.641 req/s |
+| Coefficient of Variation |       **2.461%** |       **2.492%** |
+
+The low and closely matched coefficients of variation indicate good repeatability for the primary throughput measurement.
+
+### Vegeta Latency Stability
+
+| Metric       | HTTP CV | HTTPS CV |
+| ------------ | ------: | -------: |
+| Mean Latency |  0.980% |   1.264% |
+| P50          |  0.583% |   0.351% |
+| P95          |  1.679% |   1.942% |
+| P99          | 27.385% |  25.596% |
+
+The P99 and maximum-latency measurements exhibit substantially higher variability than the central latency metrics. This is expected for tail measurements and is why the benchmark evaluates distributions and multiple iterations rather than relying on a single maximum value.
+
+---
+
+# Analysis
+
+## Why Throughput Falls
+
+The **6.54% reduction in peak throughput** is consistent with the additional work introduced by TLS termination.
+
+HTTPS requires cryptographic processing that does not exist in the HTTP baseline, including:
+
+- TLS handshake processing;
+- session key establishment;
+- symmetric encryption;
+- symmetric decryption;
+- message authentication;
+- TLS protocol management.
+
+The routing and backend pipeline remained unchanged, so the benchmark attributes the observed peak-throughput difference primarily to TLS processing.
+
+The controlled-rate Vegeta workload provides an important qualification: at 500 req/s, throughput was effectively identical. This indicates that the TLS cost becomes operationally visible primarily as the proxy approaches saturation.
+
+## Why Latency Increases
+
+HTTPS increased latency in both workloads.
+
+Under `wrk`, mean latency increased by **0.441 ms**. Under Vegeta, the absolute increase was only **0.015 ms**.
+
+The percentage increase is larger for Vegeta because its HTTP baseline latency is extremely small. The absolute latency difference is therefore the more useful operational measure.
+
+The consistent shift across the reported percentiles indicates a bounded processing cost rather than evidence of random latency spikes or architectural instability.
+
+## Why CPU Is the Primary Cost
+
+The CPU results show the clearest internal effect of enabling TLS.
+
+At 500 req/s, average CPU utilization increased by approximately **8.5%**. Under peak throughput, average CPU utilization increased by approximately **21.5%**.
+
+This is consistent with TLS moving additional work onto the proxy's CPU, particularly as request volume approaches the system's processing ceiling.
+
+## Memory Overhead
+
+HTTPS also increased average RSS:
+
+- **+5.26 MB / +20.4%** under Vegeta;
+- **+3.85 MB / +16.1%** under wrk.
+
+The report attributes this additional memory to TLS session state, certificate structures, cryptographic contexts, and temporary encryption/decryption buffers.
+
+Importantly, memory remained bounded throughout execution, with no evidence of progressive growth or resource exhaustion.
+
+---
+
+# Threats to Validity
+
+The results should be interpreted within the scope of the documented experimental environment.
+
+### Localhost Topology
+
+The benchmark client, Torus, and both backends ran on the same physical machine. This removes network latency and packet loss from the measurement, which is useful for isolating proxy overhead but does not represent a distributed production topology.
+
+### Hardware Specificity
+
+All measurements were collected on a single hardware platform. Different CPUs, cache hierarchies, memory configurations, kernels, and cryptographic acceleration capabilities may produce different absolute results.
+
+### Self-Signed Certificate
+
+The HTTPS scenario used a locally generated self-signed certificate suitable for performance evaluation. Production certificate chains, cipher suites, and security policies may alter performance.
+
+### Fixed Workload
+
+The benchmark used a fixed request size, concurrency, duration, request rate, and two-backend topology. Larger payloads, long-lived connections, streaming, or higher concurrency may exhibit different characteristics.
+
+### Benchmark Scope
+
+This benchmark does not evaluate:
+
+- TLS handshake scalability;
+- HTTP/2;
+- HTTP/3 / QUIC;
+- session resumption;
+- mutual TLS;
+- large-payload performance;
+- long-running stability;
+- multi-node deployments.
+
+### Environmental Variability
+
+Repeated iterations reduce the effect of operating-system scheduling, background processes, CPU frequency scaling, and thermal behaviour, but cannot eliminate these factors entirely.
+
+---
+
+# Conclusion
+
+TLS termination introduces a **predictable and manageable performance cost** in Torus.
+
+At peak throughput:
+
+- mean throughput decreased by **6.54%**;
+- mean latency increased by **6.66%**;
+- transfer rate decreased by **6.49%**.
+
+At a controlled rate of 500 req/s:
+
+- throughput remained effectively unchanged;
+- mean latency increased by **9.65%** in relative terms, corresponding to only **0.015 ms** absolute increase;
+- P95 latency increased by **0.020 ms**;
+- P99 latency increased by **0.035 ms**.
+
+The primary resource cost was CPU, with average utilization increasing by approximately **8.5%** under the controlled workload and **21.5%** near peak throughput. Average RSS increased modestly while remaining bounded.
+
+Most importantly, both HTTP and HTTPS maintained a **100% request success rate**, with no evidence of memory leaks, resource exhaustion, or runtime instability.
+
+The benchmark therefore establishes a reproducible HTTPS performance baseline for Torus. Future optimizations can now be evaluated quantitatively against these measurements.
+
+---
+
+# Future Work
+
+The source benchmark identifies several areas for subsequent investigation:
+
+- **TLS optimization:** configuration tuning, session resumption, keep-alive optimization, cipher-suite evaluation, and TLS 1.3-specific improvements.
+- **Higher concurrency:** identify saturation point, throughput scaling, latency degradation, and scheduler behaviour.
+- **HTTP/2 and HTTP/3:** compare newer transport protocols against the HTTP/1.1 baseline.
+- **Larger payloads:** evaluate 10 KB, 100 KB, 1 MB, streaming, and large-upload workloads.
+- **Comparative benchmarking:** evaluate Torus against NGINX, HAProxy, Envoy, Caddy, and Traefik using the same methodology.
+- **Runtime profiling:** use Go pprof, perf, allocation profiles, and CPU flamegraphs to identify specific TLS-related bottlenecks.
+
+---
+
+# Reproducibility
+
+This benchmark was executed using the Torus benchmark automation framework.
+
+The benchmark scenarios are:
+
+```bash
+./docs/benchmarking/scripts/benchmark.sh http
+./docs/benchmarking/scripts/benchmark.sh https
+```
+
+Generated datasets can be analyzed with:
+
+```bash
+./docs/benchmarking/scripts/analyze.sh <dataset-directory>
+```
+
+The benchmark dataset contains:
+
+- raw `wrk` outputs;
+- raw `vegeta` outputs;
+- parsed benchmark results;
+- metadata;
+- statistical summaries;
+- CPU and memory monitoring data;
+- generated plots;
+- intermediate benchmark reports.
+
+The complete dataset is published with the Benchmark-002 release:
+
+https://github.com/Ashish-Barmaiya/torus-proxy/releases/tag/benchmark-002
+
+## Benchmark Assets
+
+The curated report intentionally references the most informative visual artifacts rather than reproducing the full visual-artifact appendix.
+
+Expected asset root:
+
+```text
+assets/
+└── Benchmark-002-http-vs-https/
+    ├── http/
+    ├── https/
+    └── wrk-throughput-comparison-boxplot.png
+```
+
+The complete raw datasets and generated artifacts remain available through the benchmark release.
