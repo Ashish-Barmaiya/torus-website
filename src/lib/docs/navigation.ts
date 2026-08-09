@@ -174,6 +174,22 @@ export const docsNavigation: DocGroup[] = [
         category: "Configuration",
       },
       {
+        title: "Routing",
+        slug: ["configuration", "routing"],
+        summary: "Configure request paths and map them to services.",
+        readingTime: "8 min",
+        updated: "Placeholder",
+        category: "Configuration",
+      },
+      {
+        title: "Services",
+        slug: ["configuration", "services"],
+        summary: "Configure services and the upstream backends they own.",
+        readingTime: "6 min",
+        updated: "Placeholder",
+        category: "Configuration",
+      },
+      {
         title: "TLS",
         slug: ["configuration", "tls"],
         summary: "Configuring HTTPS termination for Torus..",
@@ -197,14 +213,7 @@ export const docsNavigation: DocGroup[] = [
         updated: "Placeholder",
         category: "Configuration",
       },
-      {
-        title: "Routing",
-        slug: ["configuration", "routing"],
-        summary: "Route prefixes, services and request matching.",
-        readingTime: "8 min",
-        updated: "Placeholder",
-        category: "Configuration",
-      },
+
       {
         title: "Configuration Reload",
         slug: ["configuration", "configuration-reload"],

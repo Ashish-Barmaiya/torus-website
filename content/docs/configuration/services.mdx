@@ -1,0 +1,377 @@
+---
+title: Services
+description: Configure logical services and the upstream backends they own.
+updated: 2026-08-09
+package: internal/service
+files:
+  - internal/service/service.go
+  - internal/upstream/backend.go
+related:
+  - core-concepts/services
+  - configuration/routing
+  - core-concepts/load-balancing
+  - configuration/health
+---
+
+# Services
+
+A service is the logical boundary between **request routing** and **backend servers**.
+
+Routes do not point directly to individual upstreams. Instead, a route references a service, and the service owns the pool of upstream backends that can serve requests.
+
+```text
+Route
+  ↓
+Service
+  ↓
+Upstream Pool
+  ├── Backend A
+  ├── Backend B
+  └── Backend C
+```
+
+---
+
+## Service definition
+
+Services are declared under the top-level `services` section.
+
+```yaml
+services:
+  - name: api
+    upstreams:
+      - http://localhost:3001
+      - http://localhost:3002
+```
+
+Each service contains:
+
+| Field       | Required | Description                            |
+| ----------- | -------- | -------------------------------------- |
+| `name`      | Yes      | Unique logical name used by routes.    |
+| `upstreams` | Yes      | Backend URLs belonging to the service. |
+
+A service must contain at least one upstream backend.
+
+---
+
+## `name`
+
+The `name` field identifies the service.
+
+```yaml
+services:
+  - name: api
+    upstreams:
+      - http://localhost:3001
+```
+
+Routes reference this name:
+
+```yaml
+routes:
+  - path: /api
+    service: api
+```
+
+The service name connects routing configuration to backend configuration. Service names should be:
+
+- Unique
+- Descriptive
+- Stable
+- Meaningful within the application architecture
+
+For example:
+
+```yaml
+services:
+  - name: api
+    upstreams:
+      - http://localhost:3001
+
+  - name: admin
+    upstreams:
+      - http://localhost:4001
+
+  - name: frontend
+    upstreams:
+      - http://localhost:5001
+```
+
+---
+
+## `upstreams`
+
+The `upstreams` field defines the backend servers belonging to a service.
+
+```yaml
+services:
+  - name: api
+    upstreams:
+      - http://localhost:3001
+      - http://localhost:3002
+      - http://localhost:3003
+```
+
+These backends form the service's upstream pool. The load balancer selects a healthy backend from this pool when processing a request.
+
+### Upstream URL format
+
+Each upstream must be a valid HTTP or HTTPS URL containing a hostname and explicit port.
+
+Valid examples:
+
+```yaml
+upstreams:
+  - http://localhost:3001
+  - http://10.0.0.12:8080
+  - https://backend.example.com:8443
+```
+
+The following is invalid because the port is missing:
+
+```yaml
+upstreams:
+  - http://localhost
+```
+
+The following is invalid because the URL scheme is unsupported:
+
+```yaml
+upstreams:
+  - ftp://localhost:3001
+```
+
+Torus accepts `http` and `https` schemes and requires the port to be between `1` and `65535`.
+
+### Multiple backends
+
+A service can own multiple upstreams. These backends are treated as a single logical backend pool.
+
+The current load-balancing strategy is round-robin. When all backends are healthy, requests are distributed approximately as:
+
+```text
+Request 1 → :3001
+Request 2 → :3002
+Request 3 → :3003
+Request 4 → :3001
+Request 5 → :3002
+Request 6 → :3003
+```
+
+See [Load Balancing](/docs/architecture/load-balancing) for backend selection behavior.
+
+### Health-aware backend selection
+
+Backend health is tracked for the upstreams belonging to each service. Torus continuously probes configured backends using the configured health-check settings.
+
+If a backend becomes unhealthy, the load balancer excludes it from selection:
+
+```text
+Service: api
+
+├── :3001 ✓
+├── :3002 ✗
+└── :3003 ✓
+```
+
+When a later health probe succeeds, the backend becomes eligible for traffic again. See [Health](/docs/configuration/health) for configuration details.
+
+---
+
+## Connecting services to routes
+
+A service becomes reachable through a route.
+
+```yaml
+services:
+  - name: api
+    upstreams:
+      - http://localhost:3001
+      - http://localhost:3002
+
+routes:
+  - path: /api
+    service: api
+```
+
+A request to `/api/users` follows this path:
+
+```text
+/api/users
+     ↓
+/api route
+     ↓
+api service
+     ↓
+healthy upstream
+     ↓
+backend
+```
+
+The router does not need to know which backend servers belong to `api`.
+
+### Reusing a service
+
+Multiple routes can reference the same service.
+
+```yaml
+services:
+  - name: api
+    upstreams:
+      - http://localhost:3001
+      - http://localhost:3002
+
+routes:
+  - path: /api
+    service: api
+
+  - path: /v1
+    service: api
+```
+
+Both routes resolve to the same logical service and use the same upstream pool.
+
+---
+
+## Validation
+
+Torus validates services before constructing a runtime. A service must:
+
+- Define a non-empty name
+- Use a unique service name
+- Define at least one upstream
+- Contain valid upstream URLs
+- Use supported URL schemes
+- Specify a valid port for every upstream
+
+A route that references a service that does not exist is also invalid. Validation occurs before the service becomes part of the active runtime.
+
+### Invalid examples
+
+#### Empty service name
+
+```yaml
+services:
+  - name: ""
+    upstreams:
+      - http://localhost:3001
+```
+
+The service name cannot be empty.
+
+#### Duplicate service names
+
+```yaml
+services:
+  - name: api
+    upstreams:
+      - http://localhost:3001
+
+  - name: api
+    upstreams:
+      - http://localhost:3002
+```
+
+Service names must be unique.
+
+#### No upstreams
+
+```yaml
+services:
+  - name: api
+    upstreams: []
+```
+
+A service must contain at least one upstream.
+
+#### Unknown service reference
+
+```yaml
+routes:
+  - path: /api
+    service: payments
+```
+
+If `payments` is not defined under `services`, the configuration is invalid.
+
+---
+
+## Complete example
+
+A complete service and routing configuration can look like:
+
+```yaml
+apiVersion: v2
+
+server:
+  addr: ":8443"
+
+tls:
+  cert_file: "configs/cert.pem"
+  key_file: "configs/key.pem"
+  min_version: "1.2"
+
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+
+observability:
+  enabled: true
+
+services:
+  - name: api
+    upstreams:
+      - http://localhost:3001
+      - http://localhost:3002
+
+routes:
+  - path: /api
+    service: api
+```
+
+The configuration establishes the following relationship:
+
+```text
+/api
+  ↓
+api service
+  ↓
+┌─────────────────────┐
+│ localhost:3001      │
+│ localhost:3002      │
+└─────────────────────┘
+```
+
+---
+
+## Design rationale
+
+The service abstraction separates where a request is routed from where the request is ultimately forwarded.
+
+```text
+Request
+   ↓
+Router
+   ↓
+Service
+   ↓
+Load Balancer
+   ↓
+Healthy Backend
+   ↓
+Reverse Proxy
+```
+
+Routing selects a service, the service owns the upstream pool, the load balancer selects a healthy backend, and the reverse proxy forwards the request. This separation reduces coupling between routing and backend management.
+
+---
+
+## Related documentation
+
+- [Routing](/docs/configuration/routing) — mapping request paths to services.
+- [Load Balancing](/docs/core-concepts/load-balancing) — selecting a healthy backend.
+- [Health](/docs/configuration/health) — configuring backend health checks.
+- [Reverse Proxy](/docs/core-concepts/reverse-proxy) — forwarding requests to the selected backend.
+- [Configuration Reload](/docs/configuration/configuration-reload) — applying service changes without restarting Torus.

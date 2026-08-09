@@ -93,6 +93,14 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
     loader: () => import("../../../content/docs/configuration/server.mdx"),
     filePath: path.join(docsRoot, "configuration", "server.mdx"),
   },
+  "configuration/routing": {
+    loader: () => import("../../../content/docs/configuration/routing.mdx"),
+    filePath: path.join(docsRoot, "configuration", "routing.mdx"),
+  },
+  "configuration/services": {
+    loader: () => import("../../../content/docs/configuration/services.mdx"),
+    filePath: path.join(docsRoot, "configuration", "services.mdx"),
+  },
   "configuration/tls": {
     loader: () => import("../../../content/docs/configuration/tls.mdx"),
     filePath: path.join(docsRoot, "configuration", "tls.mdx"),
@@ -106,10 +114,7 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
     loader: () => import("../../../content/docs/configuration/observability.mdx"),
     filePath: path.join(docsRoot, "configuration", "observability.mdx"),
   },
-  "configuration/routing": {
-    loader: () => import("../../../content/docs/configuration/routing.mdx"),
-    filePath: path.join(docsRoot, "configuration", "routing.mdx"),
-  },
+
   "configuration/configuration-reload": {
     loader: () => import("../../../content/docs/configuration/configuration-reload.mdx"),
     filePath: path.join(docsRoot, "configuration", "configuration-reload.mdx"),
