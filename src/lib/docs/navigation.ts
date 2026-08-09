@@ -321,7 +321,7 @@ export const docsNavigation: DocGroup[] = [
       {
         title: "Configuration Reference",
         slug: ["reference", "configuration"],
-        summary: "Configuration fields, defaults and requirements.",
+        summary: "Complete reference for the Torus v2 configuration schema.",
         readingTime: "12 min",
         updated: "Placeholder",
         category: "Reference",
@@ -329,7 +329,7 @@ export const docsNavigation: DocGroup[] = [
       {
         title: "CLI Reference",
         slug: ["reference", "cli"],
-        summary: "Command-line reference placeholder.",
+        summary: "Command-line interface reference for Torus and the development mock backend.",
         readingTime: "6 min",
         updated: "Placeholder",
         category: "Reference",
@@ -337,7 +337,7 @@ export const docsNavigation: DocGroup[] = [
       {
         title: "Package Reference",
         slug: ["reference", "packages"],
-        summary: "Go package reference placeholder.",
+        summary: "A reference to the packages and subsystem boundaries that make up Torus.",
         readingTime: "8 min",
         updated: "Placeholder",
         category: "Reference",

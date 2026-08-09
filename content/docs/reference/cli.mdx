@@ -2,6 +2,7 @@
 title: CLI Reference
 description: Command-line interface reference for Torus and the development mock backend.
 package: cmd
+updated: 2026-08-09
 ---
 
 # CLI Reference
@@ -13,7 +14,7 @@ Torus provides two executable programs:
 
 ---
 
-# Torus
+## Torus
 
 Starts the Torus reverse proxy.
 
@@ -79,7 +80,7 @@ The default shutdown timeout is **25 seconds**.
 
 ---
 
-# Mock Backend
+## Mock Backend
 
 The mock backend is a small HTTP server used throughout the documentation, integration tests, and benchmarking framework.
 
@@ -163,7 +164,7 @@ This is primarily used when testing:
 
 ---
 
-# Exit Status
+## Exit status
 
 Torus exits with a non-zero status when:
 
@@ -172,12 +173,3 @@ Torus exits with a non-zero status when:
 - the initial runtime cannot be constructed;
 - the HTTP server fails during startup;
 - graceful shutdown encounters an unrecoverable error.
-
----
-
-# Related Documentation
-
-- Getting Started
-- Configuration Reference
-- Deployment
-- Benchmark Methodology

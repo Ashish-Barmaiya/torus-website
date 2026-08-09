@@ -121,14 +121,3 @@ Torus instead treats the runtime as an immutable snapshot.
 Although constructing a new runtime requires additional work during configuration reloads, reload operations occur infrequently compared to request processing.
 
 Optimizing for immutable runtime access keeps the critical request path simple, predictable, and highly concurrent.
-
----
-
-## Related documentation
-
-Continue with:
-
-- **Architecture** — how the runtime participates in request processing.
-- **Configuration Reload** — how new runtime generations are created and published.
-- **Router** — route resolution using the active runtime.
-- **Services** — backend grouping within the runtime.

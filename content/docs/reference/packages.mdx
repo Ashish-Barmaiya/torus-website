@@ -2,6 +2,7 @@
 title: Package Reference
 description: A reference to the packages and subsystem boundaries that make up Torus.
 package: internal
+updated: 2026-08-09
 ---
 
 # Package Reference
@@ -129,9 +130,14 @@ type HealthCheckConfig struct {
     // ...
 }
 
+type ServiceConfig struct {
+    Name      string   `yaml:"name"`
+    Upstreams []string `yaml:"upstreams"`
+}
+
 type RouteConfig struct {
-    Path      string   `yaml:"path"`
-    Upstreams []string `yaml:"upstream"`
+    Path    string `yaml:"path"`
+    Service string `yaml:"service"`
 }
 
 type TlsConfig struct {
@@ -146,7 +152,7 @@ type ObservabilityConfig struct {
 The package exposes the current configuration API version:
 
 ```go
-const CurrentAPIVersion = "v1"
+const CurrentAPIVersion = "v2"
 ```
 
 The primary configuration entry point is:
@@ -176,6 +182,8 @@ func (h HealthCheckConfig) Timeout() time.Duration
 ```
 
 The package therefore acts as the boundary between YAML configuration and the typed configuration consumed by runtime construction.
+
+The v2 schema separates logical services from routes: `ServiceConfig` owns backend URLs, while `RouteConfig` maps a path to a configured service name. See the [Configuration Reference](/docs/reference/configuration) for the complete YAML schema.
 
 ---
 

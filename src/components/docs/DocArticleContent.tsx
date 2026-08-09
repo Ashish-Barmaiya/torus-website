@@ -106,7 +106,7 @@ export function DocArticleContent({
               <p className="mt-4 max-w-[680px] text-[15px] leading-7 text-[var(--ink-soft)]">
                 Implementation references will be pinned to release revisions. The current ownership
                 boundary is{" "}
-                <code className="border border-[var(--line)] bg-[var(--paper-deep)] px-1.5 py-0.5 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] break-all text-[var(--ink)]">
+                <code className="border border-[var(--line)] bg-[var(--paper-deep)] px-1.5 py-0.5 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] break-words text-[var(--ink)]">
                   {packagePath}
                 </code>
                 .
