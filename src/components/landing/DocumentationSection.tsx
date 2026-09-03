@@ -15,8 +15,8 @@ export function DocumentationSection() {
       <div className="grid gap-12 lg:grid-cols-[0.8fr_2fr] lg:gap-24">
         <div>
           <SectionEyebrow>Documentation</SectionEyebrow>
-          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Written for the person on call.</h2>
-          <p className="mt-5 max-w-sm leading-7 text-[var(--ink-soft)]">Start from an outcome, understand the constraint, and keep the operational detail close.</p>
+          <h2 className="landing-section-title mt-4 font-semibold tracking-[-0.045em]">Written for the person on call.</h2>
+          <p className="mt-5 max-w-sm text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">Start from an outcome, understand the constraint, and keep the operational detail close.</p>
         </div>
         <div className="divide-y divide-[var(--line)] border-t border-[var(--line)]">
           {documentation.map(([number, title, description]) => (

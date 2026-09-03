@@ -10,10 +10,10 @@ export function DocsHome() {
           <p className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] font-medium tracking-[0.14em] text-[var(--signal-dark)] uppercase dark:text-[var(--signal)]">
             Torus documentation
           </p>
-          <h1 className="mt-5 max-w-2xl text-4xl font-semibold tracking-[-0.045em] text-[var(--ink)] sm:text-5xl lg:text-[58px] lg:leading-[1.03]">
+          <h1 className="docs-article-title mt-5 max-w-2xl font-semibold tracking-[-0.045em] text-(--ink) lg:leading-[1.03]">
             Documentation
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-[var(--ink-soft)]">
+          <p className="mt-6 max-w-xl text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">
             Everything required to install, configure, operate, and understand Torus.
           </p>
           <p className="max-w-xl text-sm leading-8 text-[var(--ink-soft)]">Version v0.2.0</p>

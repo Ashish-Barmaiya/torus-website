@@ -3,9 +3,16 @@
 :root {
   /* Typography */
 
-  --ink: #14201e;
-  --ink-soft: #3f504c;
-  --ink-faint: #687671;
+  --text-body: clamp(1rem, 0.93rem + 0.35vw, 1.1875rem);
+  --text-body-compact: clamp(0.9375rem, 0.9rem + 0.18vw, 1.0625rem);
+  --text-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.9375rem);
+  --text-h3: clamp(1.1875rem, 1.08rem + 0.32vw, 1.375rem);
+  --text-h2: clamp(1.5rem, 1.28rem + 0.65vw, 1.875rem);
+  --text-h1: clamp(2.25rem, 1.8rem + 1.35vw, 3.625rem);
+
+  --ink: #101a18;
+  --ink-soft: #34433f;
+  --ink-faint: #5d6b66;
 
   /* Light theme (primary) */
 
@@ -48,11 +55,58 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-ibm-plex-sans), Arial, sans-serif;
-  font-size: 17px;
+  font-size: var(--text-body);
   line-height: 1.5;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.docs-article-title {
+  font-size: var(--text-h1);
+  line-height: 1.05;
+}
+
+.home-hero-title {
+  font-size: clamp(2.25rem, 1rem + 2.5vw, 4rem);
+}
+
+.home-hero-lead {
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  line-height: 1.7;
+}
+
+.landing-section-title {
+  font-size: var(--text-h2);
+}
+
+@media (min-width: 1536px) {
+  .home-hero-title {
+    font-size: clamp(4rem, -9rem + 13.5vw, 7.25rem);
+  }
+}
+
+.docs-prose p,
+.docs-prose li {
+  font-size: var(--text-body);
+}
+
+.docs-prose h2 {
+  font-size: var(--text-h2);
+}
+
+.docs-prose h3 {
+  font-size: var(--text-h3);
+}
+
+.docs-prose pre {
+  font-size: var(--text-small);
+}
+
+.docs-prose table {
+  max-width: 100%;
+  min-width: 0;
+  font-size: var(--text-body-compact);
 }
 
 ::selection {

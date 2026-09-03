@@ -27,7 +27,7 @@ export function ActivitySection() {
           <div>
             <SectionEyebrow>Project activity</SectionEyebrow>
 
-            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+            <h2 className="landing-section-title mt-4 font-semibold tracking-[-0.045em]">
               A project is a trail of decisions.
             </h2>
           </div>

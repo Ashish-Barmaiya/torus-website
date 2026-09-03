@@ -142,7 +142,7 @@ export function DocsSidebar() {
                   type="button"
                   onClick={() => setClosedGroups((groups) => groups.includes(group.title) ? groups.filter((title) => title !== group.title) : [...groups, group.title])}
                   aria-expanded={isExpanded}
-                  className="flex w-full items-center gap-1.5 py-1.5 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] font-medium tracking-[0.12em] text-[var(--ink-faint)] uppercase transition-colors hover:text-[var(--ink-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
+                  className="flex w-full items-center gap-1.5 py-2 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] font-medium tracking-[0.12em] text-[var(--ink-faint)] uppercase transition-colors hover:text-[var(--ink-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
                 >
                   <Chevron open={isExpanded} />
                   {group.title}
@@ -157,7 +157,7 @@ export function DocsSidebar() {
                             href={hrefForDoc(item)}
                             onClick={closePanel}
                             aria-current={isActive ? "page" : undefined}
-                            className={`block border-l -ml-px px-3 py-2 text-[14px] leading-5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--signal-dark)] dark:text-[var(--signal)]" : "border-transparent text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
+                            className={`block border-l -ml-px px-3 py-2.5 text-[15px] leading-6 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--signal-dark)] dark:text-[var(--signal)]" : "border-transparent text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
                           >
                             {item.title}
                           </Link>

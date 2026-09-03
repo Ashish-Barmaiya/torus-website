@@ -32,11 +32,11 @@ export function BenchmarksSection() {
           <div>
             <SectionEyebrow>Performance evidence</SectionEyebrow>
 
-            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] text-white sm:text-4xl">
+            <h2 className="landing-section-title mt-4 font-semibold tracking-[-0.045em] text-white">
               Every optimization is measured.
             </h2>
 
-            <p className="mt-5 max-w-2xl text-[15px] leading-7 text-[var(--terminal-muted)]">
+            <p className="mt-5 max-w-2xl text-[var(--text-body-compact)] leading-[1.7] text-[var(--terminal-muted)]">
               Torus publishes reproducible engineering benchmarks with documented methodology,
               hardware profiles, raw datasets, and statistical analysis. Performance claims are
               backed by repeatable experiments, not isolated benchmark runs.

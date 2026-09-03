@@ -17,11 +17,11 @@ export function ArchitectureSection() {
         <div>
           <SectionEyebrow>Architecture</SectionEyebrow>
 
-          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+          <h2 className="landing-section-title mt-4 font-semibold tracking-[-0.045em]">
             Every request follows an explicit path.
           </h2>
 
-          <p className="mt-5 max-w-md leading-7 text-[var(--ink-soft)]">
+          <p className="mt-5 max-w-md text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">
             Torus keeps request processing intentionally small and observable. Routing, load
             balancing, health awareness, and proxying remain separate responsibilities with
             well-defined execution boundaries.

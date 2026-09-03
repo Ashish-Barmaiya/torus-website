@@ -21,7 +21,7 @@ export function HeaderTransformation() {
     <section className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36">
       <div className="max-w-2xl">
         <SectionEyebrow>Header transformation</SectionEyebrow>
-        <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+        <h2 className="mt-4 text-[var(--text-h2)] font-semibold tracking-[-0.045em]">
           The upstream sees the request context.
         </h2>
         <p className="mt-5 leading-7 text-[var(--ink-soft)]">

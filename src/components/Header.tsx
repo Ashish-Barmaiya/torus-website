@@ -18,15 +18,15 @@ export default function Header() {
 
   return (
     <header className="border-b border-[var(--line)] bg-[var(--paper)]">
-      <div className="mx-auto flex h-[4.5rem] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
+      <div className="mx-auto flex h-[4.75rem] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
         <Link
           href="/"
-          className="font-[family-name:var(--font-ibm-plex-mono)] text-[16px] font-semibold tracking-[0.13em] text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
+          className="font-[family-name:var(--font-ibm-plex-mono)] text-[17px] font-semibold tracking-[0.13em] text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
         >
           TORUS
         </Link>
 
-        <nav aria-label="Primary navigation" className="hidden h-full items-center gap-8 md:flex">
+        <nav aria-label="Primary navigation" className="hidden h-full items-center gap-7 lg:gap-9 md:flex">
           {navigation.map((item) => {
             const isActive = item.href === "/docs" ? pathname.startsWith("/docs") : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -35,7 +35,7 @@ export default function Header() {
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`inline-flex h-full items-center border-b-2 text-[15px] font-medium tracking-[0.01em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--ink)]" : "border-transparent text-[var(--ink-soft)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"}`}
+                className={`inline-flex h-full items-center border-b-2 text-[var(--text-body-compact)] font-semibold tracking-[0.01em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--ink)]" : "border-transparent text-[var(--ink-soft)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"}`}
               >
                 {item.label}
               </Link>

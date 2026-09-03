@@ -13,8 +13,8 @@ export function DocsCategory({ group }: { group: DocGroup }) {
         </nav>
         <header className="mt-5 border-b border-[var(--line)] pb-12">
           <p className="font-[family-name:var(--font-ibm-plex-mono)] text-[11px] tracking-[0.14em] text-[var(--signal-dark)] uppercase dark:text-[var(--signal)]">Documentation category</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-[-0.045em] text-[var(--ink)] sm:text-5xl">{group.title}</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--ink-soft)]">A focused index of {group.items.length} {group.items.length === 1 ? "article" : "articles"} maintained as part of the Torus engineering reference.</p>
+          <h1 className="docs-article-title mt-4 font-semibold tracking-[-0.045em] text-(--ink)">{group.title}</h1>
+          <p className="mt-5 max-w-2xl text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">A focused index of {group.items.length} {group.items.length === 1 ? "article" : "articles"} maintained as part of the Torus engineering reference.</p>
         </header>
         <section aria-labelledby="articles" className="pt-10">
           <h2 id="articles" className="sr-only">{group.title} articles</h2>

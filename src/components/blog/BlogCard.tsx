@@ -60,7 +60,7 @@ export function BlogCard({ post }: { post: BlogPost }) {
               <span className="line-clamp-3">{post.title}</span>
             </h2>
 
-            <p className="mt-3 h-[4.5rem] overflow-hidden leading-6 text-[var(--ink-soft)]">
+            <p className="mt-3 h-[4.5rem] overflow-hidden text-[var(--text-body-compact)] leading-6 text-[var(--ink-soft)]">
               <span className="line-clamp-3">{post.excerpt}</span>
             </p>
           </div>

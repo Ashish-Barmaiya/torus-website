@@ -7,11 +7,11 @@ export function ArchitectureHero() {
         <div className="max-w-3xl">
           <div className="border-l-2 border-[var(--signal)] pl-4">
             <SectionEyebrow>Architecture walkthrough</SectionEyebrow>
-            <h1 className="mt-5 text-[clamp(2.85rem,12vw,5.75rem)] leading-[0.92] font-semibold tracking-[-0.07em] text-[var(--ink)] sm:text-[clamp(3.1rem,6.2vw,5.75rem)]">
+            <h1 className="mt-5 text-[clamp(2.5rem,calc(1rem+4vw),5.75rem)] leading-[0.92] font-semibold tracking-[-0.07em] text-[var(--ink)]">
               Inside <span className="text-[var(--signal-dark)]">Torus</span>
             </h1>
           </div>
-          <p className="mt-8 max-w-2xl text-lg leading-8 text-[var(--ink-soft)] sm:text-xl">
+          <p className="mt-8 max-w-2xl text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">
             Follow a request as it moves through every stage of Torus—from the HTTP listener to a
             healthy upstream.
           </p>

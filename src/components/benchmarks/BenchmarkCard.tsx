@@ -35,7 +35,7 @@ export function BenchmarkCard({ report }: { report: BenchmarkReport }) {
             <h2 className="h-16 overflow-hidden text-xl leading-7 font-semibold tracking-[-0.035em] text-[var(--ink)] sm:text-2xl sm:leading-8">
               <span className="line-clamp-2">{report.title}</span>
             </h2>
-            <p className="mt-3 h-[4.5rem] overflow-hidden leading-6 text-[var(--ink-soft)]">
+            <p className="mt-3 h-[4.5rem] overflow-hidden text-[var(--text-body-compact)] leading-6 text-[var(--ink-soft)]">
               <span className="line-clamp-3">{report.description}</span>
             </p>
           </div>

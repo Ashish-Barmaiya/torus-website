@@ -113,7 +113,7 @@ export function ExecutionPipeline() {
       <div className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-32">
         <div className="max-w-2xl">
           <SectionEyebrow>Execution pipeline</SectionEyebrow>
-          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+          <h2 className="mt-4 text-[var(--text-h2)] font-semibold tracking-[-0.045em]">
             A request has one deliberate path.
           </h2>
           <p className="mt-5 leading-7 text-[var(--ink-soft)]">

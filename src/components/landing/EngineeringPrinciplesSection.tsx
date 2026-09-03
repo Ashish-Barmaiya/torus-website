@@ -24,7 +24,7 @@ export function EngineeringPrinciplesSection() {
       <div className="grid gap-12 lg:grid-cols-[0.8fr_2fr] lg:gap-24">
         <div>
           <SectionEyebrow>Engineering principles</SectionEyebrow>
-          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+          <h2 className="landing-section-title mt-4 font-semibold tracking-[-0.045em]">
             Designed for the work that cannot be hand-waved.
           </h2>
         </div>
@@ -36,7 +36,7 @@ export function EngineeringPrinciplesSection() {
               </span>
               <div>
                 <h3 className="text-xl font-medium tracking-[-0.025em]">{title}</h3>
-                <p className="mt-3 max-w-2xl leading-7 text-[var(--ink-soft)]">{description}</p>
+                <p className="mt-3 max-w-2xl text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">{description}</p>
               </div>
             </article>
           ))}

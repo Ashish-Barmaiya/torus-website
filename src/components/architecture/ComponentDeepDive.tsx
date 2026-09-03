@@ -51,7 +51,7 @@ export function ComponentDeepDive() {
       <div className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-32">
         <div className="max-w-2xl">
           <SectionEyebrow>Component deep dive</SectionEyebrow>
-          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+          <h2 className="mt-4 text-[var(--text-h2)] font-semibold tracking-[-0.045em]">
             Small components. Explicit boundaries.
           </h2>
         </div>

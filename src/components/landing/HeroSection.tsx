@@ -1,5 +1,5 @@
-import { SectionEyebrow } from "./SectionEyebrow";
 import Link from "next/link";
+import { SectionEyebrow } from "./SectionEyebrow";
 
 export function HeroSection() {
   return (
@@ -7,15 +7,15 @@ export function HeroSection() {
       <div className="pointer-events-none absolute inset-0 [background-image:linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] [background-size:56px_56px] opacity-[0.18]" />
       <div className="pointer-events-none absolute inset-y-0 left-[14%] w-[28%] [background-image:linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] [background-size:56px_56px] opacity-[0.05]" />
       <div className="pointer-events-none absolute inset-y-0 right-[8%] w-[22%] [background-image:linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] [background-size:56px_56px] opacity-[0.1]" />
-      <div className="relative mx-auto grid max-w-[1440px] gap-14 px-5 py-20 sm:gap-16 sm:px-8 sm:py-32 lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)] lg:gap-24 lg:px-12 lg:py-[11rem]">
+      <div className="relative mx-auto grid max-w-[1440px] gap-14 px-5 py-20 sm:gap-16 sm:px-8 sm:py-32 lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)] lg:gap-24 lg:px-12 lg:py-28 2xl:py-[11rem]">
         <div>
           <SectionEyebrow>Layer 7 reverse proxy / edge gateway</SectionEyebrow>
-          <h1 className="mt-7 max-w-3xl text-[clamp(3rem,14vw,7.25rem)] leading-[0.9] font-semibold tracking-[-0.075em] text-[var(--ink)] sm:mt-8 sm:text-[clamp(3.6rem,8vw,7.25rem)]">
+          <h1 className="home-hero-title mt-7 max-w-3xl leading-[0.9] font-semibold tracking-[-0.075em] text-(--ink) sm:mt-8">
             Keep the edge
             <br />
             <span className="text-[var(--signal-dark)]">understood.</span>
           </h1>
-          <p className="mt-9 max-w-[38rem] text-[1.05rem] leading-8 text-[var(--ink-soft)] sm:text-xl sm:leading-8">
+          <p className="home-hero-lead mt-9 max-w-[38rem] text-(--ink-soft)">
             Built in Go. Designed with reproducible benchmarks, documented architecture, and
             observable request processing.
           </p>
