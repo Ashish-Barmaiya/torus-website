@@ -9,8 +9,8 @@ const activity = [
   },
   {
     type: "Release",
-    title: "v0.3.0 — Observability & Engineering Infrastructure",
-    href: "https://github.com/Ashish-Barmaiya/torus-proxy/releases/tag/v0.3.0",
+    title: "v0.6.0 — Deployment Support",
+    href: "https://github.com/Ashish-Barmaiya/torus-proxy/releases/tag/v0.6.0",
   },
   {
     type: "New Blog",

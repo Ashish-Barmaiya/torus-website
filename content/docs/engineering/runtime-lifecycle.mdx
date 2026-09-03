@@ -1,0 +1,129 @@
+---
+title: Runtime Lifecycle
+description: How Torus builds, replaces, drains, and stops runtime generations.
+updated: 2026-09-03
+package: docs/engineering/architecture
+files:
+  - docs/engineering/architecture/runtime-lifecycle.md
+related:
+  - architecture/runtime
+  - configuration/configuration-reload
+  - observability/health-endpoint
+  - deployment/systemd
+---
+
+# Runtime Lifecycle
+
+Torus treats the configuration used to serve traffic as a **runtime generation**, not as mutable process-wide state. A generation contains the routing, services and their upstream pools, TLS settings, health-check activity, and other state required to serve one accepted configuration.
+
+This makes two lifecycles explicit:
+
+```text
+Process:  STARTING → RUNNING → SHUTTING_DOWN → STOPPED
+
+Runtime:  build → active → draining → retired
+```
+
+The design goal is simple: configuration can change without interrupting work already under way, while shutdown prevents new work from extending the process lifetime indefinitely.
+
+## Build before serving
+
+At startup, Torus validates the configuration and constructs an initial runtime before the server begins accepting traffic. If that cannot succeed, the process does not start serving a partial or invalid configuration.
+
+Once running, the server has one active runtime generation:
+
+```text
+Server → Runtime N
+```
+
+A generation owns more than parsed configuration. It includes the routing and backend-selection state needed for requests, along with runtime activity such as health checking. That is why each generation has a distinct lifecycle of its own.
+
+## A request stays with one generation
+
+When a request begins, it associates with the active runtime. It continues using that same generation through route selection, service resolution, healthy-backend selection, and proxying.
+
+```text
+Request begins
+      ↓
+Acquire active Runtime N
+      ↓
+Route → Service → Upstream
+      ↓
+Proxy response
+      ↓
+Release Runtime N
+```
+
+The key invariant is that an acquired runtime remains available until the request releases it. A later configuration change cannot make an in-flight request switch midway to a different set of routes, services, or backends.
+
+## Reload replaces, then drains
+
+When Torus detects a configuration change, it first creates a complete candidate generation. Only a candidate that can be parsed, validated, and built is eligible to become active.
+
+```text
+Configuration change
+        ↓
+Build Runtime N+1
+        ↓
+Install Runtime N+1
+        ↓
+New requests use N+1
+        ↓
+Runtime N drains and retires
+```
+
+Existing requests keep using Runtime N. New requests use Runtime N+1. Runtime N is retired only after its in-flight work and background activity have drained.
+
+If a configuration is invalid or its runtime cannot be built, it is not installed. The current generation remains active, so a bad change does not replace known-good serving state.
+
+This is the core of Torus's zero-disruption reload model: replacement is atomic from the perspective of new traffic, while earlier work finishes on the generation that began it.
+
+## Readiness and shutdown
+
+Readiness and lifecycle state answer different questions:
+
+| Signal | Question answered |
+| --- | --- |
+| Readiness | Should this instance receive new traffic? |
+| Lifecycle state | Which lifecycle operations are currently permitted? |
+
+When shutdown starts, Torus becomes unready before the full drain completes. This gives load balancers and orchestrators a signal to stop sending new traffic while work already in flight is allowed to finish.
+
+```text
+RUNNING
+  ↓ shutdown begins
+SHUTTING_DOWN
+  ├── readiness becomes false
+  ├── reloads are no longer accepted
+  └── active work drains
+  ↓ shutdown completes
+STOPPED
+```
+
+The runtime that was active at the instant shutdown began is the one that shutdown retires. No later runtime replacement is allowed after that boundary.
+
+## Grace period and bounded completion
+
+Torus first performs a graceful shutdown: it stops accepting new connections and gives existing HTTP and runtime work time to complete. This protects normal requests during controlled restarts and deployments.
+
+The wait is bounded. If the grace period expires, Torus cancels remaining request work and makes a final bounded attempt to complete shutdown. The distinction matters:
+
+```text
+Graceful drain completes     → STOPPED
+Grace period expires         → cancel remaining work → final drain
+Final drain succeeds         → STOPPED
+Final drain fails            → shutdown reports failure
+```
+
+Torus also treats shutdown as a single operation: concurrent shutdown requests converge on the same result instead of independently attempting to retire the active runtime.
+
+## Design invariants
+
+- Only a running server can install a new runtime generation.
+- A request retains the generation it acquired until it completes.
+- A replaced generation drains before it is retired.
+- A candidate that is not installed is cleaned up rather than left active in the background.
+- Shutdown makes the instance unready, rejects further reloads, and owns the active generation at that moment.
+- The server does not wait forever: forced cancellation is the bounded fallback when graceful drain cannot finish.
+
+Together, these rules keep configuration changes, request handling, and process shutdown predictable as Torus evolves.

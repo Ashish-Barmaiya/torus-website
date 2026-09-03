@@ -1,12 +1,14 @@
 ---
 title: Overview
 description: An introduction to Torus configuration.
-updated: 2026-08-04
+updated: 2026-09-03
 package: internal/config
 files:
   - internal/config/config.go
 related:
+  - configuration/api-version
   - configuration/server
+  - configuration/services
   - configuration/routing
   - configuration/health
   - configuration/tls
@@ -30,7 +32,7 @@ Every configuration follows the same lifecycle.
 
 <RequestFlow steps={["Read YAML", "Parse", "Validate", "Build Runtime", "Serve Requests"]} />
 
-If validation fails, Torus refuses to build a new runtime and continues using the existing one.
+If a configuration is invalid, Torus does not construct a runtime from it. During a reload, the existing runtime remains active when the replacement cannot be parsed, validated, or constructed.
 
 ---
 
@@ -40,12 +42,13 @@ A typical configuration consists of the following sections.
 
 | Section         | Purpose                                      |
 | --------------- | -------------------------------------------- |
-| `apiVersion`    | Define the config version                    |
-| `server`        | Configure the HTTP listener.                 |
-| `routes`        | Define request routing and upstream servers. |
-| `health`        | Configure active backend health checks.      |
-| `tls`           | Enable HTTPS termination.                    |
-| `observability` | Enable or disable metrics collection.        |
+| `apiVersion`    | Identifies the configuration schema version. |
+| `server`        | Configures the address on which Torus listens. |
+| `services`      | Defines logical services and their upstream pools. |
+| `routes`        | Maps request path prefixes to services. |
+| `health`        | Configures active health checks for upstreams. |
+| `tls`           | Optionally enables TLS termination. |
+| `observability` | Optionally enables Prometheus metrics. |
 
 Each section configures one aspect of the runtime.
 
@@ -56,7 +59,8 @@ Each section configures one aspect of the runtime.
 The following pages describe each configuration section in detail.
 
 - **Server** — configure the listening address.
-- **Routing** — configure routes and upstream backends.
+- **Services** — configure services and their upstream backend pools.
+- **Routing** — configure request paths and their service references.
 - **Health** — configure active backend health checks.
 - **TLS** — enable HTTPS termination.
 - **Observability** — enable metrics collection.

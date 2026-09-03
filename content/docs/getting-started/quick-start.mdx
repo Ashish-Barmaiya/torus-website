@@ -1,7 +1,7 @@
 ---
 title: Quick Start
 description: Configure Torus and proxy your first request.
-updated: 2026-08-04
+updated: 2026-09-03
 related:
   - getting-started/installation
   - architecture
@@ -40,7 +40,7 @@ Each backend responds with its listening port, making it easy to observe load ba
 Create a file named `torus.yaml`.
 
 ```yaml
-apiVersion: v1
+apiVersion: v2
 
 server:
   addr: ":8080"
@@ -50,19 +50,23 @@ health:
   timeout_ms: 2000
   path: /health
 
-routes:
-  - path: /api
-    upstream:
+services:
+  - name: api
+    upstreams:
       - http://localhost:3001
       - http://localhost:3002
+
+routes:
+  - path: /api
+    service: api
 ```
 
 This configuration defines:
 
 - an HTTP listener on port `8080`
 - a health checker
-- one route (`/api`)
-- two upstream backends
+- one service with two upstream backends
+- one route (`/api`) that selects that service
 
 ---
 

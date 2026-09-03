@@ -1,247 +1,56 @@
 ---
 title: Configuration Reload
-description: Applying configuration changes without restarting Torus or interrupting active requests.
-updated: 2026-08-04
+description: Apply valid configuration changes without restarting Torus.
+updated: 2026-09-03
 package: internal/reload
 related:
-  - configuration/overview
-  - core-concepts/runtime
-  - core-concepts/architecture
+  - configuration
+  - configuration/server
+  - configuration/services
+  - configuration/routing
+  - configuration/health
+  - configuration/tls
+  - configuration/observability
 ---
 
 # Configuration Reload
 
-Torus supports automatic, zero-downtime configuration reloads.
-
-Whenever the configuration file changes, Torus reads the updated configuration, validates it, constructs a completely new immutable runtime, and atomically replaces the active runtime.
-
-Existing requests continue executing against the runtime they started with, while all new requests immediately begin using the newly published runtime.
-
-At no point is the running process restarted or the listening socket recreated.
-
----
-
-## Why configuration reload?
-
-Configuration changes are routine operational tasks.
-
-Examples include:
-
-- adding or removing routes
-- adding or removing upstream servers
-- updating health check settings
-- enabling or disabling observability
-- updating TLS certificates
-- modifying server configuration
-
-Restarting the proxy for every configuration change would interrupt active traffic and terminate requests in progress.
-
-Instead, Torus replaces the runtime without restarting the process.
-
----
-
-## Automatic configuration watching
-
-Torus continuously monitors the configured YAML file for filesystem changes.
-
-When a change is detected, the reload process begins automatically.
-
-No manual command, API call, or process restart is required.
-
-Only configurations that successfully complete parsing, validation, and runtime construction are published.
-
----
-
-## Reload lifecycle
-
-Every configuration update follows the same sequence.
+Torus monitors its configuration file and supports reloads without a process restart. When it detects a change, it reads and validates the candidate configuration and attempts to construct a new runtime generation.
 
 ```text
-Configuration File Changed
-            ↓
-     Read Configuration
-            ↓
-        Parse YAML
-            ↓
- Validate Configuration
-            ↓
-  Build Runtime Snapshot
-            ↓
- Publish New Runtime
-            ↓
- New Requests Use Runtime
+Configuration change
+        ↓
+Read YAML → Parse → Validate → Build runtime
+                                      ↓
+                              Atomic runtime swap
+                                      ↓
+                         New requests use new runtime
 ```
 
-The active runtime is replaced only after the new runtime has been constructed successfully.
-
-At no point is a partially initialized runtime exposed to incoming requests.
-
----
-
-## Runtime publication
-
-The active runtime is stored behind an atomic pointer.
-
-Initially:
-
-```text
-Active Runtime
-      ↓
- Runtime v1
-```
-
-After a successful reload:
-
-```text
-Active Runtime
-      ↓
- Runtime v2
-```
-
-Publishing a new runtime requires only an atomic pointer swap, allowing new requests to begin using the updated configuration immediately.
-
----
-
-## Active requests
-
-Configuration reloads never interrupt requests that are already executing.
-
-```text
-Request A
-──────────── Runtime v1 ───────────► completes
-
-Configuration Reload
-
-Request B
-──────────── Runtime v2 ───────────► completes
-```
-
-Each request retains a reference to the runtime it acquired when processing began.
-
-As a result, every request executes against a consistent configuration from start to finish, even if a reload occurs while it is in progress.
-
----
+Only a valid new generation replaces the active runtime.
 
 ## Runtime generations
 
-Every successful reload creates a new runtime generation.
+Each accepted configuration creates a runtime generation containing the state required to serve requests: routing, services, upstream pools, backend health state, observability configuration, and other runtime-owned state. The active runtime is immutable after construction.
+
+After an atomic replacement, requests that begin use the new runtime. Existing requests continue according to the runtime lifecycle rules that applied when they began.
+
+## Invalid changes are isolated
+
+A file change is not automatically accepted. Torus must parse, validate, and construct a runtime from it. If any stage fails, the active runtime remains in service.
 
 ```text
-Generation 1
-      ↓
-Generation 2
-      ↓
-Generation 3
+Configuration change
+        ↓
+Parse / validate / build fails
+        ↓
+Keep existing runtime
 ```
 
-Older generations continue serving requests that began before the reload.
+For example, an invalid upstream URL can prevent a candidate generation from becoming active while the previously accepted configuration continues serving traffic.
 
-Once no active requests reference an older generation, it is retired and becomes eligible for garbage collection.
+## Reload or restart?
 
----
+Use a configuration reload for changes to the YAML configuration. A process restart stops Torus and performs initial runtime construction again, so it is not required merely to apply a valid configuration change.
 
-## Validation
-
-Every configuration is validated before a new runtime is constructed.
-
-Validation includes:
-
-- configuration schema version
-- server configuration
-- routing configuration
-- upstream definitions
-- health check configuration
-- TLS configuration
-- observability configuration
-
-Configuration validation is an all-or-nothing operation.
-
-If any validation step fails, the reload is aborted before the new runtime becomes visible.
-
-Detailed validation rules for each configuration section are documented throughout the **Configuration** documentation.
-
----
-
-## Failed reloads
-
-If parsing, validation, or runtime construction fails, the reload is cancelled.
-
-```text
-Configuration Changed
-          ↓
- Validation Failed
-          ↓
-Discard New Runtime
-          ↓
-Continue Serving Runtime vN
-```
-
-The previous runtime remains active and continues serving requests without interruption.
-
-No partial configuration is ever applied.
-
----
-
-## Reload logging
-
-Every configuration reload generates operational log entries.
-
-A successful reload records the previous and new runtime generations.
-
-```json
-{
-  "level": "INFO",
-  "msg": "runtime reloaded",
-  "old_generation": 2,
-  "new_generation": 3
-}
-```
-
-When the previous runtime is no longer referenced by active requests, Torus logs its retirement.
-
-```json
-{
-  "level": "INFO",
-  "msg": "runtime retired",
-  "generation": 2
-}
-```
-
-If a reload fails, the validation or runtime construction error is logged and the existing runtime continues serving traffic.
-
-```json
-{
-  "level": "ERROR",
-  "msg": "failed to reload configuration",
-  "error": "routes[0].upstream[2]: missing port"
-}
-```
-
-These log entries provide a complete audit trail of configuration changes and simplify operational troubleshooting.
-
----
-
-## Design rationale
-
-Torus rebuilds the entire runtime instead of modifying it in place.
-
-This design provides several advantages:
-
-- zero request interruption
-- immutable execution context
-- simplified concurrency
-- atomic runtime publication
-- deterministic request behavior
-- safe rollback when configuration is invalid
-
-Although runtime construction is more expensive than mutating existing objects, configuration changes occur infrequently compared to request processing. Torus therefore optimizes for fast, lock-free runtime access rather than inexpensive reloads.
-
----
-
-## Related documentation
-
-Continue with:
-
-- **Runtime** — immutable runtime snapshots.
-- **Architecture** — the complete request execution pipeline.
-- **Configuration Reference** — complete YAML schema.
+The deployment model determines the configuration path. For the systemd deployment, the active configuration is installed at `/etc/torus/torus.yaml`.

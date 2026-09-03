@@ -73,7 +73,7 @@ export function DocsSidebar() {
       <aside
         id="docs-navigation"
         aria-label="Documentation navigation"
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(280px,calc(100vw-2rem))] flex-col border-r border-[var(--line)] bg-[var(--paper)] px-5 py-5 transition-transform duration-200 motion-reduce:transition-none lg:sticky lg:top-0 lg:z-0 lg:h-[calc(100vh-4rem)] lg:w-auto lg:translate-x-0 lg:py-8 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(296px,calc(100vw-2rem))] flex-col border-r border-[var(--line)] bg-[var(--paper)] px-5 py-5 transition-transform duration-200 motion-reduce:transition-none lg:sticky lg:top-0 lg:z-0 lg:h-[calc(100vh-4.5rem)] lg:w-auto lg:translate-x-0 lg:py-8 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="mb-5 flex items-center justify-between lg:hidden">
           <p className="font-[family-name:var(--font-ibm-plex-mono)] text-xs tracking-[0.1em] text-[var(--ink-faint)] uppercase">
@@ -94,7 +94,7 @@ export function DocsSidebar() {
             type="button"
             onClick={() => setSearchOpen((current) => !current)}
             aria-expanded={searchOpen}
-            className="flex w-full items-center gap-2 border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-left text-sm text-[var(--ink-soft)] transition-colors hover:border-[var(--line-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
+            className="flex w-full items-center gap-2 border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 text-left text-[15px] text-[var(--ink-soft)] transition-colors hover:border-[var(--line-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
           >
             <SearchIcon />
             <span className="flex-1">Search docs</span>
@@ -142,7 +142,7 @@ export function DocsSidebar() {
                   type="button"
                   onClick={() => setClosedGroups((groups) => groups.includes(group.title) ? groups.filter((title) => title !== group.title) : [...groups, group.title])}
                   aria-expanded={isExpanded}
-                  className="flex w-full items-center gap-1.5 py-1 font-[family-name:var(--font-ibm-plex-mono)] text-[10px] font-medium tracking-[0.12em] text-[var(--ink-faint)] uppercase transition-colors hover:text-[var(--ink-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
+                  className="flex w-full items-center gap-1.5 py-1.5 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] font-medium tracking-[0.12em] text-[var(--ink-faint)] uppercase transition-colors hover:text-[var(--ink-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
                 >
                   <Chevron open={isExpanded} />
                   {group.title}
@@ -157,7 +157,7 @@ export function DocsSidebar() {
                             href={hrefForDoc(item)}
                             onClick={closePanel}
                             aria-current={isActive ? "page" : undefined}
-                            className={`block border-l -ml-px px-3 py-1.5 text-[13px] leading-5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--signal-dark)] dark:text-[var(--signal)]" : "border-transparent text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
+                            className={`block border-l -ml-px px-3 py-2 text-[14px] leading-5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--signal-dark)] dark:text-[var(--signal)]" : "border-transparent text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
                           >
                             {item.title}
                           </Link>

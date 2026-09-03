@@ -1,148 +1,42 @@
 ---
 title: Overview
-description: Deploying Torus in production environments.
-updated: 2026-08-04
-package: cmd/torus
-files:
-  - cmd/torus/main.go
+description: Choose and operate a supported Torus deployment model.
+updated: 2026-09-03
+package: deployment
 related:
+  - deployment/native
   - deployment/docker
-  - deployment/linux
   - deployment/systemd
-  - deployment/oracle-cloud
+  - deployment/production
+  - configuration
 ---
 
 # Deployment
 
-Torus is designed to run as a standalone server process.
+Torus supports three deployment models. Configuration defines what Torus does; deployment defines how it is installed and run.
 
-Once started, it accepts incoming HTTP or HTTPS traffic, forwards requests to configured backend services, continuously monitors backend health, and applies configuration changes without interrupting active requests.
+| Model | Intended use |
+| --- | --- |
+| Native | Local development, debugging, experimentation, and benchmarks. |
+| Docker Compose | Reproducible full-stack development, demonstrations, and evaluation. |
+| Linux/systemd | Long-running Linux VM operation and the v0.6.0 production-oriented model. |
 
-The deployment model is intentionally simple. Torus requires only a configuration file and access to its upstream services.
+## Choose a model
 
----
+Use [Native](/docs/deployment/native) when you need direct host execution. Use [Docker](/docs/deployment/docker) when you want the repository's Torus, mock backends, Prometheus, and Grafana development stack together. Use [systemd](/docs/deployment/systemd) for a managed Linux service.
 
-## Deployment model
+The Docker Compose files include development-oriented assets such as mock backends, development credentials, and development certificates. They are not a production environment. For a Linux VM, see [Production](/docs/deployment/production).
 
-A typical production deployment looks like:
+## Configuration and runtime responsibility
 
-```text
-                    Internet
-                        ↓
-                 Load Balancer
-                        ↓
-                    Torus Proxy
-                        │
-         ┌────────┴─────────┐
-         ↓                             ↓
-     Backend A                     Backend B
-```
+Use [Configuration](/docs/configuration) to create the YAML file that determines the listener, services, routes, health checks, TLS, and observability. Generic examples are in `configs/`; Docker deployments use the deployment-specific assets under `docker/`.
 
-Torus acts as the edge proxy between clients and backend applications.
-
----
-
-## Deployment requirements
-
-Before deploying Torus, ensure:
-
-- a production configuration file is available
-- upstream services are reachable
-- health endpoints are configured
-- firewall rules allow inbound traffic
-- TLS certificates are available (if HTTPS is enabled)
-
----
-
-## Runtime behavior
-
-During normal operation Torus:
-
-- listens for incoming connections
-- routes requests
-- performs load balancing
-- monitors backend health
-- exports operational metrics
-- reloads configuration without restarting
-
-No manual intervention is required after startup under normal conditions.
-
----
-
-## Deployment options
-
-Torus can be deployed in several environments.
-
-| Environment  | Recommended when               |
-| ------------ | ------------------------------ |
-| Docker       | Containerized workloads        |
-| Linux        | Bare-metal or virtual machines |
-| systemd      | Long-running Linux services    |
-| Oracle Cloud | Cloud VM deployments           |
-
-Each deployment model is documented separately.
-
----
-
-## Production checklist
-
-Before exposing Torus to production traffic:
-
-- Build using a released version of Go.
-- Use a validated production configuration.
-- Enable health checks for every backend.
-- Configure TLS for public endpoints.
-- Enable metrics and request logging.
-- Run the complete test suite before deployment.
-- Verify readiness using `/readyz`.
-- Monitor runtime metrics after startup.
-
----
-
-## Updating configuration
-
-Configuration changes do not require restarting Torus.
-
-Instead:
+For systemd, responsibilities remain separate:
 
 ```text
-Configuration Updated
-
-          ↓
-
- Build New Runtime
-
-          ↓
-
- Atomic Runtime Swap
-
-          ↓
-
- Continue Serving Traffic
+install.sh → installs and activates the deployment
+systemd    → supervises the Torus process
+Torus      → owns its runtime and configuration reloads
 ```
 
-This enables operational changes with no interruption to active requests.
-
----
-
-## Choosing a deployment model
-
-The recommended deployment depends on the operating environment.
-
-- **Docker** for container platforms.
-- **Linux** for direct host deployments.
-- **systemd** for production Linux servers.
-- **Oracle Cloud** for cloud virtual machines.
-
-The underlying Torus binary behaves identically in every environment.
-
----
-
-## Related documentation
-
-Continue with:
-
-- **Docker** — containerized deployment.
-- **Linux** — native Linux deployment.
-- **systemd** — running Torus as a service.
-- **Oracle Cloud** — deploying on OCI virtual machines.
+The installer rejects invalid configuration or TLS material before changing the deployment. If installation or activation fails after changes begin, it attempts to restore the preceding deployment. After a successful installation, systemd handles process restarts according to the service policy.

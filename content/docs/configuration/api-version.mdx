@@ -1,13 +1,13 @@
 ---
 title: API Version
 description: Configuration schema versioning in Torus.
-updated: 2026-08-04
+updated: 2026-09-03
 package: internal/config
 files:
   - internal/config/config.go
 related:
-  - configuration-overview
-  - configuration-reference
+  - configuration
+  - reference/configuration
 ---
 
 # API Version
@@ -15,7 +15,7 @@ related:
 Every Torus configuration begins with an API version declaration.
 
 ```yaml
-apiVersion: v1
+apiVersion: v2
 ```
 
 The API version identifies the configuration schema used by the file.
@@ -38,21 +38,15 @@ Without an explicit version, Torus would have no reliable way to determine how a
 
 ## Supported versions
 
-The current release supports:
-
-| Version | Status    |
-| ------- | --------- |
-| `v1`    | Supported |
+| Version | Status |
+| --- | --- |
+| `v2` | Supported |
 
 Using any other value causes startup or configuration reload to fail.
 
 For example:
 
-```yaml
-apiVersion: v2
-```
-
-produces a validation error because the schema is not recognized.
+Configurations declaring an unsupported version are rejected before Torus constructs a runtime. During a reload, that leaves the active runtime in service.
 
 ---
 

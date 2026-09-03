@@ -1,0 +1,132 @@
+---
+title: Production
+description: Run Torus as a systemd-managed service on a Linux virtual machine.
+updated: 2026-09-03
+package: deployment
+files:
+  - deployments/systemd/install.sh
+related:
+  - deployment
+  - deployment/systemd
+  - configuration/overview
+  - configuration/tls
+---
+
+# Production Deployment
+
+For a Linux virtual machine, Torus v0.6.0 uses a native systemd service as its production-oriented deployment model. The repository Docker Compose configurations are for development and evaluation: they include mock backends and development-oriented assets.
+
+```text
+Internet → HTTPS → Torus (systemd) → Backend A / Backend B
+                         │
+                         └── Prometheus and Grafana
+```
+
+Backend services are independent of Torus. Prometheus and Grafana may share the VM in a small environment or run on separate monitoring infrastructure.
+
+## Production requirements
+
+Prepare:
+
+- real backend services and an environment-specific Torus configuration
+- production TLS certificate and private key
+- firewall rules and an operational monitoring strategy
+- certificate renewal, deployment, and rollback procedures
+
+Do not use the repository development certificates, mock backends, or default development credentials in production.
+
+The current installer builds Torus from a source checkout. The target Linux system therefore needs systemd, Go, `curl`, `ss`, and OpenSSL for HTTPS deployments.
+
+## Configure Torus
+
+Use actual backend addresses and routes. A minimal HTTPS configuration looks like:
+
+```yaml
+apiVersion: v2
+
+server:
+  addr: ":8443"
+
+tls:
+  cert_file: "/etc/torus/tls/cert.pem"
+  key_file: "/etc/torus/tls/key.pem"
+  min_version: "1.2"
+
+health:
+  interval_ms: 5000
+  timeout_ms: 2000
+  path: /health
+
+observability:
+  enabled: true
+
+services:
+  - name: api
+    upstreams:
+      - http://10.0.1.21:3001
+      - http://10.0.1.22:3001
+
+routes:
+  - path: /api
+    service: api
+```
+
+See [Configuration](/docs/configuration) for the complete schema. Keep private keys out of source control and plan their renewal and rotation separately from installation.
+
+## Install and verify
+
+Clone the repository, then run the installer from its root:
+
+```bash
+sudo ./deployments/systemd/install.sh
+```
+
+Provide the production configuration when prompted. For HTTPS, provide the source certificate and private-key paths; the installer validates them, installs the deployment, enables the service, starts it, and verifies the configured listener.
+
+Check the service and the configured readiness endpoint:
+
+```bash
+sudo systemctl status torus --no-pager
+curl -k https://127.0.0.1:8443/readyz
+```
+
+Verify a real application route separately. The repository's `/api/hello` route is only a development example.
+
+## Networking and observability
+
+Expose only ports required by the deployment and ensure Torus can reach its backend and monitoring networks. When metrics are enabled, verify Torus first:
+
+```bash
+curl -k https://127.0.0.1:8443/metrics
+```
+
+Then confirm the Prometheus target is `UP` and that Grafana receives data after traffic flows. The systemd installer does not install or manage either monitoring component.
+
+## Backend and network boundaries
+
+Deploy and supervise production backend services independently from Torus. Do not use `docker/compose.full.yml` as the production backend architecture unless you deliberately build and operate a separate production Compose deployment.
+
+Restrict inbound exposure to the ports the deployment needs. Torus must be able to reach backend services and, when used, monitoring infrastructure. Binding `server.addr` controls the listener; firewall rules, DNS, and certificate hostname behavior are separate operational responsibilities.
+
+## Service operations and runtime failures
+
+Use `systemctl status torus` and `journalctl -u torus -f` for service health and logs. Configuration changes use Torus's reload behavior; binary upgrades and re-deployments use the installer and should follow an explicit rollback plan.
+
+After successful installation, systemd supervises the process according to its service policy. If Torus exits, investigate the service status and journal rather than rerunning the installer as a crash-recovery mechanism.
+
+## Configuration, redeployment, and TLS lifecycle
+
+Use a configuration reload for valid YAML changes. Validate changed configuration and its operational implications—routes, service targets, certificates, listener exposure, and Prometheus targets—before applying it. An invalid candidate must not replace the active runtime.
+
+For a binary upgrade or re-deployment, preserve a known-good configuration and certificate source, run the installer deliberately, and verify the listener, readiness endpoint, application traffic, metrics, and logs afterward. Plan a rollback route before changing a live deployment.
+
+TLS certificate renewal and rotation are operational processes independent of initial installation. Keep private keys restricted, use certificates issued for the deployed hostname, and test the renewed material before it becomes live.
+
+## Production checklist
+
+- Use real upstream services, environment-specific routes, and production TLS material.
+- Limit network exposure and verify backend reachability.
+- Check readiness, real application traffic, metrics, logs, and certificate behavior after deployment.
+- Monitor the systemd service and establish certificate renewal and rollback procedures.
+
+This is a reference model for a single Linux VM in v0.6.0. High availability, automated certificate management, and separate monitoring infrastructure require environment-specific design.

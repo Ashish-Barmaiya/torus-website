@@ -1,314 +1,90 @@
 ---
 title: systemd
-description: Run Torus as a managed Linux service using systemd.
-updated: 2026-08-04
+description: Install Torus as a managed Linux systemd service.
+updated: 2026-09-03
 package: deployment
 files:
-  - deployments/systemd/torus.service
+  - deployments/systemd/install.sh
 related:
   - deployment
-  - deployment/linux
+  - deployment/production
+  - configuration
+  - configuration/tls
   - configuration/configuration-reload
 ---
 
-# systemd
+# Linux/systemd Deployment
 
-For production Linux deployments, Torus should run under **systemd** rather than as an interactive shell process.
+The repository includes an interactive installer for a native Linux systemd service. It validates the supplied configuration, builds Torus from the source checkout, creates the `torus` user and group when needed, installs the binary and configuration, installs TLS material when configured, enables and starts the service, and verifies the configured listener.
 
-Running Torus as a system service provides:
+This installer targets Linux with systemd. Docker Compose is the cross-platform container path.
 
-- automatic startup during system boot
-- process supervision
-- automatic restart after failures
-- centralized logging through journald
-- predictable lifecycle management
+## Prerequisites and configuration
 
----
+The installer requires Linux, systemd, Go, `curl`, and `ss`; HTTPS deployments also require OpenSSL. It is configuration-driven: it does not ask you to choose HTTP or HTTPS. Run it from the repository root:
 
-## Recommended installation layout
+```bash
+sudo ./deployments/systemd/install.sh
+```
 
-A typical production installation looks like:
+Provide a Torus configuration path when prompted. If it contains a `tls` block, provide the source certificate and key paths. The installed configuration should reference the installer-managed paths:
+
+```yaml
+tls:
+  cert_file: "/etc/torus/tls/cert.pem"
+  key_file: "/etc/torus/tls/key.pem"
+  min_version: "1.2"
+```
+
+The installer validates the certificate, key, and their pairing before installation.
+
+## Installed layout and permissions
 
 ```text
-/usr/local/bin/
-└── torus
+/usr/local/bin/torus
 
 /etc/torus/
-└── torus.yaml
+├── torus.yaml
+├── torus.yaml.bak
+└── tls/
+    ├── cert.pem
+    └── key.pem
 
-/etc/systemd/system/
-└── torus.service
-```
-
-Keeping the binary, configuration, and service definition separate simplifies upgrades and operational maintenance.
-
----
-
-## Create a dedicated service account
-
-Torus should not run as the root user.
-
-Create a dedicated system account:
-
-```bash
-sudo useradd \
-  --system \
-  --home /nonexistent \
-  --shell /usr/sbin/nologin \
-  torus
-```
-
-This account should have read access only to:
-
-- the Torus configuration
-- TLS certificates (if enabled)
-
----
-
-## Install the binary
-
-Copy the compiled executable.
-
-```bash
-sudo install -m 755 torus /usr/local/bin/torus
-```
-
-Verify the installation.
-
-```bash
-/usr/local/bin/torus --help
-```
-
----
-
-## Install the configuration
-
-Create the configuration directory.
-
-```bash
-sudo mkdir -p /etc/torus
-```
-
-Copy the configuration.
-
-```bash
-sudo cp configs/torus-http.yaml /etc/torus/torus.yaml
-```
-
-Set appropriate permissions.
-
-```bash
-sudo chown root:torus /etc/torus/torus.yaml
-sudo chmod 640 /etc/torus/torus.yaml
-```
-
----
-
-## Create the service unit
-
-Create:
-
-```text
 /etc/systemd/system/torus.service
 ```
 
-Example service definition:
+The TLS directory and backup exist only when applicable. The binary is `root:root` with mode `0755`; configuration, TLS files, and the Torus directory are owned by `root:torus` with modes `0640`, `0640`, and `0750` respectively.
 
-```ini
-[Unit]
-Description=Torus Reverse Proxy
-Documentation=https://github.com/Ashish-Barmaiya/torus-proxy
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-
-User=torus
-Group=torus
-
-ExecStart=/usr/local/bin/torus \
-  -config /etc/torus/torus.yaml
-
-Restart=on-failure
-RestartSec=5
-
-NoNewPrivileges=true
-PrivateTmp=true
-
-LimitNOFILE=65535
-
-[Install]
-WantedBy=multi-user.target
-```
-
----
-
-## Reload systemd
-
-Whenever the service definition changes:
+## Operate and verify
 
 ```bash
-sudo systemctl daemon-reload
-```
-
----
-
-## Enable automatic startup
-
-Enable the service.
-
-```bash
-sudo systemctl enable torus
-```
-
-Start it immediately.
-
-```bash
-sudo systemctl start torus
-```
-
----
-
-## Verify the service
-
-Check service status.
-
-```bash
-systemctl status torus
-```
-
-Expected output resembles:
-
-```text
-● torus.service
-   Loaded: loaded
-   Active: active (running)
-```
-
----
-
-## View logs
-
-systemd automatically captures Torus logs.
-
-Recent logs:
-
-```bash
-journalctl -u torus
-```
-
-Follow logs in real time:
-
-```bash
-journalctl -u torus -f
-```
-
----
-
-## Service management
-
-Restart:
-
-```bash
+sudo systemctl status torus
+sudo journalctl -u torus -f
 sudo systemctl restart torus
+sudo systemctl is-active torus
+sudo systemctl is-enabled torus
 ```
 
-Stop:
+The installer derives the listener from `server.addr`. Verify its actual address after installation:
 
 ```bash
-sudo systemctl stop torus
+curl http://localhost:8080/readyz
 ```
 
-Disable automatic startup:
+For HTTPS, use the configured address, such as `curl -k https://localhost:8443/readyz`.
 
-```bash
-sudo systemctl disable torus
-```
+## Metrics, updates, and failures
 
----
+Enabling `observability.enabled` exposes metrics on Torus's listener, but the installer does not operate Prometheus or Grafana. They are separate components.
 
-## Updating Torus
+The installation flow preserves a configuration backup. A preflight validation failure makes no changes; an installation or activation failure attempts rollback. After a successful install, systemd—not the installer—supervises runtime failures.
 
-When deploying a new version:
+Configuration changes follow Torus's reload lifecycle. To upgrade or redeploy the binary, rerun the installer with an explicit maintenance and rollback plan.
 
-1. Stop the service.
+## Backup, upgrades, and removal
 
-```bash
-sudo systemctl stop torus
-```
+The installer keeps the prior installed configuration at `/etc/torus/torus.yaml.bak` when applicable. Treat that backup as deployment material: inspect it before a rollback and preserve any separate certificate-management process.
 
-2. Replace the executable.
+For a new binary or deployment configuration, rerun `sudo ./deployments/systemd/install.sh`. The installer performs its preflight checks before mutating an existing installation and attempts rollback if installation or activation fails.
 
-```bash
-sudo install -m 755 torus /usr/local/bin/torus
-```
-
-3. Start the service.
-
-```bash
-sudo systemctl start torus
-```
-
-Configuration updates are independent of binary updates. Refer to **Hot Reload** for runtime configuration replacement.
-
----
-
-## Operational recommendations
-
-For production systems:
-
-- Run Torus as a dedicated service account.
-- Keep configuration under `/etc/torus`.
-- Restrict access to TLS private keys.
-- Enable request logging and metrics.
-- Monitor the readiness endpoint.
-- Configure automatic restart on failures.
-- Keep the operating system updated.
-
----
-
-## Troubleshooting
-
-### Service will not start
-
-Check the service status.
-
-```bash
-systemctl status torus
-```
-
-Review the logs.
-
-```bash
-journalctl -u torus
-```
-
----
-
-### Configuration errors
-
-Validate that:
-
-- the configuration file exists
-- file permissions allow Torus to read it
-- backend addresses are reachable
-
----
-
-### Permission denied
-
-Verify ownership and permissions for:
-
-- `/usr/local/bin/torus`
-- `/etc/torus/torus.yaml`
-- TLS certificate and key files
-
----
-
-## Related documentation
-
-- **Deployment** — deployment overview
-- **Linux** — native Linux deployment
-- **Hot Reload** — runtime configuration replacement
-- **Observability** — monitoring a running proxy
+To remove the managed service, follow the repository uninstall procedure. Stopping and disabling the service alone does not remove the binary, configuration, TLS material, service user, or service definition; review the targets before removing any of those resources.

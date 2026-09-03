@@ -3,9 +3,9 @@
 :root {
   /* Typography */
 
-  --ink: #17201f;
-  --ink-soft: #52605d;
-  --ink-faint: #7a8582;
+  --ink: #14201e;
+  --ink-soft: #3f504c;
+  --ink-faint: #687671;
 
   /* Light theme (primary) */
 
@@ -48,6 +48,8 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-ibm-plex-sans), Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -83,8 +85,8 @@ a {
 
 html.dark {
   --ink: #e8eeea;
-  --ink-soft: #b6c2bc;
-  --ink-faint: #889791;
+  --ink-soft: #b8c5be;
+  --ink-faint: #91a099;
 
   --paper: #111917;
   --paper-deep: #17211e;

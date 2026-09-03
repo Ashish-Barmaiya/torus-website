@@ -25,7 +25,7 @@ export function MobileNavigation({ items }: { items: NavigationItem[] }) {
       </button>
 
       {isOpen ? (
-        <div id="mobile-navigation" className="fixed inset-x-0 top-16 z-50 border-b border-[var(--line)] bg-[var(--paper)] px-5 py-5 shadow-[0_14px_28px_rgb(0_0_0_/_0.08)]">
+        <div id="mobile-navigation" className="fixed inset-x-0 top-[4.5rem] z-50 border-b border-[var(--line)] bg-[var(--paper)] px-5 py-5 shadow-[0_14px_28px_rgb(0_0_0_/_0.08)]">
           <nav aria-label="Mobile navigation" className="mx-auto grid max-w-[1440px] gap-1">
             {items.map((item) => (
               <Link

@@ -1,15 +1,15 @@
 ---
 title: Services
 description: Configure logical services and the upstream backends they own.
-updated: 2026-08-09
+updated: 2026-09-03
 package: internal/service
 files:
   - internal/service/service.go
   - internal/upstream/backend.go
 related:
-  - core-concepts/services
+  - architecture/services
   - configuration/routing
-  - core-concepts/load-balancing
+  - architecture/load-balancing
   - configuration/health
 ---
 
@@ -371,7 +371,7 @@ Routing selects a service, the service owns the upstream pool, the load balancer
 ## Related documentation
 
 - [Routing](/docs/configuration/routing) — mapping request paths to services.
-- [Load Balancing](/docs/core-concepts/load-balancing) — selecting a healthy backend.
+- [Load Balancing](/docs/architecture/load-balancing) — selecting a healthy backend.
 - [Health](/docs/configuration/health) — configuring backend health checks.
-- [Reverse Proxy](/docs/core-concepts/reverse-proxy) — forwarding requests to the selected backend.
+- [Reverse Proxy](/docs/architecture/reverse-proxy) — forwarding requests to the selected backend.
 - [Configuration Reload](/docs/configuration/configuration-reload) — applying service changes without restarting Torus.

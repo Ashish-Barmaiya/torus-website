@@ -1,45 +1,37 @@
 ---
 title: Observability
-description: Configuring Prometheus metrics collection and Grafana dashboards.
-updated: 2026-08-04
+description: Configuring the Prometheus metrics endpoint.
+updated: 2026-09-03
 package: internal/config
 files:
   - internal/config/config.go
-  - docker/compose.yml
-  - docker/prometheus/prometheus.yml
 related:
   - observability/overview
   - observability/metrics
   - observability/logging
-  - configuration-reference
+  - reference/configuration
 ---
 
 # Observability
 
 The `observability` section controls whether Torus exposes Prometheus metrics.
 
-When enabled, Torus registers a `/metrics` endpoint that exports application metrics, Go runtime metrics, and process metrics in the Prometheus exposition format.
-
-These metrics can then be collected by Prometheus and visualized using Grafana.
+When enabled, Torus exposes `/metrics`, which Prometheus can scrape. The configuration controls the Torus endpoint; installing and operating Prometheus or Grafana remains a deployment concern.
 
 ```yaml
 observability:
   enabled: true
 ```
 
----
 
 ## Configuration
 
 The `observability` section currently supports a single field.
 
-| Field     | Type    | Required | Default | Description                 |
-| --------- | ------- | -------- | ------- | --------------------------- |
-| `enabled` | boolean | No       | `true`  | Enables Prometheus metrics. |
+| Field     | Type    | Required | Description                 |
+| --------- | ------- | -------- | --------------------------- |
+| `enabled` | boolean | No       | Enables Prometheus metrics. |
 
-If the field is omitted, observability is enabled by default.
-
----
 
 ## Enabling observability
 
@@ -50,19 +42,15 @@ observability:
   enabled: true
 ```
 
-When enabled, Torus registers:
+When enabled, Torus exposes:
 
 ```text
 GET /metrics
 ```
 
-The endpoint becomes available immediately after the server starts.
-
----
-
 ## Disabling observability
 
-Metrics can be disabled by setting:
+To omit the endpoint, set:
 
 ```yaml
 observability:
@@ -72,42 +60,13 @@ observability:
 When disabled:
 
 - the `/metrics` endpoint is not registered
-- Prometheus cannot scrape Torus
-- Grafana dashboards receive no new data
-- request processing is unaffected
-- logging and health checks continue to function normally
+- normal proxy operation, health checks, and logging continue independently.
 
----
+## Prometheus integration
 
-## Starting Prometheus and Grafana
-
-Torus includes a preconfigured Docker Compose setup for Prometheus and Grafana.
-
-Start both services from the `docker` directory.
-
-```bash
-cd docker
-docker compose up -d
-```
-
-This starts:
-
-| Service    | Port   | Purpose                      |
-| ---------- | ------ | ---------------------------- |
-| Prometheus | `9090` | Collects metrics from Torus  |
-| Grafana    | `3000` | Visualizes collected metrics |
-
----
-
-## Prometheus configuration
-
-The included Prometheus configuration scrapes Torus every five seconds.
+A Prometheus job can scrape the configured Torus listener:
 
 ```yaml
-global:
-  scrape_interval: 5s
-  evaluation_interval: 5s
-
 scrape_configs:
   - job_name: torus
     static_configs:
@@ -115,181 +74,14 @@ scrape_configs:
           - host.docker.internal:8080
 ```
 
-The target must match the address on which Torus is listening.
+The target must match the listener used by the deployment. The repository's Docker stack includes local Prometheus and Grafana assets under `docker/`; see [Docker](/docs/deployment/docker).
 
-For example, if Torus runs on port `8443`, update the target accordingly.
+## Verify metrics
 
-```
-  - targets:
-      - host.docker.internal:8443
-```
+With observability enabled, request the endpoint on the configured listener:
 
----
-
-## Accessing Prometheus
-
-Once Prometheus is running, open:
-
-```text
-http://localhost:9090
+```bash
+curl http://localhost:8080/metrics
 ```
 
-Useful pages include:
-
-- **Status → Targets** — verify that the `torus` target is **UP**
-- **Graph** — explore exported metrics interactively
-
-If the target is **DOWN**, Prometheus is unable to reach the Torus metrics endpoint.
-
----
-
-## Accessing Grafana
-
-Grafana is available at:
-
-```text
-http://localhost:3000
-```
-
-Default credentials:
-
-```text
-Username: admin
-Password: admin
-```
-
-The Docker configuration automatically provisions:
-
-- the Prometheus data source
-- the **Torus Overview** dashboard
-- the **Go Runtime** dashboard
-
-The dashboards provide complementary views of a running Torus instance.
-
-| Dashboard          | Purpose                                                                                                                          |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Torus Overview** | Displays Torus application metrics such as request throughput, latency, backend health, runtime reloads, and runtime generation. |
-| **Go Runtime**     | Displays Go runtime and process metrics including goroutines, heap usage, garbage collection, CPU utilization, and memory usage. |
-
-After Torus begins serving traffic, both dashboards populate automatically as Prometheus scrapes the exported metrics.
-
----
-
-## Verifying the setup
-
-After starting Torus, Prometheus, and Grafana, verify that the observability pipeline is functioning correctly.
-
-### 1. Check the metrics endpoint
-
-Open:
-
-```text
-http://localhost:8080/metrics
-```
-
-You should see metrics in the Prometheus exposition format.
-
-For example:
-
-```text
-# HELP torus_http_requests_total ...
-# TYPE torus_http_requests_total counter
-torus_http_requests_total{...}
-```
-
----
-
-### 2. Verify Prometheus
-
-Open:
-
-```text
-http://localhost:9090
-```
-
-Navigate to:
-
-```text
-Status → Targets
-```
-
-The `torus` target should display:
-
-```text
-UP
-```
-
----
-
-### 3. Verify Grafana
-
-Open:
-
-```text
-http://localhost:3000
-```
-
-After generating a few requests through Torus, verify that both dashboards are receiving data.
-
-**Torus Overview** should display metrics such as:
-
-- HTTP request rate
-- Request latency
-- Backend latency
-- Backend health
-- Runtime reloads
-- Runtime generation
-
-**Go Runtime** should display metrics such as:
-
-- Goroutine count
-- Heap usage
-- Garbage collection activity
-- CPU utilization
-- Memory usage
-
----
-
-## Troubleshooting
-
-### Prometheus target is DOWN
-
-Common causes include:
-
-- Torus is not running.
-- Observability is disabled.
-- Prometheus is scraping the wrong port.
-- Docker cannot reach the host machine.
-
----
-
-### Grafana dashboard shows no data
-
-Verify that:
-
-- Prometheus successfully scrapes Torus.
-- Requests are reaching Torus.
-- The selected dashboard time range includes recent traffic.
-
----
-
-## What metrics are exported?
-
-Torus exports three categories of metrics:
-
-- **Application metrics** implemented by Torus.
-- **Go runtime metrics** exported by the Prometheus Go collector.
-- **Process metrics** exported by the Prometheus Process collector.
-
-A complete description of every exported metric is available in the **Metrics** documentation.
-
----
-
-## Related documentation
-
-Continue with:
-
-- **Metrics** — complete reference for every exported metric.
-- **Logging** — structured request and operational logs.
-- **Health Endpoint** — readiness endpoint for orchestration systems.
-- **Configuration Reference** — complete YAML schema.
+It returns Prometheus exposition-format metrics. Prometheus collects those metrics and Grafana visualizes the data; neither is configured by the `observability` block itself.

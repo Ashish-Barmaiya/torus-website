@@ -1,12 +1,12 @@
 ---
 title: Configuration Reference
 description: Complete reference for the Torus v2 configuration schema.
-updated: 2026-08-09
+updated: 2026-09-03
 package: internal/config
 files:
   - internal/config/config.go
 related:
-  - configuration/overview
+  - configuration
   - configuration/api-version
   - configuration/server
   - configuration/services
@@ -18,22 +18,15 @@ related:
 
 # Configuration Reference
 
-This page defines the complete **v2** Torus configuration schema. Configuration files are written in YAML and validated before Torus constructs a runtime. Invalid configurations prevent startup or are rejected during configuration reload.
+Torus configuration is YAML. It is validated before a runtime is built; invalid files prevent startup or are rejected during reload.
 
----
-
-## Configuration structure
+## Complete structure
 
 ```yaml
 apiVersion: v2
 
 server:
-  addr: ":8443"
-
-tls:
-  cert_file: "configs/cert.pem"
-  key_file: "configs/key.pem"
-  min_version: "1.2"
+  addr: ":8080"
 
 health:
   interval_ms: 5000
@@ -42,6 +35,11 @@ health:
 
 observability:
   enabled: true
+
+tls:
+  cert_file: "/path/to/cert.pem"
+  key_file: "/path/to/key.pem"
+  min_version: "1.2"
 
 services:
   - name: api
@@ -54,250 +52,44 @@ routes:
     service: api
 ```
 
-| Section         | Purpose                                                    |
-| --------------- | ---------------------------------------------------------- |
-| `apiVersion`    | Declares the configuration schema version.                 |
-| `server`        | Configures the listener address.                           |
-| `tls`           | Optionally enables HTTPS termination.                      |
-| `health`        | Configures active backend health checks.                   |
-| `observability` | Enables or disables Prometheus metrics.                    |
-| `services`      | Defines logical services and their upstream backend pools. |
-| `routes`        | Maps request path prefixes to services.                    |
+## Fields
 
-In v2, routes reference a logical service. Upstream URLs belong to that service; they are no longer configured directly on a route.
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `apiVersion` | string | Yes | Current supported value: `v2`. |
+| `server.addr` | string | Yes | Listener address in Go `host:port` form. |
+| `health.interval_ms` | integer | Yes | Interval between health checks. |
+| `health.timeout_ms` | integer | Yes | Timeout for one health-check request. |
+| `health.path` | string | Yes | Path requested on each upstream. |
+| `observability.enabled` | boolean | No | Enables or disables Prometheus metrics. |
+| `tls.cert_file` | string | When `tls` is present | X.509 certificate path. |
+| `tls.key_file` | string | When `tls` is present | Matching private-key path. |
+| `tls.min_version` | string | No | `"1.2"` or `"1.3"`. |
+| `services[].name` | string | Yes | Unique logical service name. |
+| `services[].upstreams` | array of strings | Yes | At least one HTTP or HTTPS URL with hostname and explicit port. |
+| `routes[].path` | string | Yes | Unique, non-empty path prefix. |
+| `routes[].service` | string | Yes | Name of a configured service. |
 
----
+`tls` is optional. When it is absent, Torus serves HTTP. When present, Torus terminates HTTPS on `server.addr`; client-facing TLS is independent of the scheme used by a service upstream.
 
-## `apiVersion`
+## Validation
 
-| Property        | Value    |
-| --------------- | -------- |
-| Type            | `string` |
-| Required        | Yes      |
-| Supported value | `v2`     |
+Torus validates the entire configuration and the relationships between sections:
 
-```yaml
-apiVersion: v2
+```text
+routes → services → upstreams
 ```
 
-Torus validates the schema version before it builds a runtime. Earlier `v1` configuration is not the current schema.
+`server.addr` must not be empty. Health intervals and timeouts must be positive, the timeout cannot exceed the interval, and the health path must be non-empty and begin with `/`. Service names and route paths must be unique; every route must refer to an existing service. Certificate and key paths must be valid when TLS is configured.
 
----
+## Deployment-specific paths
 
-## `server`
-
-The `server` section defines the address on which Torus accepts incoming requests.
-
-### `server.addr`
-
-| Property | Value    |
-| -------- | -------- |
-| Type     | `string` |
-| Required | Yes      |
-
-```yaml
-server:
-  addr: ":8443"
-```
-
-The address uses Go's standard `host:port` form. It must not be empty.
-
----
-
-## `tls`
-
-The `tls` section is optional. When omitted, Torus serves HTTP; when configured, Torus loads an X.509 certificate and private key to terminate HTTPS connections.
-
-| Field         | Type   | Required                   | Default | Description                            |
-| ------------- | ------ | -------------------------- | ------- | -------------------------------------- |
-| `cert_file`   | string | Yes, when `tls` is present | —       | Path to the X.509 certificate.         |
-| `key_file`    | string | Yes, when `tls` is present | —       | Path to the corresponding private key. |
-| `min_version` | string | No                         | `"1.2"` | Minimum accepted TLS version.          |
+Certificate paths depend on the deployment. Local configuration can use repository paths, while the systemd installer manages TLS files at:
 
 ```yaml
 tls:
-  cert_file: "configs/cert.pem"
-  key_file: "configs/key.pem"
-  min_version: "1.2"
+  cert_file: "/etc/torus/tls/cert.pem"
+  key_file: "/etc/torus/tls/key.pem"
 ```
 
-`min_version` must be `"1.2"` or `"1.3"`. The certificate and key must be readable and form a valid pair.
-
----
-
-## `health`
-
-The `health` section configures active checks for every backend in every service.
-
-| Field         | Type    | Required | Description                                                 |
-| ------------- | ------- | -------- | ----------------------------------------------------------- |
-| `interval_ms` | integer | Yes      | Time between health-check cycles, in milliseconds.          |
-| `timeout_ms`  | integer | Yes      | Maximum time to wait for a probe response, in milliseconds. |
-| `path`        | string  | Yes      | HTTP path requested on each backend.                        |
-
-```yaml
-health:
-  interval_ms: 5000
-  timeout_ms: 2000
-  path: /health
-```
-
-`interval_ms` and `timeout_ms` must be greater than zero, and `timeout_ms` cannot exceed `interval_ms`. `path` must be non-empty and begin with `/`.
-
----
-
-## `observability`
-
-The `observability` section controls Prometheus metrics collection.
-
-| Field     | Type    | Required | Default | Description                 |
-| --------- | ------- | -------- | ------- | --------------------------- |
-| `enabled` | boolean | No       | `true`  | Enables Prometheus metrics. |
-
-```yaml
-observability:
-  enabled: true
-```
-
-When metrics are enabled, Torus exposes `GET /metrics`. Setting `enabled` to `false` prevents the metrics endpoint from being registered.
-
----
-
-## `services`
-
-The `services` list defines logical backend pools. Each service has a unique name and one or more upstream URLs.
-
-```yaml
-services:
-  - name: api
-    upstreams:
-      - http://localhost:3001
-      - http://localhost:3002
-```
-
-### `services[].name`
-
-| Property | Value    |
-| -------- | -------- |
-| Type     | `string` |
-| Required | Yes      |
-
-The service name must be non-empty and unique. Routes use this name to select the service.
-
-### `services[].upstreams`
-
-| Property | Value           |
-| -------- | --------------- |
-| Type     | `array[string]` |
-| Required | Yes             |
-
-Every service must define at least one upstream. Each entry must be an HTTP or HTTPS URL with a hostname and an explicit port between `1` and `65535`.
-
-```yaml
-services:
-  - name: api
-    upstreams:
-      - http://localhost:3001
-      - https://backend.example.com:8443
-```
-
-The service owns this pool; Torus selects a healthy backend from it using round-robin load balancing.
-
----
-
-## `routes`
-
-The `routes` list maps request path prefixes to services.
-
-```yaml
-routes:
-  - path: /api
-    service: api
-```
-
-### `routes[].path`
-
-| Property | Value    |
-| -------- | -------- |
-| Type     | `string` |
-| Required | Yes      |
-
-The path must be non-empty and unique. Torus uses longest-prefix matching while respecting path-segment boundaries.
-
-### `routes[].service`
-
-| Property | Value    |
-| -------- | -------- |
-| Type     | `string` |
-| Required | Yes      |
-
-The service value must reference a configured service.
-
-```yaml
-services:
-  - name: api
-    upstreams:
-      - http://localhost:3001
-
-routes:
-  - path: /api
-    service: api
-```
-
----
-
-## Validation rules
-
-Torus validates the entire configuration before it becomes active.
-
-| Area        | Validation                                                                                                                  |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- |
-| API version | Must be `v2`.                                                                                                               |
-| Server      | `server.addr` must not be empty.                                                                                            |
-| TLS         | When configured, certificate and key paths are required; `min_version` must be `"1.2"` or `"1.3"`.                          |
-| Health      | Intervals and timeouts must be positive; timeout cannot exceed interval; the path must begin with `/`.                      |
-| Services    | Names must be non-empty and unique; each service must have at least one valid HTTP or HTTPS upstream with an explicit port. |
-| Routes      | Paths must be non-empty and unique; every route must reference a configured service.                                        |
-
-On startup, a validation error prevents Torus from accepting traffic. During a reload, the current runtime stays active if the new configuration fails validation.
-
----
-
-## Complete example
-
-```yaml
-apiVersion: v2
-
-server:
-  addr: ":8443"
-
-tls:
-  cert_file: "configs/cert.pem"
-  key_file: "configs/key.pem"
-  min_version: "1.2"
-
-health:
-  interval_ms: 5000
-  timeout_ms: 2000
-  path: /health
-
-observability:
-  enabled: true
-
-services:
-  - name: api
-    upstreams:
-      - http://localhost:3001
-      - http://localhost:3002
-
-  - name: web
-    upstreams:
-      - http://localhost:4000
-
-routes:
-  - path: /api
-    service: api
-
-  - path: /
-    service: web
-```
+See [systemd](/docs/deployment/systemd) for that installation model.

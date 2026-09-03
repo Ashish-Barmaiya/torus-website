@@ -1,0 +1,110 @@
+---
+title: Native
+description: Run Torus directly on a host for development, debugging, and benchmarking.
+updated: 2026-09-03
+package: cmd/torus
+files:
+  - cmd/torus/main.go
+related:
+  - deployment
+  - deployment/docker
+  - deployment/systemd
+  - configuration/overview
+---
+
+# Native Deployment
+
+Native deployment runs Torus directly as a host process, rather than through a container or systemd. It is the primary model for local development, debugging, configuration experiments, and benchmarking.
+
+```text
+Host
+  ├── Torus
+  ├── Backend services
+  └── Optional Prometheus and Grafana stack
+```
+
+Torus, its backends, and the optional monitoring stack are independent processes.
+
+## Prerequisites
+
+- Go 1.26.1 or newer
+- One or more HTTP backend services
+- Docker, when using the optional Prometheus and Grafana stack
+- Certificate and key files when serving HTTPS
+
+## Build and start Torus
+
+Clone the repository and build the binary:
+
+```bash
+git clone https://github.com/Ashish-Barmaiya/torus-proxy.git
+cd torus-proxy
+go build -o torus ./cmd/torus
+```
+
+For local testing, start the included mock backends in separate terminals:
+
+```bash
+go run ./cmd/mock-backend 3001
+go run ./cmd/mock-backend 3002
+```
+
+Create or adapt a configuration from the examples under `configs/`, then start Torus with it:
+
+```bash
+./torus -config configs/torus-http.yaml
+```
+
+For HTTPS, use the configuration that defines its TLS section:
+
+```bash
+./torus -config configs/torus-https.yaml
+```
+
+The configuration controls the listener, TLS, services, routes, health checks, and metrics. See [Configuration](/docs/configuration).
+
+## Optional observability stack
+
+The repository provides a Docker-based Prometheus and Grafana setup:
+
+```bash
+docker compose -f docker/compose.yml up -d
+```
+
+It exposes Prometheus on port `9090` and Grafana on port `3000`. Configure Prometheus to scrape the address on which the native Torus process listens.
+
+First verify the Torus metrics endpoint:
+
+```bash
+curl http://localhost:8080/metrics
+```
+
+Then visit Prometheus and check **Status → Targets**. The Torus target should be `UP`; Grafana can then display data after traffic passes through Torus.
+
+Stop the stack when finished:
+
+```bash
+docker compose -f docker/compose.yml down
+```
+
+## Verify and stop
+
+Check readiness and send a request through a configured route:
+
+```bash
+curl http://localhost:8080/readyz
+curl http://localhost:8080/api/hello
+```
+
+For an HTTPS listener, use the actual configured address, for example:
+
+```bash
+curl -k https://localhost:8443/readyz
+curl -k https://localhost:8443/api/hello
+```
+
+Stop the foreground Torus process with `Ctrl-C`.
+
+## When to use native deployment
+
+Use native deployment for development, debugging, learning Torus behavior, configuration experiments, and performance benchmarks. It is not the recommended model for supervising a long-lived Linux VM service across reboots; use [systemd](/docs/deployment/systemd) for that.

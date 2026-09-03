@@ -1,13 +1,13 @@
 ---
 title: Routing
 description: Configure request paths and map them to logical services.
-updated: 2026-08-09
+updated: 2026-09-03
 package: internal/routing
 files:
   - internal/routing/router.go
   - internal/routing/matcher.go
 related:
-  - core-concepts/router
+  - architecture/router
   - configuration/services
   - configuration/overview
 ---
@@ -309,7 +309,7 @@ Avoid unnecessary overlapping routes. When overlapping routes are intentional, m
 
 ## Related documentation
 
-- [Router](/docs/core-concepts/router) — how Torus performs longest-prefix matching.
+- [Router](/docs/architecture/router) — how Torus performs longest-prefix matching.
 - [Services](/docs/configuration/services) — configuring services and their upstream backends.
-- [Load Balancing](/docs/core-concepts/load-balancing) — selecting a healthy backend from a service.
+- [Load Balancing](/docs/architecture/load-balancing) — selecting a healthy backend from a service.
 - [Configuration Reload](/docs/configuration/configuration-reload) — applying routing changes without restarting Torus.

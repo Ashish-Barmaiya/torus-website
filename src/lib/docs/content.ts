@@ -119,11 +119,6 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
     loader: () => import("../../../content/docs/configuration/configuration-reload.mdx"),
     filePath: path.join(docsRoot, "configuration", "configuration-reload.mdx"),
   },
-  "configuration/graceful-shutdown": {
-    loader: () => import("../../../content/docs/configuration/graceful-shutdown.mdx"),
-    filePath: path.join(docsRoot, "configuration", "graceful-shutdown.mdx"),
-  },
-
   deployment: {
     loader: () => import("../../../content/docs/deployment/overview.mdx"),
     filePath: path.join(docsRoot, "deployment", "overview.mdx"),
@@ -132,17 +127,17 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
     loader: () => import("../../../content/docs/deployment/docker.mdx"),
     filePath: path.join(docsRoot, "deployment", "docker.mdx"),
   },
-  "deployment/linux": {
-    loader: () => import("../../../content/docs/deployment/linux.mdx"),
-    filePath: path.join(docsRoot, "deployment", "linux.mdx"),
+  "deployment/native": {
+    loader: () => import("../../../content/docs/deployment/native.mdx"),
+    filePath: path.join(docsRoot, "deployment", "native.mdx"),
   },
   "deployment/systemd": {
     loader: () => import("../../../content/docs/deployment/systemd.mdx"),
     filePath: path.join(docsRoot, "deployment", "systemd.mdx"),
   },
-  "deployment/oracle-cloud": {
-    loader: () => import("../../../content/docs/deployment/oracle-cloud.mdx"),
-    filePath: path.join(docsRoot, "deployment", "oracle-cloud.mdx"),
+  "deployment/production": {
+    loader: () => import("../../../content/docs/deployment/production.mdx"),
+    filePath: path.join(docsRoot, "deployment", "production.mdx"),
   },
   "benchmarking/methodology": {
     loader: () => import("../../../content/docs/benchmarking/methodology.mdx"),
@@ -175,6 +170,10 @@ const mdxDocuments: Record<string, { loader: MdxLoader; filePath: string }> = {
   adrs: {
     loader: () => import("../../../content/docs/adrs.mdx"),
     filePath: path.join(docsRoot, "adrs.mdx"),
+  },
+  "engineering/runtime-lifecycle": {
+    loader: () => import("../../../content/docs/engineering/runtime-lifecycle.mdx"),
+    filePath: path.join(docsRoot, "engineering", "runtime-lifecycle.mdx"),
   },
 };
 

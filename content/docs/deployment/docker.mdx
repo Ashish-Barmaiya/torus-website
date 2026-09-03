@@ -1,174 +1,82 @@
 ---
 title: Docker
-description: Running Torus in a Docker container.
-updated: 2026-08-04
+description: Run the repository's complete Torus development and evaluation stack with Docker Compose.
+updated: 2026-09-03
 package: docker
 files:
-  - Dockerfile
-  - docker-compose.yml
+  - docker/compose.full.yml
+  - docker/compose.full-https.yml
 related:
   - deployment
-  - deployment/linux
-  - deployment/systemd
+  - deployment/native
+  - configuration
+  - configuration/observability
 ---
 
-# Docker
+# Docker Compose Deployment
 
-Torus can be packaged as a lightweight container image and deployed anywhere a Docker-compatible runtime is available.
-
-Containerized deployments are useful for local development, virtual machines, CI environments, and container orchestration platforms.
-
----
-
-## Prerequisites
-
-Before building the image, ensure you have:
-
-- Docker installed
-- A Torus configuration file
-- Backend services accessible from the container
-
----
-
-## Build the image
-
-From the repository root:
-
-```bash
-docker build -t torus:latest .
-```
-
-This produces a container image containing the Torus binary and its runtime dependencies.
-
----
-
-## Run the container
-
-Mount the configuration file into the container.
-
-```bash
-docker run \
-  --name torus \
-  -p 8080:8080 \
-  -v $(pwd)/configs/torus-http.yaml:/etc/torus/torus.yaml:ro \
-  torus:latest \
-  -config /etc/torus/torus.yaml
-```
-
-Windows PowerShell users should replace the volume mount syntax with the appropriate Windows path.
-
----
-
-## Exposing ports
-
-Expose the port configured in the Torus configuration.
-
-Example:
-
-| Torus Address | Docker Mapping |
-| ------------- | -------------- |
-| `:8080`       | `-p 8080:8080` |
-| `:8443`       | `-p 8443:8443` |
-
----
-
-## Mounting configuration
-
-Configuration should be provided through a bind mount or container volume.
+The repository supplies Docker Compose deployments for local development, demonstrations, and evaluation. The full HTTP stack runs Torus, two mock backends, Prometheus, and Grafana; the HTTPS stack adds mounted TLS certificate and private-key files.
 
 ```text
-Host
-└── configs/
-    └── torus-http.yaml
-
-          ↓
-
-Container
-└── /etc/torus/torus.yaml
+docker/
+├── compose.yml
+├── compose.full.yml
+├── compose.full-https.yml
+├── torus/
+├── certs/
+├── prometheus/
+└── grafana/
 ```
 
-Keeping configuration outside the image allows updates without rebuilding the container.
+Customize these Docker-specific assets for this deployment; the generic examples under `configs/` are separate.
 
----
+## Full HTTP stack
 
-## TLS certificates
-
-When HTTPS is enabled, mount the certificate and private key into the container.
-
-Example:
-
-```text
-/etc/certs/cert.pem
-/etc/certs/key.pem
-```
-
-Update the configuration file so the certificate paths match the mounted locations.
-
----
-
-## Health checks
-
-Docker health checks can use Torus' readiness endpoint.
-
-Example:
+Docker and `docker compose` are required. From the repository root, build and start the stack:
 
 ```bash
+docker compose -f docker/compose.full.yml up --build -d
+```
+
+Verify it:
+
+```bash
+docker compose -f docker/compose.full.yml ps
 curl http://localhost:8080/readyz
+curl http://localhost:8080/api/hello
 ```
 
-A successful response indicates that Torus has completed startup and is ready to serve traffic.
-
----
-
-## Logs
-
-Torus writes structured logs to standard output.
-
-Docker automatically captures these logs.
-
-View recent logs with:
+View logs or stop the stack:
 
 ```bash
-docker logs torus
+docker compose -f docker/compose.full.yml logs -f torus
+docker compose -f docker/compose.full.yml down
 ```
 
----
+Named Prometheus and Grafana volumes remain unless removed explicitly.
 
-## Updating configuration
+## Full HTTPS stack
 
-Configuration reloads behave the same inside a container as on a native installation.
+The HTTPS deployment uses `docker/compose.full-https.yml`, `docker/torus/torus-https.yaml`, `docker/certs/cert.pem`, and `docker/certs/key.pem`.
 
-After updating the configuration file:
-
-```text
-Configuration Updated
-        ↓
- Build Runtime
-        ↓
- Atomic Swap
-        ↓
- Continue Serving Requests
+```bash
+docker compose -f docker/compose.full-https.yml up --build -d
+curl -k https://localhost:8443/readyz
+curl -k https://localhost:8443/api/hello
 ```
 
-No container restart is required.
+Use the listener actually configured in `docker/torus/torus-https.yaml`.
 
----
+## Observability
 
-## Production recommendations
+The full stack exposes Prometheus at `http://localhost:9090` and Grafana at `http://localhost:3000`. With observability enabled, first verify Torus:
 
-For production deployments:
+```bash
+curl http://localhost:8080/metrics
+```
 
-- Mount configuration as a read-only volume.
-- Store TLS certificates outside the image.
-- Configure container restart policies.
-- Monitor `/readyz` and `/metrics`.
-- Limit container privileges where possible.
-- Use tagged image versions instead of `latest`.
+For HTTPS, use `curl -k https://localhost:8443/metrics`. In Prometheus, open **Status → Targets** and confirm the Torus target is `UP`, then generate traffic and verify the provisioned Grafana dashboards show current data.
 
----
+## Development limits
 
-## Related documentation
-
-- **Deployment** — deployment overview
-- **Linux** — native Linux deployment
-- **systemd** — long-running service management
+The provided Compose files are not production-ready by default. They use mock backends and source-built images; create a separate deployment architecture for real backend services and production credentials.
