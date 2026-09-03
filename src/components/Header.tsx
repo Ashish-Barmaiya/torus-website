@@ -35,7 +35,7 @@ export default function Header() {
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`inline-flex h-full items-center border-b-2 text-[var(--text-body-compact)] font-semibold tracking-[0.01em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--ink)]" : "border-transparent text-[var(--ink-soft)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"}`}
+                className={`inline-flex h-full items-center border-b-2 text-[var(--text-body-compact)] font-normal tracking-[0.01em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--ink)]" : "border-transparent text-[var(--ink-soft)] hover:border-[var(--line-strong)] hover:text-[var(--ink)]"}`}
               >
                 {item.label}
               </Link>
