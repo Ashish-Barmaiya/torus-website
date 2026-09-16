@@ -15,7 +15,11 @@ export function CodeTabs({ tabs }: { tabs: CodeTab[] }) {
 
   return (
     <div className="my-7">
-      <div role="tablist" aria-label="Code examples" className="flex gap-4 overflow-x-auto border-b border-[var(--line)]">
+      <div
+        role="tablist"
+        aria-label="Code examples"
+        className="flex gap-4 overflow-x-auto border-b border-[var(--line)]"
+      >
         {tabs.map((tab, index) => (
           <button
             key={tab.label}
@@ -31,8 +35,14 @@ export function CodeTabs({ tabs }: { tabs: CodeTab[] }) {
           </button>
         ))}
       </div>
-      <div id={`${id}-panel-${selectedIndex}`} role="tabpanel" aria-labelledby={`${id}-tab-${selectedIndex}`}>
-        <CodeBlock filename={selectedTab.filename} language={selectedTab.language}>{selectedTab.code}</CodeBlock>
+      <div
+        id={`${id}-panel-${selectedIndex}`}
+        role="tabpanel"
+        aria-labelledby={`${id}-tab-${selectedIndex}`}
+      >
+        <CodeBlock filename={selectedTab.filename} language={selectedTab.language}>
+          {selectedTab.code}
+        </CodeBlock>
       </div>
     </div>
   );

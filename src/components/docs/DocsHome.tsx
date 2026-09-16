@@ -13,7 +13,7 @@ export function DocsHome() {
           <h1 className="docs-article-title mt-5 max-w-2xl font-semibold tracking-[-0.045em] text-(--ink) lg:leading-[1.03]">
             Documentation
           </h1>
-          <p className="mt-6 max-w-xl text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">
+          <p className="mt-6 max-w-xl leading-[1.7] text-[var(--ink-soft)] text-[var(--text-body)]">
             Everything required to install, configure, operate, and understand Torus.
           </p>
           <p className="max-w-xl text-sm leading-8 text-[var(--ink-soft)]">Version v0.2.0</p>

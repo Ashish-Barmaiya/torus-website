@@ -21,7 +21,7 @@ export function ArchitectureSection() {
             Every request follows an explicit path.
           </h2>
 
-          <p className="mt-5 max-w-md text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">
+          <p className="mt-5 max-w-md leading-[1.7] text-[var(--ink-soft)] text-[var(--text-body)]">
             Torus keeps request processing intentionally small and observable. Routing, load
             balancing, health awareness, and proxying remain separate responsibilities with
             well-defined execution boundaries.

@@ -21,7 +21,7 @@ export function HeaderTransformation() {
     <section className="mx-auto max-w-[1440px] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-36">
       <div className="max-w-2xl">
         <SectionEyebrow>Header transformation</SectionEyebrow>
-        <h2 className="mt-4 text-[var(--text-h2)] font-semibold tracking-[-0.045em]">
+        <h2 className="mt-4 font-semibold tracking-[-0.045em] text-[var(--text-h2)]">
           The upstream sees the request context.
         </h2>
         <p className="mt-5 leading-7 text-[var(--ink-soft)]">
@@ -68,7 +68,7 @@ function HeaderPanel({
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.6 }}
               transition={{ duration: 0.2, delay: isAdded ? index * 0.08 : 0 }}
-              className={`break-words border-b border-[var(--line)] px-3 py-3 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] leading-5 sm:text-xs ${isAdded ? "text-[var(--ink)]" : "text-[var(--ink-soft)]"}`}
+              className={`border-b border-[var(--line)] px-3 py-3 font-[family-name:var(--font-ibm-plex-mono)] text-[11px] leading-5 break-words sm:text-xs ${isAdded ? "text-[var(--ink)]" : "text-[var(--ink-soft)]"}`}
             >
               {isAdded && <span className="mr-2 text-[var(--signal)]">+</span>}
               {header}

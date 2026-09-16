@@ -7,11 +7,7 @@ export function generateStaticParams() {
   return allDocs.map((doc) => ({ slug: doc.slug }));
 }
 
-export default async function DocPage({
-  params,
-}: {
-  params: Promise<{ slug: string[] }>;
-}) {
+export default async function DocPage({ params }: { params: Promise<{ slug: string[] }> }) {
   const { slug } = await params;
   const doc = getDocBySlug(slug);
 
@@ -23,4 +19,3 @@ export default async function DocPage({
 
   return <DocArticle doc={doc} metadata={metadata} />;
 }
-

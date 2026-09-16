@@ -36,7 +36,9 @@ export function EngineeringPrinciplesSection() {
               </span>
               <div>
                 <h3 className="text-xl font-medium tracking-[-0.025em]">{title}</h3>
-                <p className="mt-3 max-w-2xl text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">{description}</p>
+                <p className="mt-3 max-w-2xl leading-[1.7] text-[var(--ink-soft)] text-[var(--text-body)]">
+                  {description}
+                </p>
               </div>
             </article>
           ))}

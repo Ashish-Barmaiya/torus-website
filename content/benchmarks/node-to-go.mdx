@@ -25,13 +25,13 @@ The following changes were made to eliminate measurement noise and maximize benc
 - **Objective:** Benchmark Torus under real production conditions — full reverse-proxy lifecycle including request parsing, longest-prefix routing, round-robin load balancing, downstream TCP connection, backend response, and zero-copy stream piping back to the client.
 - **Behavior:** Torus forwards every request to live Go mock backends on `:3001` and `:3002`, which respond with `200 OK`.
 
-| Metric                     | Value                               |
-| :------------------------- | :---------------------------------- |
-| **Total Throughput**       | **17,865.81 req/sec**               |
-| **Average Latency**        | 6.12 ms                             |
-| **Maximum Tail Latency**   | 45.32 ms                            |
-| **Data Transfer Rate**     | 2.01 MB/sec                         |
-| **Total Requests Handled** | 178,892 requests (in 10.01s)        |
+| Metric                     | Value                        |
+| :------------------------- | :--------------------------- |
+| **Total Throughput**       | **17,865.81 req/sec**        |
+| **Average Latency**        | 6.12 ms                      |
+| **Maximum Tail Latency**   | 45.32 ms                     |
+| **Data Transfer Rate**     | 2.01 MB/sec                  |
+| **Total Requests Handled** | 178,892 requests (in 10.01s) |
 
 - **Analysis:** With native Go backends replacing Node.js servers, the full proxy lifecycle now achieves **17,865 req/sec** — a **~2.95× improvement** over the previous autocannon-measured 6,044 req/sec baseline. This confirms that the prior bottleneck was not Torus itself, but Node.js backend latency and Autocannon's single-threaded JavaScript load generator.
 
@@ -40,13 +40,13 @@ The following changes were made to eliminate measurement noise and maximize benc
 - **Objective:** Isolate the raw routing and HTTP processing speed of Torus by hitting a path with no live backends. Torus catches the downstream connection failure instantly and returns an error response directly from memory — no network I/O roundtrip.
 - **Behavior:** Torus returns a non-2xx failure boundary from memory without opening any downstream TCP connection.
 
-| Metric                     | Value                               |
-| :------------------------- | :---------------------------------- |
-| **Total Throughput**       | **98,565.91 req/sec**               |
-| **Average Latency**        | 10.21 ms                            |
-| **Maximum Tail Latency**   | 86.63 ms                            |
-| **Data Transfer Rate**     | 15.70 MB/sec                        |
-| **Total Requests Handled** | 994,967 requests (in 10.09s)        |
+| Metric                     | Value                        |
+| :------------------------- | :--------------------------- |
+| **Total Throughput**       | **98,565.91 req/sec**        |
+| **Average Latency**        | 10.21 ms                     |
+| **Maximum Tail Latency**   | 86.63 ms                     |
+| **Data Transfer Rate**     | 15.70 MB/sec                 |
+| **Total Requests Handled** | 994,967 requests (in 10.09s) |
 
 - **Analysis:** With network I/O eliminated entirely, Torus's pure routing engine peaks at **~98.5k req/sec** — a **~6.3× improvement** over the previous autocannon-measured 15,644 req/sec baseline. This demonstrates that the Go HTTP router and memory-path error handling are extremely efficient, and that the prior Autocannon client was the primary throughput bottleneck in no-backend scenarios.
 
@@ -54,13 +54,13 @@ The following changes were made to eliminate measurement noise and maximize benc
 
 ## Go vs Node.js — Historical Comparison
 
-| Metric                | Node.js (Autocannon)                | Go + wrk (Latest)           | Improvement        |
-| --------------------- | ----------------------------------- | --------------------------- | ------------------ |
-| **Avg Throughput**    | 1,647 req/s                         | **17,865 req/s**            | **~10.8×**         |
-| **Avg Latency**       | —                                   | 6.12 ms                     | —                  |
-| **Max Tail Latency**  | —                                   | 45.32 ms                    | —                  |
-| **Concurrency Model** | 4 OS processes (`node:cluster`)     | 1 process (goroutines)      | 10× less memory    |
-| **Memory Footprint**  | ~200 MB                             | ~20 MB                      | **~10×**           |
+| Metric                | Node.js (Autocannon)            | Go + wrk (Latest)      | Improvement     |
+| --------------------- | ------------------------------- | ---------------------- | --------------- |
+| **Avg Throughput**    | 1,647 req/s                     | **17,865 req/s**       | **~10.8×**      |
+| **Avg Latency**       | —                               | 6.12 ms                | —               |
+| **Max Tail Latency**  | —                               | 45.32 ms               | —               |
+| **Concurrency Model** | 4 OS processes (`node:cluster`) | 1 process (goroutines) | 10× less memory |
+| **Memory Footprint**  | ~200 MB                         | ~20 MB                 | **~10×**        |
 
 > **Note:** The Node.js throughput (1,647 req/s) was measured with Autocannon against live Node.js backends. The Go throughput (17,865 req/s) was measured with `wrk` against live Go mock backends. Both represent full end-to-end production proxying on identical hardware.
 

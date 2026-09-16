@@ -16,7 +16,7 @@ export function RoutingVisualization() {
       <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
         <div>
           <SectionEyebrow>Routing visualization</SectionEyebrow>
-          <h2 className="mt-4 text-[var(--text-h2)] font-semibold tracking-[-0.045em]">
+          <h2 className="mt-4 font-semibold tracking-[-0.045em] text-[var(--text-h2)]">
             The most specific route wins.
           </h2>
           <p className="mt-5 max-w-md leading-7 text-[var(--ink-soft)]">
@@ -29,7 +29,7 @@ export function RoutingVisualization() {
           <button
             type="button"
             onClick={() => setMatched((value) => !value)}
-            className="mt-8 inline-flex border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--ink)] dark:hover:bg-[var(--ink)] dark:hover:text-[var(--paper)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
+            className="mt-8 inline-flex border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] dark:hover:bg-[var(--ink)] dark:hover:text-[var(--paper)]"
           >
             {matched ? "Reset match" : "Run match"}
           </button>

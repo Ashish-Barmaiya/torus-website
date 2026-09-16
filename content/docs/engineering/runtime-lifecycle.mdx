@@ -82,9 +82,9 @@ This is the core of Torus's zero-disruption reload model: replacement is atomic 
 
 Readiness and lifecycle state answer different questions:
 
-| Signal | Question answered |
-| --- | --- |
-| Readiness | Should this instance receive new traffic? |
+| Signal          | Question answered                                   |
+| --------------- | --------------------------------------------------- |
+| Readiness       | Should this instance receive new traffic?           |
 | Lifecycle state | Which lifecycle operations are currently permitted? |
 
 When shutdown starts, Torus becomes unready before the full drain completes. This gives load balancers and orchestrators a signal to stop sending new traffic while work already in flight is allowed to finish.

@@ -35,7 +35,7 @@ export function PageContainer({
 
   return (
     <div
-      className={`w-full px-space-4 sm:px-space-5 md:px-space-6 ${widthClasses} ${pyClasses} ${alignClasses} ${className}`}
+      className={`px-space-4 sm:px-space-5 md:px-space-6 w-full ${widthClasses} ${pyClasses} ${alignClasses} ${className}`}
     >
       {children}
     </div>

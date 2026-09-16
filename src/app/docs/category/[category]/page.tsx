@@ -7,7 +7,11 @@ export function generateStaticParams() {
   return docsNavigation.map((group) => ({ category: categorySlugFor(group) }));
 }
 
-export default async function DocsCategoryPage({ params }: { params: Promise<{ category: string }> }) {
+export default async function DocsCategoryPage({
+  params,
+}: {
+  params: Promise<{ category: string }>;
+}) {
   const { category } = await params;
   const group = getCategoryBySlug(category);
 

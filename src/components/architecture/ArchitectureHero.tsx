@@ -11,7 +11,7 @@ export function ArchitectureHero() {
               Inside <span className="text-[var(--signal-dark)]">Torus</span>
             </h1>
           </div>
-          <p className="mt-8 max-w-2xl text-[var(--text-body)] leading-[1.7] text-[var(--ink-soft)]">
+          <p className="mt-8 max-w-2xl leading-[1.7] text-[var(--ink-soft)] text-[var(--text-body)]">
             Follow a request as it moves through every stage of Torus—from the HTTP listener to a
             healthy upstream.
           </p>

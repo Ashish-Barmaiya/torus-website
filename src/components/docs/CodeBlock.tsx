@@ -9,7 +9,12 @@ type CodeBlockProps = {
   highlightedLines?: number[];
 };
 
-export function CodeBlock({ children, filename, language = "text", highlightedLines = [] }: CodeBlockProps) {
+export function CodeBlock({
+  children,
+  filename,
+  language = "text",
+  highlightedLines = [],
+}: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
   const lines = children.trim().split("\n");
 
@@ -22,7 +27,9 @@ export function CodeBlock({ children, filename, language = "text", highlightedLi
   return (
     <div className="my-7 overflow-hidden border border-[var(--terminal-line)] bg-[var(--terminal)] text-[var(--terminal-text)]">
       <div className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--terminal-line)] px-3">
-        <span className="min-w-0 truncate font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.08em] text-[var(--terminal-muted)] uppercase">{filename ?? language}</span>
+        <span className="min-w-0 truncate font-[family-name:var(--font-ibm-plex-mono)] text-[10px] tracking-[0.08em] text-[var(--terminal-muted)] uppercase">
+          {filename ?? language}
+        </span>
         <button
           type="button"
           onClick={copyCode}
@@ -34,8 +41,16 @@ export function CodeBlock({ children, filename, language = "text", highlightedLi
       <pre className="overflow-x-auto py-3 text-[13px] leading-6">
         <code>
           {lines.map((line, index) => (
-            <span key={`${line}-${index}`} className={`block min-w-max px-4 ${highlightedLines.includes(index + 1) ? "bg-[color:var(--signal)]/15" : ""}`}>
-              <span aria-hidden="true" className="mr-4 inline-block w-4 select-none text-right text-[var(--terminal-muted)]">{index + 1}</span>
+            <span
+              key={`${line}-${index}`}
+              className={`block min-w-max px-4 ${highlightedLines.includes(index + 1) ? "bg-[color:var(--signal)]/15" : ""}`}
+            >
+              <span
+                aria-hidden="true"
+                className="mr-4 inline-block w-4 text-right text-[var(--terminal-muted)] select-none"
+              >
+                {index + 1}
+              </span>
               {line || " "}
             </span>
           ))}

@@ -40,15 +40,15 @@ If a configuration is invalid, Torus does not construct a runtime from it. Durin
 
 A typical configuration consists of the following sections.
 
-| Section         | Purpose                                      |
-| --------------- | -------------------------------------------- |
-| `apiVersion`    | Identifies the configuration schema version. |
-| `server`        | Configures the address on which Torus listens. |
+| Section         | Purpose                                            |
+| --------------- | -------------------------------------------------- |
+| `apiVersion`    | Identifies the configuration schema version.       |
+| `server`        | Configures the address on which Torus listens.     |
 | `services`      | Defines logical services and their upstream pools. |
-| `routes`        | Maps request path prefixes to services. |
-| `health`        | Configures active health checks for upstreams. |
-| `tls`           | Optionally enables TLS termination. |
-| `observability` | Optionally enables Prometheus metrics. |
+| `routes`        | Maps request path prefixes to services.            |
+| `health`        | Configures active health checks for upstreams.     |
+| `tls`           | Optionally enables TLS termination.                |
+| `observability` | Optionally enables Prometheus metrics.             |
 
 Each section configures one aspect of the runtime.
 

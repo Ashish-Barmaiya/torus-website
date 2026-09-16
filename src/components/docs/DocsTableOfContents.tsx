@@ -49,10 +49,11 @@ export function DocsTableOfContents({ items }: { items?: HeadingItem[] }) {
             >
               <a
                 href={`#${heading.id}`}
-                className={`block text-[15px] leading-6 transition-colors hover:text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${activeId === heading.id
+                className={`block text-[15px] leading-6 transition-colors hover:text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${
+                  activeId === heading.id
                     ? "text-[var(--signal-dark)] dark:text-[var(--signal)]"
                     : "text-[var(--ink-soft)]"
-                  }`}
+                }`}
               >
                 {heading.title}
               </a>

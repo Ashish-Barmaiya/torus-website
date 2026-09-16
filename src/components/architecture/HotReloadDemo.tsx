@@ -15,7 +15,7 @@ export function HotReloadDemo() {
         <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
           <div>
             <SectionEyebrow>Runtime hot reload</SectionEyebrow>
-            <h2 className="mt-4 text-[var(--text-h2)] font-semibold tracking-[-0.045em]">
+            <h2 className="mt-4 font-semibold tracking-[-0.045em] text-[var(--text-h2)]">
               Swap configuration without stopping traffic.
             </h2>
             <p className="mt-5 max-w-md leading-7 text-[var(--ink-soft)]">
@@ -25,7 +25,7 @@ export function HotReloadDemo() {
             <button
               type="button"
               onClick={() => setReloaded((value) => !value)}
-              className="mt-8 inline-flex border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--signal)] dark:hover:bg-[var(--ink)] dark:hover:text-[var(--paper)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)]"
+              className="mt-8 inline-flex border border-[var(--line-strong)] px-4 py-2.5 font-[family-name:var(--font-ibm-plex-mono)] text-xs font-medium text-[var(--ink)] transition-colors hover:border-[var(--signal)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--signal)] dark:hover:bg-[var(--ink)] dark:hover:text-[var(--paper)]"
             >
               {reloaded ? "Show Runtime v1" : "Apply Runtime v2"}
             </button>
@@ -93,7 +93,9 @@ function RuntimeCard({
       >
         {runtime}
       </p>
-      <p className={`mt-2 text-sm ${active ? "text-[var(--signal)] dark:text-[var(--paper)]" : "text-[var(--ink-soft)]"}`}>
+      <p
+        className={`mt-2 text-sm ${active ? "text-[var(--signal)] dark:text-[var(--paper)]" : "text-[var(--ink-soft)]"}`}
+      >
         {state}
       </p>
     </motion.div>

@@ -72,7 +72,9 @@ export function DocArticleContent({
             <h1 className="docs-article-title mt-4 font-semibold tracking-[-0.045em] text-(--ink)">
               {doc.title}
             </h1>
-            <p className="mt-5 max-w-2xl text-[var(--text-body)] leading-[1.65] text-[var(--ink-soft)]">{doc.summary}</p>
+            <p className="mt-5 max-w-2xl leading-[1.65] text-[var(--ink-soft)] text-[var(--text-body)]">
+              {doc.summary}
+            </p>
             <dl className="mt-7 flex flex-wrap gap-x-5 gap-y-2 border-y border-[var(--line)] py-4 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] tracking-[0.06em] text-[var(--ink-faint)] uppercase">
               {/* <div>
                 <dt className="sr-only">Last updated</dt>
@@ -91,7 +93,7 @@ export function DocArticleContent({
             </dl>
           </header>
 
-          <div className="docs-prose [&_table_th]:font-semibold [&_a]:text-[var(--signal-dark)] [&_a]:underline [&_a]:decoration-[var(--line-strong)] dark:[&_a]:text-[var(--signal)] [&_blockquote]:my-9 [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--line-strong)] [&_blockquote]:pl-5 [&_blockquote]:text-[var(--ink)] [&_code]:font-[family-name:var(--font-ibm-plex-mono)] [&_h1]:hidden [&_h2]:scroll-mt-10 [&_h2]:border-t [&_h2]:border-[var(--line)] [&_h2]:pt-12 [&_h2]:text-[30px] [&_h2]:font-semibold [&_h2]:tracking-[-0.03em] [&_h2]:text-[var(--ink)] [&_h3]:mt-9 [&_h3]:text-[22px] [&_h3]:font-semibold [&_h3]:text-[var(--ink)] [&_li]:text-[19px] [&_li]:leading-[1.7] [&_li]:text-[var(--ink)] [&_p]:mt-6 [&_p]:max-w-[740px] [&_p]:text-[19px] [&_p]:leading-[1.7] [&_p]:text-[var(--ink)] [&_pre]:my-9 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-[var(--terminal-line)] [&_pre]:bg-[var(--terminal)] [&_pre]:p-5 [&_pre]:font-[family-name:var(--font-ibm-plex-mono)] [&_pre]:text-[15px] [&_pre]:leading-7 [&_pre]:text-[var(--terminal-text)] [&_table]:my-9 [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-[var(--line)] [&_table]:text-left [&_table]:text-[17px] [&_table_tbody]:divide-y [&_table_tbody]:divide-[var(--line)] [&_table_td]:border-r [&_table_td]:px-4 [&_table_td]:py-3.5 [&_table_td]:text-[var(--ink)] [&_table_th]:border-b [&_table_th]:border-[var(--line)] [&_table_th]:bg-[var(--paper-deep)] [&_table_th]:px-4 [&_table_th]:py-3.5 [&_ul]:mt-6 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6">
+          <div className="docs-prose [&_a]:text-[var(--signal-dark)] [&_a]:underline [&_a]:decoration-[var(--line-strong)] dark:[&_a]:text-[var(--signal)] [&_blockquote]:my-9 [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--line-strong)] [&_blockquote]:pl-5 [&_blockquote]:text-[var(--ink)] [&_code]:font-[family-name:var(--font-ibm-plex-mono)] [&_h1]:hidden [&_h2]:scroll-mt-10 [&_h2]:border-t [&_h2]:border-[var(--line)] [&_h2]:pt-12 [&_h2]:text-[30px] [&_h2]:font-semibold [&_h2]:tracking-[-0.03em] [&_h2]:text-[var(--ink)] [&_h3]:mt-9 [&_h3]:text-[22px] [&_h3]:font-semibold [&_h3]:text-[var(--ink)] [&_li]:text-[19px] [&_li]:leading-[1.7] [&_li]:text-[var(--ink)] [&_p]:mt-6 [&_p]:max-w-[740px] [&_p]:text-[19px] [&_p]:leading-[1.7] [&_p]:text-[var(--ink)] [&_pre]:my-9 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-[var(--terminal-line)] [&_pre]:bg-[var(--terminal)] [&_pre]:p-5 [&_pre]:font-[family-name:var(--font-ibm-plex-mono)] [&_pre]:text-[15px] [&_pre]:leading-7 [&_pre]:text-[var(--terminal-text)] [&_table]:my-9 [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-[var(--line)] [&_table]:text-left [&_table]:text-[17px] [&_table_tbody]:divide-y [&_table_tbody]:divide-[var(--line)] [&_table_td]:border-r [&_table_td]:px-4 [&_table_td]:py-3.5 [&_table_td]:text-[var(--ink)] [&_table_th]:border-b [&_table_th]:border-[var(--line)] [&_table_th]:bg-[var(--paper-deep)] [&_table_th]:px-4 [&_table_th]:py-3.5 [&_table_th]:font-semibold [&_ul]:mt-6 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6">
             <Content />
           </div>
 
@@ -100,10 +102,10 @@ export function DocArticleContent({
               id="source-files"
               className="scroll-mt-10 border-t border-[var(--line)] py-10 sm:py-12"
             >
-              <h2 className="text-[var(--text-h2)] font-semibold tracking-[-0.03em] text-[var(--ink)]">
+              <h2 className="font-semibold tracking-[-0.03em] text-[var(--ink)] text-[var(--text-h2)]">
                 Source files
               </h2>
-              <p className="mt-6 max-w-[740px] text-[var(--text-body)] leading-[1.7] text-[var(--ink)]">
+              <p className="mt-6 max-w-[740px] leading-[1.7] text-[var(--ink)] text-[var(--text-body)]">
                 Implementation references will be pinned to release revisions. The current ownership
                 boundary is{" "}
                 <code className="border border-[var(--line)] bg-[var(--paper-deep)] px-1.5 py-0.5 font-[family-name:var(--font-ibm-plex-mono)] text-[13px] break-words text-[var(--ink)]">
@@ -136,7 +138,7 @@ export function DocArticleContent({
               id="related-documentation"
               className="scroll-mt-10 border-t border-[var(--line)] py-10 sm:py-12"
             >
-              <h2 className="text-[var(--text-h2)] font-semibold tracking-[-0.03em] text-[var(--ink)]">
+              <h2 className="font-semibold tracking-[-0.03em] text-[var(--ink)] text-[var(--text-h2)]">
                 Related documentation
               </h2>
               <div className="mt-5 grid border-t border-l border-[var(--line)] sm:grid-cols-2">

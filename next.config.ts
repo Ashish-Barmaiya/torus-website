@@ -7,8 +7,16 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/docs/deployment/linux", destination: "/docs/deployment/native", permanent: true },
-      { source: "/docs/deployment/oracle-cloud", destination: "/docs/deployment/production", permanent: true },
-      { source: "/docs/configuration/graceful-shutdown", destination: "/docs/deployment/systemd", permanent: true },
+      {
+        source: "/docs/deployment/oracle-cloud",
+        destination: "/docs/deployment/production",
+        permanent: true,
+      },
+      {
+        source: "/docs/configuration/graceful-shutdown",
+        destination: "/docs/deployment/systemd",
+        permanent: true,
+      },
     ];
   },
 };

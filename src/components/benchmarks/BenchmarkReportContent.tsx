@@ -18,7 +18,7 @@ function ReportMdxH1({
   return (
     <h2
       {...props}
-      className={`scroll-mt-10 border-t border-[var(--line)] pt-10 text-[var(--text-h2)] font-semibold tracking-[-0.03em] text-[var(--ink)] ${className ?? ""}`}
+      className={`scroll-mt-10 border-t border-[var(--line)] pt-10 font-semibold tracking-[-0.03em] text-[var(--ink)] text-[var(--text-h2)] ${className ?? ""}`}
     >
       {children}
     </h2>
@@ -58,7 +58,7 @@ export function BenchmarkReportContent({
           <h1 className="docs-article-title mt-4 font-semibold tracking-[-0.055em] text-(--ink)">
             {report.title}
           </h1>
-          <p className="mt-5 max-w-2xl text-[var(--text-body)] leading-[1.65] text-[var(--ink-soft)]">
+          <p className="mt-5 max-w-2xl leading-[1.65] text-[var(--ink-soft)] text-[var(--text-body)]">
             {report.description}
           </p>
           <dl className="mt-7 flex flex-wrap gap-x-5 gap-y-2 border-y border-[var(--line)] py-4 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] tracking-[0.06em] text-[var(--ink-faint)] uppercase">
@@ -75,7 +75,7 @@ export function BenchmarkReportContent({
           </dl>
         </header>
 
-        <div className="docs-prose [&_a]:text-[var(--signal-dark)] [&_a]:underline [&_a]:decoration-[var(--line-strong)] dark:[&_a]:text-[var(--signal)] [&_blockquote]:my-9 [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--line-strong)] [&_blockquote]:pl-5 [&_blockquote]:text-[var(--ink)] [&_code]:font-[family-name:var(--font-ibm-plex-mono)] [&_h1]:hidden [&_h2]:scroll-mt-10 [&_h2]:border-t [&_h2]:border-[var(--line)] [&_h2]:pt-12 [&_h2]:text-[30px] [&_h2]:font-semibold [&_h2]:tracking-[-0.03em] [&_h2]:text-[var(--ink)] [&_h3]:mt-9 [&_h3]:text-[var(--text-h3)] [&_h3]:font-semibold [&_h3]:text-[var(--ink)] [&_hr]:my-12 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-[var(--line)] [&_img]:mt-9 [&_img]:h-auto [&_img]:max-w-full [&_li]:text-[var(--text-body)] [&_li]:leading-[1.7] [&_li]:text-[var(--ink)] [&_ol]:mt-6 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_p]:mt-6 [&_p]:max-w-[740px] [&_p]:text-[var(--text-body)] [&_p]:leading-[1.7] [&_p]:text-[var(--ink)] [&_pre]:my-9 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-[var(--terminal-line)] [&_pre]:bg-[var(--terminal)] [&_pre]:p-5 [&_pre]:font-[family-name:var(--font-ibm-plex-mono)] [&_pre]:text-[var(--text-small)] [&_pre]:leading-7 [&_pre]:text-[var(--terminal-text)] [&_table]:my-9 [&_table]:block [&_table]:w-full [&_table]:min-w-max [&_table]:border-collapse [&_table]:overflow-x-auto [&_table]:border-[var(--line)] [&_table]:text-left [&_table]:text-[var(--text-body-compact)] [&_table_tbody]:divide-y [&_table_tbody]:divide-[var(--line)] [&_table_td]:border-r [&_table_td]:px-4 [&_table_td]:py-3.5 [&_table_td]:text-[var(--ink)] [&_table_th]:border-b [&_table_th]:border-[var(--line)] [&_table_th]:bg-[var(--paper-deep)] [&_table_th]:px-4 [&_table_th]:py-3.5 [&_table_th]:font-semibold [&_ul]:mt-6 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6">
+        <div className="docs-prose [&_a]:text-[var(--signal-dark)] [&_a]:underline [&_a]:decoration-[var(--line-strong)] dark:[&_a]:text-[var(--signal)] [&_blockquote]:my-9 [&_blockquote]:border-l-2 [&_blockquote]:border-[var(--line-strong)] [&_blockquote]:pl-5 [&_blockquote]:text-[var(--ink)] [&_code]:font-[family-name:var(--font-ibm-plex-mono)] [&_h1]:hidden [&_h2]:scroll-mt-10 [&_h2]:border-t [&_h2]:border-[var(--line)] [&_h2]:pt-12 [&_h2]:text-[30px] [&_h2]:font-semibold [&_h2]:tracking-[-0.03em] [&_h2]:text-[var(--ink)] [&_h3]:mt-9 [&_h3]:font-semibold [&_h3]:text-[var(--ink)] [&_h3]:text-[var(--text-h3)] [&_hr]:my-12 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-[var(--line)] [&_img]:mt-9 [&_img]:h-auto [&_img]:max-w-full [&_li]:leading-[1.7] [&_li]:text-[var(--ink)] [&_li]:text-[var(--text-body)] [&_ol]:mt-6 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_p]:mt-6 [&_p]:max-w-[740px] [&_p]:leading-[1.7] [&_p]:text-[var(--ink)] [&_p]:text-[var(--text-body)] [&_pre]:my-9 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-[var(--terminal-line)] [&_pre]:bg-[var(--terminal)] [&_pre]:p-5 [&_pre]:font-[family-name:var(--font-ibm-plex-mono)] [&_pre]:leading-7 [&_pre]:text-[var(--terminal-text)] [&_pre]:text-[var(--text-small)] [&_table]:my-9 [&_table]:block [&_table]:w-full [&_table]:min-w-max [&_table]:border-collapse [&_table]:overflow-x-auto [&_table]:border-[var(--line)] [&_table]:text-left [&_table]:text-[var(--text-body-compact)] [&_table_tbody]:divide-y [&_table_tbody]:divide-[var(--line)] [&_table_td]:border-r [&_table_td]:px-4 [&_table_td]:py-3.5 [&_table_td]:text-[var(--ink)] [&_table_th]:border-b [&_table_th]:border-[var(--line)] [&_table_th]:bg-[var(--paper-deep)] [&_table_th]:px-4 [&_table_th]:py-3.5 [&_table_th]:font-semibold [&_ul]:mt-6 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6">
           <Content
             components={{
               h1: (props: ComponentProps<"h1">) => (

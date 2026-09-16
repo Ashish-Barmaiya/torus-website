@@ -36,7 +36,7 @@ export function BenchmarksSection() {
               Every optimization is measured.
             </h2>
 
-            <p className="mt-5 max-w-2xl text-[var(--text-body-compact)] leading-[1.7] text-[var(--terminal-muted)]">
+            <p className="mt-5 max-w-2xl leading-[1.7] text-[var(--terminal-muted)] text-[var(--text-body-compact)]">
               Torus publishes reproducible engineering benchmarks with documented methodology,
               hardware profiles, raw datasets, and statistical analysis. Performance claims are
               backed by repeatable experiments, not isolated benchmark runs.

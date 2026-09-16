@@ -54,21 +54,21 @@ routes:
 
 ## Fields
 
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `apiVersion` | string | Yes | Current supported value: `v2`. |
-| `server.addr` | string | Yes | Listener address in Go `host:port` form. |
-| `health.interval_ms` | integer | Yes | Interval between health checks. |
-| `health.timeout_ms` | integer | Yes | Timeout for one health-check request. |
-| `health.path` | string | Yes | Path requested on each upstream. |
-| `observability.enabled` | boolean | No | Enables or disables Prometheus metrics. |
-| `tls.cert_file` | string | When `tls` is present | X.509 certificate path. |
-| `tls.key_file` | string | When `tls` is present | Matching private-key path. |
-| `tls.min_version` | string | No | `"1.2"` or `"1.3"`. |
-| `services[].name` | string | Yes | Unique logical service name. |
-| `services[].upstreams` | array of strings | Yes | At least one HTTP or HTTPS URL with hostname and explicit port. |
-| `routes[].path` | string | Yes | Unique, non-empty path prefix. |
-| `routes[].service` | string | Yes | Name of a configured service. |
+| Field                   | Type             | Required              | Notes                                                           |
+| ----------------------- | ---------------- | --------------------- | --------------------------------------------------------------- |
+| `apiVersion`            | string           | Yes                   | Current supported value: `v2`.                                  |
+| `server.addr`           | string           | Yes                   | Listener address in Go `host:port` form.                        |
+| `health.interval_ms`    | integer          | Yes                   | Interval between health checks.                                 |
+| `health.timeout_ms`     | integer          | Yes                   | Timeout for one health-check request.                           |
+| `health.path`           | string           | Yes                   | Path requested on each upstream.                                |
+| `observability.enabled` | boolean          | No                    | Enables or disables Prometheus metrics.                         |
+| `tls.cert_file`         | string           | When `tls` is present | X.509 certificate path.                                         |
+| `tls.key_file`          | string           | When `tls` is present | Matching private-key path.                                      |
+| `tls.min_version`       | string           | No                    | `"1.2"` or `"1.3"`.                                             |
+| `services[].name`       | string           | Yes                   | Unique logical service name.                                    |
+| `services[].upstreams`  | array of strings | Yes                   | At least one HTTP or HTTPS URL with hostname and explicit port. |
+| `routes[].path`         | string           | Yes                   | Unique, non-empty path prefix.                                  |
+| `routes[].service`      | string           | Yes                   | Name of a configured service.                                   |
 
 `tls` is optional. When it is absent, Torus serves HTTP. When present, Torus terminates HTTPS on `server.addr`; client-facing TLS is independent of the scheme used by a service upstream.
 

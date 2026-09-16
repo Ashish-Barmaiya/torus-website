@@ -8,7 +8,11 @@ import { docsNavigation, hrefForDoc } from "@/lib/docs/navigation";
 
 function SearchIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-none stroke-current stroke-[1.7]">
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="size-4 fill-none stroke-current stroke-[1.7]"
+    >
       <circle cx="11" cy="11" r="6.5" />
       <path d="m16 16 4 4" />
     </svg>
@@ -40,7 +44,9 @@ export function DocsSidebar() {
 
     return docsNavigation
       .flatMap((group) => group.items)
-      .filter((item) => `${item.title} ${item.summary} ${item.category}`.toLowerCase().includes(normalizedQuery))
+      .filter((item) =>
+        `${item.title} ${item.summary} ${item.category}`.toLowerCase().includes(normalizedQuery),
+      )
       .slice(0, 6);
   }, [query]);
 
@@ -85,7 +91,9 @@ export function DocsSidebar() {
             className="p-1 text-[var(--ink-soft)] hover:text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
             aria-label="Close documentation navigation"
           >
-            <span aria-hidden="true" className="text-lg leading-none">×</span>
+            <span aria-hidden="true" className="text-lg leading-none">
+              ×
+            </span>
           </button>
         </div>
 
@@ -98,12 +106,16 @@ export function DocsSidebar() {
           >
             <SearchIcon />
             <span className="flex-1">Search docs</span>
-            <kbd className="hidden border border-[var(--line)] px-1 font-[family-name:var(--font-ibm-plex-mono)] text-[10px] text-[var(--ink-faint)] sm:inline">⌘K</kbd>
+            <kbd className="hidden border border-[var(--line)] px-1 font-[family-name:var(--font-ibm-plex-mono)] text-[10px] text-[var(--ink-faint)] sm:inline">
+              ⌘K
+            </kbd>
           </button>
 
           {searchOpen ? (
             <div className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-10 border border-[var(--line)] bg-[var(--surface)] p-2">
-              <label className="sr-only" htmlFor="docs-search">Search documentation</label>
+              <label className="sr-only" htmlFor="docs-search">
+                Search documentation
+              </label>
               <input
                 id="docs-search"
                 autoFocus
@@ -113,17 +125,30 @@ export function DocsSidebar() {
                 className="w-full border-b border-[var(--line)] bg-transparent px-2 py-2 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--ink-faint)]"
               />
               <div className="max-h-64 overflow-y-auto pt-1">
-                {query && results.length === 0 ? <p className="px-2 py-3 text-xs text-[var(--ink-faint)]">No local results yet.</p> : null}
-                {!query ? <p className="px-2 py-3 text-xs leading-5 text-[var(--ink-faint)]">Search indexing is prepared for a future provider.</p> : null}
+                {query && results.length === 0 ? (
+                  <p className="px-2 py-3 text-xs text-[var(--ink-faint)]">No local results yet.</p>
+                ) : null}
+                {!query ? (
+                  <p className="px-2 py-3 text-xs leading-5 text-[var(--ink-faint)]">
+                    Search indexing is prepared for a future provider.
+                  </p>
+                ) : null}
                 {results.map((item) => (
                   <Link
                     key={item.slug.join("/")}
                     href={hrefForDoc(item)}
-                    onClick={() => { setSearchOpen(false); closePanel(); }}
+                    onClick={() => {
+                      setSearchOpen(false);
+                      closePanel();
+                    }}
                     className="block px-2 py-2 transition-colors hover:bg-[var(--paper-deep)] focus-visible:outline-2 focus-visible:outline-[var(--signal)]"
                   >
-                    <span className="block text-xs font-medium text-[var(--ink)]">{item.title}</span>
-                    <span className="mt-0.5 block text-[11px] text-[var(--ink-faint)]">{item.category}</span>
+                    <span className="block text-xs font-medium text-[var(--ink)]">
+                      {item.title}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-[var(--ink-faint)]">
+                      {item.category}
+                    </span>
                   </Link>
                 ))}
               </div>
@@ -140,7 +165,13 @@ export function DocsSidebar() {
               <section key={group.title} className="mb-5">
                 <button
                   type="button"
-                  onClick={() => setClosedGroups((groups) => groups.includes(group.title) ? groups.filter((title) => title !== group.title) : [...groups, group.title])}
+                  onClick={() =>
+                    setClosedGroups((groups) =>
+                      groups.includes(group.title)
+                        ? groups.filter((title) => title !== group.title)
+                        : [...groups, group.title],
+                    )
+                  }
                   aria-expanded={isExpanded}
                   className="flex w-full items-center gap-1.5 py-2 font-[family-name:var(--font-ibm-plex-mono)] text-[12px] font-medium tracking-[0.12em] text-[var(--ink-faint)] uppercase transition-colors hover:text-[var(--ink-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)]"
                 >
@@ -157,7 +188,7 @@ export function DocsSidebar() {
                             href={hrefForDoc(item)}
                             onClick={closePanel}
                             aria-current={isActive ? "page" : undefined}
-                            className={`block border-l -ml-px px-3 py-2.5 text-[15px] leading-6 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--signal-dark)] dark:text-[var(--signal)]" : "border-transparent text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
+                            className={`-ml-px block border-l px-3 py-2.5 text-[15px] leading-6 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--signal)] ${isActive ? "border-[var(--signal)] text-[var(--signal-dark)] dark:text-[var(--signal)]" : "border-transparent text-[var(--ink-soft)] hover:text-[var(--ink)]"}`}
                           >
                             {item.title}
                           </Link>

@@ -50,14 +50,14 @@ http://localhost:3000
 
 ## Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `make dev` | Start development server |
-| `make build` | Production build |
-| `make lint` | Run ESLint |
-| `make typecheck` | Run TypeScript checks |
-| `make format` | Format source code |
-| `make clean` | Remove generated files |
+| Command          | Description              |
+| ---------------- | ------------------------ |
+| `make dev`       | Start development server |
+| `make build`     | Production build         |
+| `make lint`      | Run ESLint               |
+| `make typecheck` | Run TypeScript checks    |
+| `make format`    | Format source code       |
+| `make clean`     | Remove generated files   |
 
 Or use pnpm directly:
 
