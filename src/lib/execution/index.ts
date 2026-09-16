@@ -48,8 +48,10 @@ export type ExecutionSocketLike = {
   readyState: number;
   close: () => void;
   send?: (data: string) => void;
-  addEventListener: (type: string, handler: (event: unknown) => void) => void;
-  removeEventListener?: (type: string, handler: (event: unknown) => void) => void;
+  onopen: (() => void) | null;
+  onmessage: ((event: { data: unknown }) => void) | null;
+  onerror: ((event: unknown) => void) | null;
+  onclose: (() => void) | null;
 };
 
 export type ExecutionStreamClientConfig = {
@@ -306,9 +308,9 @@ export function createExecutionStreamClient(
     notify();
   };
 
-  const handleMessage = (event: { data?: unknown }) => {
+  const handleMessage = (event: { data: unknown }) => {
     try {
-      const parsed = parseExecutionEvent(event?.data);
+      const parsed = parseExecutionEvent(event.data);
       if (!parsed) {
         store.setError("Execution stream received malformed or invalid event payload.");
         notify();
@@ -353,21 +355,24 @@ export function createExecutionStreamClient(
     updateConnection({ kind: "connecting" });
 
     try {
-      const socketFactory =
+      const socketFactory: () => ExecutionSocketLike =
         config.socketFactory ??
         (() => {
           if (typeof WebSocket === "undefined") {
             throw new Error("WebSocket is not available in this environment.");
           }
 
-          return new WebSocket(resolveExecutionSocketUrl(config.controllerUrl, executionId));
+          return new WebSocket(
+            resolveExecutionSocketUrl(config.controllerUrl, executionId),
+          ) as unknown as ExecutionSocketLike;
         });
 
-      socket = socketFactory();
-      socket.addEventListener("open", () => handleOpen());
-      socket.addEventListener("message", (message) => handleMessage(message as { data?: unknown }));
-      socket.addEventListener("error", () => handleError());
-      socket.addEventListener("close", () => handleClose());
+      const nextSocket = socketFactory();
+      socket = nextSocket;
+      nextSocket.onopen = handleOpen;
+      nextSocket.onmessage = handleMessage;
+      nextSocket.onerror = handleError;
+      nextSocket.onclose = handleClose;
     } catch (error) {
       store.setError(
         error instanceof Error ? error.message : "Unable to open execution stream connection.",

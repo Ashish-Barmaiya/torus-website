@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createExecutionStreamClient,
-  getExecutionControllerUrl,
   type ExecutionConnectionState,
   type ExecutionLifecycle,
   type ExecutionStreamSnapshot,
@@ -38,7 +37,7 @@ export function useExecutionStream({ executionId, controllerUrl }: UseExecutionS
 
     const client = createExecutionStreamClient({
       executionId,
-      controllerUrl: controllerUrl ?? getExecutionControllerUrl(),
+      controllerUrl,
     });
 
     clientRef.current = client;
